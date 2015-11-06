@@ -58,3 +58,4 @@ target/
 
 # Generated binary files
 *.bin
+generated/

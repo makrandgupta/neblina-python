@@ -3,6 +3,7 @@ import binascii
 import json
 import random
 import math
+import os
 
 usPerSecond = 1000000
 
@@ -22,24 +23,28 @@ def main():
     for packet in walking:
         packetString = packet.stringEncode()
         packetStringList.append( packetString )
-        print( packet.data )
+        # print( packet.data )
 
     for packet in imuData:
         packetString = packet.stringEncode()
         packetStringList.append( packetString )
-        print( packet.data )
+        # print( packet.data )
 
-    anglesFile = open("oneSpinInOneSecond.bin", "w")
+    # Generate the data directory
+    if not os.path.exists('./generated'):
+        os.makedirs('./generated')
+
+    anglesFile = open("./generated/euleranglePackets.bin", "w")
     for packet in packetStringList:
         anglesFile.write(packet)
     anglesFile.close()
 
-    walkingFile = open("aHundredStepsSlowWalking.bin", "w")
+    walkingFile = open("./generated/pedometerPackets.bin", "w")
     for packet in packetStringList:
         walkingFile.write(packet)
     walkingFile.close()
 
-    imuFile = open("sineWaveIMUSamples.bin", "w")
+    imuFile = open("./generated/imuPackets.bin", "w")
     for packet in packetStringList:
         imuFile.write(packet)
     imuFile.close()
