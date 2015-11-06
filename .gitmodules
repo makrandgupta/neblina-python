@@ -1,3 +1,6 @@
 [submodule "pyslip"]
 	path = pyslip
 	url = https://github.com/Motsai/pyslip.git
+[submodule "bluepy"]
+	path = bluepy
+	url = https://github.com/Motsai/bluepy.git
