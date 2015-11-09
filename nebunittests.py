@@ -30,6 +30,7 @@ class ut_NeblinaPackets(unittest.TestCase):
         errorList = []
         for idx,packetString in enumerate(packetList):
             try:
+                # print(binascii.hexlify(bytearray(packetString)))
                 nebPacket = neb.NebResponsePacket(packetString)
                 # print('Appending {0}'.format(nebPacket))
                 packets.append(nebPacket)
@@ -37,7 +38,6 @@ class ut_NeblinaPackets(unittest.TestCase):
                 # print('Invalid Motion Engine Code')
                 errorList.append(keyError)
             except NotImplementedError as notImplError:
-                # print(binascii.hexlify(bytearray(packetString)))
                 # print('Got a non-standard packet at #{0}'\
                     # .format(idx))
                 errorList.append(notImplError)
@@ -130,7 +130,7 @@ class ut_NeblinaPackets(unittest.TestCase):
         self.assertEquals(packets[4].data.timestamp, 19057720)
         self.assertEquals(packets[4].data.stepCount, 4)
         self.assertEquals(packets[4].data.stepsPerMinute, 104)
-        self.assertEquals(packets[4].data.walkingDirection, 24.8)
+        self.assertEquals(packets[4].data.walkingDirection, -180.0)
 
     def testDecodeQuat(self):
         print("\n*** Testing Quaternion Stream Decoding ***")

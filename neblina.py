@@ -27,7 +27,7 @@ MotCmd_TrajectoryDistance   =   0x0A # calculating the distance from a pre-recor
 MotCmd_Pedometer            =   0x0B # streaming pedometer data
 MotCmd_MAG_Data             =   0x0C # streaming magnetometer data
 
-NeblinaCommandPacketData_fmt = "B 15s"
+NeblinaCommandPacketData_fmt = "<B 15s"
 class NebCommandData(object):
     """docstring for NebCommandData"""
     def __init__(self, enable):
@@ -42,7 +42,7 @@ class NebCommandData(object):
     def __str__(self):
         return "enable: {0}".format(self.enable)
 
-Neblina_BatteryLevel_fmt = "h 14s" # Battery Level (%)
+Neblina_BatteryLevel_fmt = "<h 14s" # Battery Level (%)
 class BatteryLevelData(object):
     """docstring for BatteryLevelData"""
     def __init__(self, dataString):
@@ -52,7 +52,7 @@ class BatteryLevelData(object):
     def __str__(self):
         return "batteryLevel: {0}%".format(self.batteryLevel)
 
-Neblina_MotionState_fmt = "I B 11s" # Timestamp, start/stop
+Neblina_MotionState_fmt = "<I B 11s" # Timestamp, start/stop
 class MotionStateData(object):
     """docstring for MotionStateData"""
     def __init__(self, dataString):
@@ -64,7 +64,7 @@ class MotionStateData(object):
         return "{0}us: startStop:{1})"\
         .format(self.timestamp,self.startStop)
 
-Neblina_ExternalForce_fmt = "I 3h 6s" # Timestamp, External force xyz
+Neblina_ExternalForce_fmt = "<I 3h 6s" # Timestamp, External force xyz
 class ExternalForceData(object):
     """docstring for ExternalForceData"""
     def __init__(self, dataString):
@@ -80,7 +80,7 @@ class ExternalForceData(object):
         .format(self.timestamp,self.externalForces[0],\
             self.externalForces[1], self.externalForces[2])
 
-Neblina_TrajectoryDistance_fmt = "I 3h 6s" # Timestamp, Euler angle errors
+Neblina_TrajectoryDistance_fmt = "<I 3h 6s" # Timestamp, Euler angle errors
 class TrajectoryDistanceData(object):
     """docstring for TrajectoryDistance"""
     def __init__(self, dataString):
@@ -97,7 +97,7 @@ class TrajectoryDistanceData(object):
         .format(self.timestamp,self.eulerAngleErrors[0],\
             self.eulerAngleErrors[1], self.eulerAngleErrors[2])
 
-Neblina_Pedometer_fmt = "I H B h 6s" # Timestamp, stepCount, stepsPerMinute, walking direction 
+Neblina_Pedometer_fmt = "<I H B h 7s" # Timestamp, stepCount, stepsPerMinute, walking direction 
 class PedometerData(object):
     """docstring for PedometerData"""
     def __init__(self, dataString):
@@ -108,9 +108,9 @@ class PedometerData(object):
         self.walkingDirection /= 10.0
 
     def encode(self):
-        garbage = '\000'*6
-        packetString = struct.pack(Neblina_Euler_fmt, self.timestamp,\
-        self.stepCount, self.stepsPerMinute, self.walkingDirection*10, garbage)
+        garbage = '\000'*7
+        packetString = struct.pack(Neblina_Pedometer_fmt, self.timestamp,\
+        self.stepCount, self.stepsPerMinute, int(self.walkingDirection*10), garbage)
         return packetString
 
     def __str__(self):
@@ -118,7 +118,7 @@ class PedometerData(object):
         .format(self.timestamp, self.stepCount,\
         self.stepsPerMinute, self.walkingDirection)
 
-Neblina_Quat_t_fmt = "I 4h 4s"
+Neblina_Quat_t_fmt = "<I 4h 4s"
 class QuaternionData(object):
     """docstring for QuaternionData"""
     def __init__(self, dataString):
@@ -136,7 +136,7 @@ class QuaternionData(object):
             self.timestamp, self.quaternions[0], self.quaternions[1],\
             self.quaternions[2], self.quaternions[3])
 
-Neblina_IMU_fmt = "I 3h 3h" # timestamp xyz xyz
+Neblina_IMU_fmt = "<I 3h 3h" # timestamp xyz xyz
 class IMUData(object):
     """docstring for IMUData"""
     def __init__(self, dataString):
@@ -160,7 +160,7 @@ class IMUData(object):
                 self.accel[0], self.accel[1], self.accel[2],
                 self.gyro[0], self.gyro[1], self.gyro[2])
 
-Neblina_MAG_fmt = "I 3h 3h" # timestamp xyz xyz
+Neblina_MAG_fmt = "<I 3h 3h" # timestamp xyz xyz
 class MAGData(object):
     """docstring for MAGData"""
     def __init__(self, dataString):
@@ -178,7 +178,7 @@ class MAGData(object):
                 self.accel[0], self.accel[1], self.accel[2],
                 self.mag[0], self.mag[1], self.mag[2])
 
-Neblina_Euler_fmt = "I 3h 6s" # timestamp yaw, pitch, roll
+Neblina_Euler_fmt = "<I 3h 6s" # timestamp yaw, pitch, roll
 class EulerAngleData(object):
     """docstring for EulerAngleData"""
     def __init__(self, dataString):
@@ -231,7 +231,7 @@ MotionCommandsStrings = {
 
 
 # Header = 4 bytes
-NeblinaPacketHeader_fmt = ">4B"
+NeblinaPacketHeader_fmt = "<4B"
 class NebHeader(object):
     """docstring for NebHeader"""
     def __init__(self, subSystem, commandType, crc, length = 16):
@@ -252,7 +252,7 @@ class NebHeader(object):
         return stringDescriptor
 
 # Data = 16 bytes
-NeblinaPacket_fmt = ">4s 16s"
+NeblinaPacket_fmt = "<4s 16s"
 class NebCommandPacket(object):
     """docstring for NebCommandPacket"""
     def __init__(self, subSystem, commandType, enable, length = 16):
@@ -305,7 +305,7 @@ class NebResponsePacket(object):
     def createPedometerResponsePacket(cls, timestamp, stepCount, stepsPerMinute, walkingDirection):
         # Multiply the walking direction value by 10 to emulate the firmware behavior
         walkingDirection = int(walkingDirection*10)
-        garbage = '\000\000\000\000\000\000'
+        garbage = '\000'*7
         dataString = struct.pack( Neblina_Pedometer_fmt, timestamp, stepCount,\
          stepsPerMinute, walkingDirection, garbage )
         data = PedometerData(dataString)
@@ -383,7 +383,7 @@ class InvalidPacketFormatError(Exception):
 def crc8(bytes):
     crc = 0
     for byte in bytes:
-       ee = (crc) ^ (byte)
-       ff = (ee) ^ (ee>>4) ^ (ee>>7)
-       crc = ((ff<<1)%256) ^ ((ff<<4) % 256)
+        ee = (crc) ^ (byte)
+        ff = (ee) ^ (ee>>4) ^ (ee>>7)
+        crc = ((ff<<1)%256) ^ ((ff<<4) % 256)
     return crc
