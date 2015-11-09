@@ -1,4 +1,4 @@
-import NeblinaData as neb
+import neblina as neb
 import binascii
 import json
 import random
