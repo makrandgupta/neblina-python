@@ -9,25 +9,36 @@ usPerSecond = 1000000
 
 def main():
     packetList = []
-    packetStringList = []
-    spinning = createSpinningObjectPacketList(10.0, 1.0)
-    walking = createWalkingPathPacketList(100, 40.0, 5.0, 3, -44.0)
-    imuData = createRandomIMUDataPacketList(50, 300)
+    spinningPacketStringList = []
+    walkingPacketStringList = []
+    imuDataPacketStringList = []
+    samplingFrequency = 50.0
+
+    # Create spinning object packets
+    spinning = createSpinningObjectPacketList(samplingFrequency, 0.5, 0.0, 0.0)
+    # Get last packet in the list and use its timestamp to determine the timestamp of the next rotation
+    startTimestamp = spinning[-1].data.timestamp + int(1/samplingFrequency)
+    spinning += createSpinningObjectPacketList(samplingFrequency, 0.0, 0.5, 0.0, startTimestamp)
+    startTimestamp = spinning[-1].data.timestamp + int(1/samplingFrequency)
+    spinning += createSpinningObjectPacketList(samplingFrequency, 0.0, 0.0, 0.5, startTimestamp)
+    
+    walking = createWalkingPathPacketList( 100, 40.0, 5.0, 3, -44.0 )
+    imuData = createRandomIMUDataPacketList( 50, 300 )
 
     # Create a list of the encoded rotating packets
     for packet in spinning:
         packetString = packet.stringEncode()
-        packetStringList.append( packetString )
+        spinningPacketStringList.append( packetString )
         # print( packet.data )
-    
+
     for packet in walking:
         packetString = packet.stringEncode()
-        packetStringList.append( packetString )
+        walkingPacketStringList.append( packetString )
         # print( packet.data )
 
     for packet in imuData:
         packetString = packet.stringEncode()
-        packetStringList.append( packetString )
+        imuDataPacketStringList.append( packetString )
         # print( packet.data )
 
     # Generate the data directory
@@ -35,17 +46,17 @@ def main():
         os.makedirs('./generated')
 
     anglesFile = open("./generated/euleranglePackets.bin", "w")
-    for packet in packetStringList:
+    for packet in spinningPacketStringList:
         anglesFile.write(packet)
     anglesFile.close()
 
     walkingFile = open("./generated/pedometerPackets.bin", "w")
-    for packet in packetStringList:
+    for packet in walkingPacketStringList:
         walkingFile.write(packet)
     walkingFile.close()
 
     imuFile = open("./generated/imuPackets.bin", "w")
-    for packet in packetStringList:
+    for packet in imuDataPacketStringList:
         imuFile.write(packet)
     imuFile.close()
 
@@ -117,7 +128,7 @@ def createWalkingPathPacketList(numSteps, averageSPM=61.0, maxDegreesDeviation=2
 
 # RPS = Rotation Per Second
 def createSpinningObjectPacketList(samplingFrequency = 50.0,\
-                                yawRPS=0.5, pitchRPS=0.0, rollRPS=0.0):
+                                yawRPS=0.5, pitchRPS=0.0, rollRPS=0.0, startTimestamp = 0):
     packetList = []
     degreesPerSecond = [0]*3
     degreesPerSecond[0] = yawRPS*360
@@ -144,7 +155,7 @@ def createSpinningObjectPacketList(samplingFrequency = 50.0,\
         yawDegrees  =   round((((degreesPerSecond[0]*samplingPeriod*n) + 180 )% 360 ) - 180, 2 )
         pitchDegrees =  round((((degreesPerSecond[1]*samplingPeriod*n) + 90 )% 180 ) - 90, 2 )
         rollDegrees =   round((((degreesPerSecond[2]*samplingPeriod*n) + 180 )% 360 ) - 180, 2 )
-        timestamp = n*samplingPeriod*usPerSecond
+        timestamp =  ( n*samplingPeriod*usPerSecond ) + startTimestamp
         packet = neb.NebResponsePacket.createEulerAngleResponsePacket(\
             timestamp, yawDegrees, pitchDegrees, rollDegrees)
         packetList.append( packet )
