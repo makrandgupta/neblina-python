@@ -55,7 +55,7 @@ class ut_NeblinaPackets(unittest.TestCase):
 
     def printPackets(self, packetList):
         for packet in packetList:
-            print packet
+            print(packet)
 
     def checkTimestamps(self, packetList, expected, actual):
         currentTimestamp = packetList[0].data.timestamp - expected
@@ -95,111 +95,111 @@ class ut_NeblinaPackets(unittest.TestCase):
         packets, errorList = self.buildPacketListFromSLIP("SampleData/EulerAngleStreamShort.bin")
 
         # Make sure the timestamps are well extracted
-        self.assertEquals(packets[10].data.timestamp, 190483824)
-        self.assertEquals(packets[20].data.timestamp, 190683824)
+        self.assertEqual(packets[10].data.timestamp, 190483824)
+        self.assertEqual(packets[20].data.timestamp, 190683824)
         # Make sure the first packet is recognized as garbage
-        self.assertEquals(type(errorList[0]), NotImplementedError)
+        self.assertEqual(type(errorList[0]), NotImplementedError)
         # Check intentional CRC Errors
-        self.assertEquals(type(errorList[1]), neb.CRCError)
-        self.assertEquals(errorList[1].expected, 70)
-        self.assertEquals(errorList[1].actual, 14)
-        self.assertEquals(type(errorList[2]), neb.CRCError)
-        self.assertEquals(errorList[2].expected, 112)
-        self.assertEquals(errorList[2].actual, 34)
+        self.assertEqual(type(errorList[1]), neb.CRCError)
+        self.assertEqual(errorList[1].expected, 70)
+        self.assertEqual(errorList[1].actual, 14)
+        self.assertEqual(type(errorList[2]), neb.CRCError)
+        self.assertEqual(errorList[2].expected, 112)
+        self.assertEqual(errorList[2].actual, 34)
         # Check intentional CRC Errors
-        self.assertEquals(type(errorList[1]), neb.CRCError)
-        self.assertEquals(errorList[1].expected, 70)
-        self.assertEquals(errorList[1].actual, 14)
-        self.assertEquals(type(errorList[2]), neb.CRCError)
-        self.assertEquals(errorList[2].expected, 112)
-        self.assertEquals(errorList[2].actual, 34)
+        self.assertEqual(type(errorList[1]), neb.CRCError)
+        self.assertEqual(errorList[1].expected, 70)
+        self.assertEqual(errorList[1].actual, 14)
+        self.assertEqual(type(errorList[2]), neb.CRCError)
+        self.assertEqual(errorList[2].expected, 112)
+        self.assertEqual(errorList[2].actual, 34)
         # Check euler angle decoding
-        self.assertEquals(packets[6].data.yaw, -51.6)
-        self.assertEquals(packets[6].data.pitch, -60.9)
-        self.assertEquals(packets[6].data.roll, 121.5)
+        self.assertEqual(packets[6].data.yaw, -51.6)
+        self.assertEqual(packets[6].data.pitch, -60.9)
+        self.assertEqual(packets[6].data.roll, 121.5)
 
     def testDecodePedometer(self):
         print("\n*** Testing Pedometer Decoding ***")
         packets, errorList = self.buildPacketListFromSLIP("SampleData/PedometerStream.bin")
         # Make sure the beginning garbage packet was not recorded
-        self.assertEquals(len(packets), 6)
-        self.assertEquals(type(errorList[0]), NotImplementedError)
+        self.assertEqual(len(packets), 6)
+        self.assertEqual(type(errorList[0]), NotImplementedError)
         # Make sure the invalid subsystem error has been detected
-        self.assertEquals(type(errorList[1]), neb.InvalidPacketFormatError)
+        self.assertEqual(type(errorList[1]), neb.InvalidPacketFormatError)
         # Check pedometer data decoding
-        self.assertEquals(packets[4].data.timestamp, 19057720)
-        self.assertEquals(packets[4].data.stepCount, 4)
-        self.assertEquals(packets[4].data.stepsPerMinute, 104)
-        self.assertEquals(packets[4].data.walkingDirection, -180.0)
+        self.assertEqual(packets[4].data.timestamp, 19057720)
+        self.assertEqual(packets[4].data.stepCount, 4)
+        self.assertEqual(packets[4].data.stepsPerMinute, 104)
+        self.assertEqual(packets[4].data.walkingDirection, -180.0)
 
     def testDecodeQuat(self):
         print("\n*** Testing Quaternion Stream Decoding ***")
         packets, errorList = self.buildPacketListFromSLIP("SampleData/QuaternionStream.bin")
         # Make sure the error list is empty
-        self.assertEquals(len(errorList), 0)
+        self.assertEqual(len(errorList), 0)
         # Check quaternion packet decoding
-        self.assertEquals(packets[8].data.quaternions[0], 21949)
-        self.assertEquals(packets[8].data.quaternions[1], 12649)
-        self.assertEquals(packets[8].data.quaternions[2], -20696)
-        self.assertEquals(packets[8].data.quaternions[3], -178)
+        self.assertEqual(packets[8].data.quaternions[0], 21949)
+        self.assertEqual(packets[8].data.quaternions[1], 12649)
+        self.assertEqual(packets[8].data.quaternions[2], -20696)
+        self.assertEqual(packets[8].data.quaternions[3], -178)
 
     def testDecodeMAG(self):
         print("\n*** Testing MA Stream Decoding ***")
         packets, errorList = self.buildPacketListFromSLIP("SampleData/MAGStream.bin")
         # Make sure the error list is empty
-        self.assertEquals(len(errorList), 0)
+        self.assertEqual(len(errorList), 0)
         # Check MAG packet decoding
-        self.assertEquals(packets[12].data.accel[0], -7527)
-        self.assertEquals(packets[12].data.accel[1], 1119)
-        self.assertEquals(packets[12].data.accel[2], -15106)
-        self.assertEquals(packets[12].data.mag[0], 1009)
-        self.assertEquals(packets[12].data.mag[1], -1903)
-        self.assertEquals(packets[12].data.mag[2], 3933)
+        self.assertEqual(packets[12].data.accel[0], -7527)
+        self.assertEqual(packets[12].data.accel[1], 1119)
+        self.assertEqual(packets[12].data.accel[2], -15106)
+        self.assertEqual(packets[12].data.mag[0], 1009)
+        self.assertEqual(packets[12].data.mag[1], -1903)
+        self.assertEqual(packets[12].data.mag[2], 3933)
 
     def testDecodeIMU(self):
         print("\n*** Testing IMU Stream Decoding ***")
         packets, errorList = self.buildPacketListFromSLIP("SampleData/IMUStream.bin")
         # Make sure the error list is empty
-        self.assertEquals(len(errorList), 0)
+        self.assertEqual(len(errorList), 0)
         # Check MAG packet decoding
-        self.assertEquals(packets[12].data.timestamp, 12377048)
-        self.assertEquals(packets[12].data.accel[0], -12376)
-        self.assertEquals(packets[12].data.accel[1], 6870)
-        self.assertEquals(packets[12].data.accel[2], -8843)
-        self.assertEquals(packets[12].data.gyro[0], -21)
-        self.assertEquals(packets[12].data.gyro[1], -23)
-        self.assertEquals(packets[12].data.gyro[2], 42)
+        self.assertEqual(packets[12].data.timestamp, 12377048)
+        self.assertEqual(packets[12].data.accel[0], -12376)
+        self.assertEqual(packets[12].data.accel[1], 6870)
+        self.assertEqual(packets[12].data.accel[2], -8843)
+        self.assertEqual(packets[12].data.gyro[0], -21)
+        self.assertEqual(packets[12].data.gyro[1], -23)
+        self.assertEqual(packets[12].data.gyro[2], 42)
 
     def testDecodeTrajectory(self):
         print("\n*** Testing Decode Trajectory Decoding ***")
         packets, errorList = self.buildPacketListFromSLIP("SampleData/TrajectoryDistanceStream.bin")
         # Make sure the error list is empty
-        self.assertEquals(len(errorList), 0)
+        self.assertEqual(len(errorList), 0)
         # Check MAG packet decoding
-        self.assertEquals(packets[15].data.timestamp, 36838400)
-        self.assertEquals(packets[15].data.eulerAngleErrors[0], -22)
-        self.assertEquals(packets[15].data.eulerAngleErrors[1], -1)
-        self.assertEquals(packets[15].data.eulerAngleErrors[2], -8)
+        self.assertEqual(packets[15].data.timestamp, 36838400)
+        self.assertEqual(packets[15].data.eulerAngleErrors[0], -22)
+        self.assertEqual(packets[15].data.eulerAngleErrors[1], -1)
+        self.assertEqual(packets[15].data.eulerAngleErrors[2], -8)
 
     def testDecodeExtForce(self):
         print("\n*** Testing External Force Decoding ***")
         packets, errorList = self.buildPacketListFromSLIP("SampleData/ForceStream.bin")
         # Make sure the error list is empty
-        self.assertEquals(len(errorList), 0)
+        self.assertEqual(len(errorList), 0)
         # Check Ext packet decoding
-        self.assertEquals(packets[3].data.timestamp, 3878480)
-        self.assertEquals(packets[3].data.externalForces[0], 2559)
-        self.assertEquals(packets[3].data.externalForces[1], -257)
-        self.assertEquals(packets[3].data.externalForces[2], 597)
+        self.assertEqual(packets[3].data.timestamp, 3878480)
+        self.assertEqual(packets[3].data.externalForces[0], 2559)
+        self.assertEqual(packets[3].data.externalForces[1], -257)
+        self.assertEqual(packets[3].data.externalForces[2], 597)
 
     def testDecodeMotionState(self):
         print("\n*** Testing Motion State Decoding ***")
         packets, errorList = self.buildPacketListFromSLIP("SampleData/MotionStateStream.bin")
         # Make sure the error list is empty
-        self.assertEquals(len(errorList), 0)
+        self.assertEqual(len(errorList), 0)
         # Check Ext packet decoding
-        self.assertEquals(packets[10].data.timestamp, 43738384)
-        self.assertEquals(packets[10].data.startStop, True)
+        self.assertEqual(packets[10].data.timestamp, 43738384)
+        self.assertEqual(packets[10].data.startStop, True)
 
     def testEncodePackets(self):
         print("\n*** Testing Encoding of Packets ***")
@@ -208,11 +208,11 @@ class ut_NeblinaPackets(unittest.TestCase):
         downSampleCommandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine, neb.MotCmd_Downsample, downSampleFactor)
         packetString = downSampleCommandPacket.stringEncode()
         packetBytes = bytearray(packetString)
-        self.assertEquals(len(packetBytes), 20)
-        self.assertEquals(packetBytes[0], neb.Subsys_MotionEngine)
-        self.assertEquals(packetBytes[1], 16)
-        self.assertEquals(packetBytes[3], neb.MotCmd_Downsample)
-        self.assertEquals(packetBytes[4], downSampleFactor)
+        self.assertEqual(len(packetBytes), 20)
+        self.assertEqual(packetBytes[0], neb.Subsys_MotionEngine)
+        self.assertEqual(packetBytes[1], 16)
+        self.assertEqual(packetBytes[3], neb.MotCmd_Downsample)
+        self.assertEqual(packetBytes[4], downSampleFactor)
 
         # Make sure these calls dont cause an exception
         responsePacket = neb.NebCommandPacket(neb.Subsys_MotionEngine, neb.MotCmd_MotionState, True)
@@ -235,12 +235,12 @@ class ut_NeblinaPackets(unittest.TestCase):
             packetString = packet.stringEncode()
             responsePackets.append(neb.NebResponsePacket(packetString))
         for idx,packet in enumerate(responsePackets):
-            self.assertEquals(packets[idx].header.subSystem, neb.Subsys_MotionEngine)
-            self.assertEquals(packets[idx].header.command, neb.MotCmd_EulerAngle)
-            self.assertEquals(packets[idx].data.timestamp, packet.data.timestamp)
-            self.assertEquals(packets[idx].data.yaw, packet.data.yaw)
-            self.assertEquals(packets[idx].data.pitch, packet.data.pitch)
-            self.assertEquals(packets[idx].data.roll, packet.data.roll)
+            self.assertEqual(packets[idx].header.subSystem, neb.Subsys_MotionEngine)
+            self.assertEqual(packets[idx].header.command, neb.MotCmd_EulerAngle)
+            self.assertEqual(packets[idx].data.timestamp, packet.data.timestamp)
+            self.assertEqual(packets[idx].data.yaw, packet.data.yaw)
+            self.assertEqual(packets[idx].data.pitch, packet.data.pitch)
+            self.assertEqual(packets[idx].data.roll, packet.data.roll)
 
     def testCreatePedometerPackets(self):
         print("\n*** Testing Encoding and Decoding of Pedometer Packets ***")
@@ -250,12 +250,12 @@ class ut_NeblinaPackets(unittest.TestCase):
             packetString = packet.stringEncode()
             responsePackets.append(neb.NebResponsePacket(packetString))
         for idx,packet in enumerate(responsePackets):
-            self.assertEquals(packets[idx].header.subSystem, neb.Subsys_MotionEngine)
-            self.assertEquals(packets[idx].header.command, neb.MotCmd_Pedometer)
-            self.assertEquals(packets[idx].data.timestamp, packet.data.timestamp)
-            self.assertEquals(packets[idx].data.stepCount, packet.data.stepCount)
-            self.assertEquals(packets[idx].data.stepsPerMinute, packet.data.stepsPerMinute)
-            self.assertEquals(packets[idx].data.walkingDirection, packet.data.walkingDirection)
+            self.assertEqual(packets[idx].header.subSystem, neb.Subsys_MotionEngine)
+            self.assertEqual(packets[idx].header.command, neb.MotCmd_Pedometer)
+            self.assertEqual(packets[idx].data.timestamp, packet.data.timestamp)
+            self.assertEqual(packets[idx].data.stepCount, packet.data.stepCount)
+            self.assertEqual(packets[idx].data.stepsPerMinute, packet.data.stepsPerMinute)
+            self.assertEqual(packets[idx].data.walkingDirection, packet.data.walkingDirection)
 
     def testCreateIMUPackets(self):
         print("\n*** Testing Encoding and Decoding of IMU Packets ***")
@@ -265,15 +265,15 @@ class ut_NeblinaPackets(unittest.TestCase):
             packetString = packet.stringEncode()
             responsePackets.append(neb.NebResponsePacket(packetString))
         for idx,packet in enumerate(responsePackets):
-            self.assertEquals( packets[idx].header.subSystem, neb.Subsys_MotionEngine)
-            self.assertEquals( packets[idx].header.command, neb.MotCmd_IMU_Data)
-            self.assertEquals( packets[idx].data.timestamp, packet.data.timestamp )
-            self.assertEquals( packets[idx].data.accel[0], packet.data.accel[0] )
-            self.assertEquals( packets[idx].data.accel[1], packet.data.accel[1] )
-            self.assertEquals( packets[idx].data.accel[2], packet.data.accel[2] )
-            self.assertEquals( packets[idx].data.gyro[0], packet.data.gyro[0] )
-            self.assertEquals( packets[idx].data.gyro[1], packet.data.gyro[1] )
-            self.assertEquals( packets[idx].data.gyro[2], packet.data.gyro[2] )
+            self.assertEqual( packets[idx].header.subSystem, neb.Subsys_MotionEngine)
+            self.assertEqual( packets[idx].header.command, neb.MotCmd_IMU_Data)
+            self.assertEqual( packets[idx].data.timestamp, packet.data.timestamp )
+            self.assertEqual( packets[idx].data.accel[0], packet.data.accel[0] )
+            self.assertEqual( packets[idx].data.accel[1], packet.data.accel[1] )
+            self.assertEqual( packets[idx].data.accel[2], packet.data.accel[2] )
+            self.assertEqual( packets[idx].data.gyro[0], packet.data.gyro[0] )
+            self.assertEqual( packets[idx].data.gyro[1], packet.data.gyro[1] )
+            self.assertEqual( packets[idx].data.gyro[2], packet.data.gyro[2] )
 
 
 
@@ -281,4 +281,4 @@ class ut_NeblinaPackets(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main() # run all tests
-    print unittest.TextTestResult
+    print (unittest.TextTestResult)

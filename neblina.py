@@ -34,7 +34,7 @@ class NebCommandData(object):
         self.enable = enable
 
     def encode(self):
-        garbage = '\000'*15
+        garbage = ('\000'*15).encode('utf-8')
         commandDataString = struct.pack(NeblinaCommandPacketData_fmt,\
             self.enable, garbage)
         return commandDataString
@@ -108,7 +108,7 @@ class PedometerData(object):
         self.walkingDirection /= 10.0
 
     def encode(self):
-        garbage = '\000'*7
+        garbage = ('\000'*7).encode('utf-8')
         packetString = struct.pack(Neblina_Pedometer_fmt, self.timestamp,\
         self.stepCount, self.stepsPerMinute, int(self.walkingDirection*10), garbage)
         return packetString
@@ -189,7 +189,7 @@ class EulerAngleData(object):
         self.roll = self.roll/10.0
 
     def encode(self):
-        garbage = '\000'*6
+        garbage = ('\000'*6).encode('utf-8')
         packetString = struct.pack(Neblina_Euler_fmt, self.timestamp,\
          int(self.yaw*10), int(self.pitch*10), int(self.roll*10), garbage)
         return packetString
@@ -277,8 +277,8 @@ class NebResponsePacket(object):
     @classmethod
     def createIMUResponsePacket(cls, timestamp, accel, gyro):
         dataString = struct.pack( Neblina_IMU_fmt, \
-        timestamp, accel[0], accel[1], accel[2],\
-        gyro[0], gyro[1], gyro[2])
+        timestamp, int(accel[0]), int(accel[1]), int(accel[2]),\
+        int(gyro[0]), int(gyro[1]), int(gyro[2]))
         data = IMUData(dataString)
         # Perform CRC of data bytes
         crc = crc8(bytearray(dataString))
@@ -292,8 +292,8 @@ class NebResponsePacket(object):
         yaw = int(yaw*10)
         pitch = int(pitch*10)
         roll = int(roll*10)
-        garbage = '\000\000\000\000\000\000'
-        dataString = struct.pack( Neblina_Euler_fmt, timestamp, yaw, pitch, roll, garbage )
+        garbage = '\000\000\000\000\000\000'.encode('utf-8')
+        dataString = struct.pack( Neblina_Euler_fmt, int(timestamp), yaw, pitch, roll, garbage )
         data = EulerAngleData(dataString)
         # Perform CRC of data bytes
         crc = crc8(bytearray(dataString))
@@ -305,7 +305,7 @@ class NebResponsePacket(object):
     def createPedometerResponsePacket(cls, timestamp, stepCount, stepsPerMinute, walkingDirection):
         # Multiply the walking direction value by 10 to emulate the firmware behavior
         walkingDirection = int(walkingDirection*10)
-        garbage = '\000'*7
+        garbage = ('\000'*7).encode('utf-8')
         dataString = struct.pack( Neblina_Pedometer_fmt, timestamp, stepCount,\
          stepsPerMinute, walkingDirection, garbage )
         data = PedometerData(dataString)
@@ -328,6 +328,11 @@ class NebResponsePacket(object):
                 raise NotImplementedError(\
                     'Packets are not supposed to be anything other than 20 bytes for now but got {0}'\
                     .format(packetStringLength))
+
+            # The string can either be bytes or an actual string
+            # Force it to a string if that is the case.
+            if (type(packetString) == str):
+                packetString = packetString.encode('iso-8859-1')
 
             # Extract the header information
             self.headerLength = 4

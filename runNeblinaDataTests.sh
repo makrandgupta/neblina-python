@@ -1,1 +1,1 @@
-PYTHONPATH=./pyslip/ python nebunittests.py 
+PYTHONPATH=./pyslip/ python3 nebunittests.py 

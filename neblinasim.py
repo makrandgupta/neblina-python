@@ -45,17 +45,17 @@ def main():
     if not os.path.exists('./generated'):
         os.makedirs('./generated')
 
-    anglesFile = open("./generated/euleranglePackets.bin", "w")
+    anglesFile = open("./generated/euleranglePackets.bin", "wb")
     for packet in spinningPacketStringList:
         anglesFile.write(packet)
     anglesFile.close()
 
-    walkingFile = open("./generated/pedometerPackets.bin", "w")
+    walkingFile = open("./generated/pedometerPackets.bin", "wb")
     for packet in walkingPacketStringList:
         walkingFile.write(packet)
     walkingFile.close()
 
-    imuFile = open("./generated/imuPackets.bin", "w")
+    imuFile = open("./generated/imuPackets.bin", "wb")
     for packet in imuDataPacketStringList:
         imuFile.write(packet)
     imuFile.close()
