@@ -8,7 +8,7 @@ git clone https://github.com/Motsai/latero.git
 ```
 Execute the python scripts:
 ```
-python neblinasim.py
+python3 neblinasim.py
 ```
 The example streaming data should appear in a new directory called "generated"
 
