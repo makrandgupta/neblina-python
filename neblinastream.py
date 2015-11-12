@@ -2,6 +2,7 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
 import numpy as np
 import neblina as neb
+import neblinasim as sim
 import math
 import pyqtgraph.parametertree.parameterTypes as pTypes
 from pyqtgraph.parametertree import Parameter, ParameterTree, ParameterItem, registerParameterType
@@ -20,24 +21,43 @@ curvesList = []
 dataSeries = []
 bufferData = []
 
-timebase = [0,1,2,3,4,5,6,7,8]
-data = [1,3,22,5,8,4,16,4,7]
-curve = None
 
 class PlottingData(object):
     """docstring Por PlottingData"""
     def __init__(self, arg):
-        self.arg = arg
+        numSamples = 300
+        self.timebase = np.arange(0, numSamples)
+        self.accelData = ([],[],[])
+        self.gyroData = ([],[],[])
+        imuPackets = sim.createRandomIMUDataPacketList(50.0, numSamples)
+        for packet in imuPackets:
+            # For all three axis
+            for idx,axis in enumerate(packet.data.accel):
+                # Gyro and Accel have same num of axis
+                self.accelData[idx].append(axis)
+                self.gyroData[idx].append(axis)
 
-    def setup(self):
-        pass
 
 class PlottingWindow(pg.GraphicsWindow):
     """docstring for PlottingGUI"""
     def __init__(self, plottingData, parent=None):
         super(PlottingWindow, self).__init__(parent)
-        self.plottingData = plottingData
+        self.data = plottingData
         self.setWindowTitle('Neblina Data Plots')
+        self.accelPlot = self.addPlot(title='Accelerometer Data')
+        self.accelPlot.addLegend()
+        self.gyroPlot = self.addPlot(title='Gyroscope Data')
+        self.gyroPlot.addLegend()
+        self.nextRow()
+        self.magPlot = self.addPlot(title='Magnetometer Data')
+        self.magPlot.addLegend()
+        accelXCurve = self.accelPlot.plot(self.data.timebase, self.data.accelData[0], pen='b', name='X')
+        accelYCurve = self.accelPlot.plot(self.data.timebase, self.data.accelData[1], pen='g', name='Y')
+        accelZCurve = self.accelPlot.plot(self.data.timebase, self.data.accelData[2], pen='r', name='Z')
+        gyroXCurve = self.gyroPlot.plot(self.data.timebase, self.data.gyroData[0], pen='b', name='X')
+        gyroYCurve = self.gyroPlot.plot(self.data.timebase, self.data.gyroData[1], pen='g', name='Y')
+        gyroZCurve = self.gyroPlot.plot(self.data.timebase, self.data.gyroData[2], pen='r', name='Z')
+
 
     def main_loop(self):
         # wait for the UI to cease
@@ -51,58 +71,13 @@ def start():
     # of the GUI...)
 
     data = PlottingData(1)
-    data.setup()
 
     plottingApplication = QtGui.QApplication(sys.argv) # create application
     plottingWindow = PlottingWindow(data) # Create the instance of the window
 
-    # win.setWindowTitle('Neblina Data Plots')
-    # accelPlot = win.addPlot(title='Accelerometer Data')
-    # accelPlot.addLegend()
-    # gyroPlot = win.addPlot(title='Gyroscope Data')
-    # gyroPlot.addLegend()
-    # win.nextRow()
-    # magPlot = win.addPlot(title='Magnetometer Data')
-    # magPlot.addLegend()
-    # curve = accelPlot.plot(timebase, data, pen='b', name='X')
-    # accelPlot.plot(timebase, [9,8,7,6,5,4,3,2,1], pen='g', name='Y')
-    # accelPlot.plot(timebase, [9,8,7,6,5,4,3,2,1], pen='r', name='Z')
-    # gyroPlot.plot(timebase, [9,8,7,6,5,4,3,2,1], pen='b', name='X')
-    # gyroPlot.plot(timebase, [9,8,7,6,5,4,3,2,1], pen='g', name='Y')
-    # gyroPlot.plot(timebase, [9,8,7,6,5,4,3,2,1], pen='r', name='Z')
-
     plottingWindow.show() # Make the instance visible
     plottingWindow.raise_() # Raise instance on top of window stack
     plottingApplication.exec_()
-
-    # PlottingGUI(data).main_loop()
-
-
-    # global curve, timebase
-    # ii = 0
-    # jj = 0
-    # kk = 0
-    # win = pg.GraphicsWindow()
-    # win.setWindowTitle('Neblina Data Plots')
-
-    # accelPlot = win.addPlot(title='Accelerometer Data')
-    # accelPlot.addLegend()
-
-    # gyroPlot = win.addPlot(title='Gyroscope Data')
-    # gyroPlot.addLegend()
-    # win.nextRow()
-    # magPlot = win.addPlot(title='Magnetometer Data')
-    # magPlot.addLegend()
-    # curve = accelPlot.plot(timebase, data, pen='b', name='X')
-    # accelPlot.plot(timebase, [9,8,7,6,5,4,3,2,1], pen='g', name='Y')
-    # accelPlot.plot(timebase, [9,8,7,6,5,4,3,2,1], pen='r', name='Z')
-
-    # gyroPlot.plot(timebase, [9,8,7,6,5,4,3,2,1], pen='b', name='X')
-    # gyroPlot.plot(timebase, [9,8,7,6,5,4,3,2,1], pen='g', name='Y')
-    # gyroPlot.plot(timebase, [9,8,7,6,5,4,3,2,1], pen='r', name='Z')
-
-    # while True:
-    #     print()
 
 
     # eulerPlot = win.addPlot(title='Euler Angles')
