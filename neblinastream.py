@@ -28,7 +28,7 @@ class DataThread(QThread):
         while (self.exiting == False):
             self.data.update()
             self.IMUupdateSignal.emit()
-            self.headingWindow.setAngle(self.data.headingData)
+            self.headingWindow.setAngle(self.data.headingData, self.data.demoHeading)
             time.sleep(0.02)
 
 class PlottingData(object):
@@ -43,6 +43,7 @@ class PlottingData(object):
         self.accelData = [[],[],[]]
         self.gyroData = [[],[],[]]
         self.headingData = 0.0
+        self.demoHeading = 0.0
         self.imuPackets = sim.createRandomIMUDataPacketList(
             self.samplingFrequency, self.numIMUSamples, 0.5)
         self.eulerAnglePackets = sim.createSpinningObjectPacketList(
@@ -57,6 +58,7 @@ class PlottingData(object):
                 self.gyroData[idx].append(axisSample)
         # Populate the initial euler heading data
         self.headingData = self.eulerAnglePackets[0].data.yaw
+        self.demoHeading = self.eulerAnglePackets[0].data.demoHeading
 
     def update(self):
         # Update all three axis for both accel and gyro
@@ -68,6 +70,7 @@ class PlottingData(object):
             self.gyroData[idx][0] = self.imuPackets[self.imuRollIdx].data.gyro[idx]
         # Update euler angle heading
         self.headingData = self.eulerAnglePackets[self.headingRollIdx].data.yaw
+        self.demoHeading = self.eulerAnglePackets[self.headingRollIdx].data.demoHeading
 
         # Wrap around the samples
         self.imuRollIdx += 1    
@@ -77,10 +80,11 @@ class PlottingData(object):
 
 # This window inspired by: https://wiki.python.org/moin/PyQt/Compass%20widget
 class HeadingWindow(QWidget):
-    angleChangedSignal = pyqtSignal(float)
+    angleChangedSignal = pyqtSignal(float, float)
     def __init__(self, parent=None):
         super(HeadingWindow, self).__init__(parent)
         self._angle = 0.0
+        self._demoHeading = 0.0
         self._margins = 10
         self._pointText = {0: "N", 45: "NE", 90: "E",
                              135: "SE", 180: "S",
@@ -94,6 +98,7 @@ class HeadingWindow(QWidget):
         painter.fillRect(event.rect(), self.palette().brush(QPalette.Window))
         self.drawMarkings(painter)
         self.drawNeedle(painter)
+        self.drawDemoNeedle(painter)
         painter.end()
 
     def drawMarkings(self, painter):
@@ -125,7 +130,6 @@ class HeadingWindow(QWidget):
         painter.restore()
     
     def drawNeedle(self, painter):
-    
         painter.save()
         painter.translate(self.width()/2, self.height()/2)
         painter.rotate(self._angle)
@@ -133,7 +137,7 @@ class HeadingWindow(QWidget):
                     (self.height() - self._margins)/120.0)
         painter.scale(scale, scale)
         
-        painter.setPen(QPen(0))
+        painter.setPen(QPen(1))
         painter.setBrush(self.palette().brush(QPalette.Shadow))
         
         painter.drawPolygon(
@@ -149,6 +153,32 @@ class HeadingWindow(QWidget):
             )
         
         painter.restore()
+
+    def drawDemoNeedle(self, painter):
+        painter.save()
+        painter.translate(self.width()/2, self.height()/2)
+        painter.rotate(self._demoHeading)
+        scale = min((self.width() - self._margins)/120.0,
+                    (self.height() - self._margins)/120.0)
+        painter.scale(scale, scale)
+        
+        painter.setPen(QPen(1))
+        painter.setBrush(self.palette().brush(QPalette.Shadow))
+        
+        painter.drawPolygon(
+            QPolygon([QPoint(-2, 0), QPoint(0, -25), QPoint(2, 0),
+                      QPoint(0, 45), QPoint(-2, 0)])
+            )
+        
+        painter.setBrush(self.palette().brush(QPalette.Highlight))
+        
+        painter.drawPolygon(
+            QPolygon([QPoint(-3, -10), QPoint(0, -45), QPoint(3, -10),
+                      QPoint(0, -10), QPoint(-3, -10)])
+            )
+        
+        painter.restore()
+
     
     def sizeHint(self):    
         return QSize(1000, 750)
@@ -156,14 +186,18 @@ class HeadingWindow(QWidget):
     def angle(self):
         return self._angle
 
+    def demoHeading(self):
+        return self._demoHeading
+
     @pyqtSlot(float)
-    def setAngle(self, angle):
+    def setAngle(self, angle, demoHeading):
         if angle != self._angle:
             self._angle = angle
-            self.angleChangedSignal.emit(angle)
+            self._demoHeading = demoHeading
+            self.angleChangedSignal.emit(angle, demoHeading)
             self.update()
     
-    angle = pyqtProperty(float, angle, setAngle)
+    angle = pyqtProperty(float, angle, demoHeading, setAngle)
 
 
 
