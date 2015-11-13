@@ -31,12 +31,12 @@ class PlottingData(object):
     """docstring Por PlottingData"""
     def __init__(self, arg):
         self.rollIdx = 0
-        self.numSamples = 300
-        graphSize = 100
+        self.numSamples = 1000
+        graphSize = 250
         self.timebase = np.arange(0, graphSize)
         self.accelData = [[],[],[]]
         self.gyroData = [[],[],[]]
-        self.imuPackets = sim.createRandomIMUDataPacketList(50.0, self.numSamples)
+        self.imuPackets = sim.createRandomIMUDataPacketList(50.0, self.numSamples, 0.5)
         for elem in (packet for idx,packet in enumerate(self.imuPackets) if idx < graphSize):
             # For all three axis
             for idx,axisSample in enumerate(elem.data.accel):
@@ -63,6 +63,7 @@ class PlottingWindow(pg.GraphicsWindow):
     def __init__(self, plottingData, parent=None):
         super(PlottingWindow, self).__init__(parent)
         self.packetReceivedSignal.connect(self.draw)
+        self.showMaximized()
         self.data = plottingData
         self.setWindowTitle('Neblina Data Plots')
         self.accelPlot = self.addPlot(title='Accelerometer Data')
