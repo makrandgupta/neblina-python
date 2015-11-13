@@ -305,12 +305,12 @@ class NebResponsePacket(object):
         return responsePacket
 
     @classmethod
-    def createEulerAngleResponsePacket(cls, timestamp, yaw, pitch, roll):
+    def createEulerAngleResponsePacket(cls, timestamp, yaw, pitch, roll, demoHeading = 0.0):
         # Multiply the euler angle values by 10 to emulate the firmware behavior
         yaw = int(yaw*10)
         pitch = int(pitch*10)
         roll = int(roll*10)
-        demoHeading = int(yaw*10)
+        demoHeading = int(demoHeading*10)
         garbage = '\000\000\000\000'.encode('utf-8')
         dataString = struct.pack( Neblina_Euler_fmt, int(timestamp), yaw, pitch, roll, demoHeading, garbage )
         data = EulerAngleData(dataString)

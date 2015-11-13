@@ -155,9 +155,11 @@ def createSpinningObjectPacketList(samplingFrequency = 50.0,\
         yawDegrees  =   round((((degreesPerSecond[0]*samplingPeriod*n) + 180 )% 360 ) - 180, 2 )
         pitchDegrees =  round((((degreesPerSecond[1]*samplingPeriod*n) + 90 )% 180 ) - 90, 2 )
         rollDegrees =   round((((degreesPerSecond[2]*samplingPeriod*n) + 180 )% 360 ) - 180, 2 )
+        # Simulate the heading 'demo mode' activated
+        demoDegrees =   round((((1.5*degreesPerSecond[0]*samplingPeriod*n) + 180 )% 360 ) - 180, 2 )
         timestamp =  ( n*samplingPeriod*usPerSecond ) + startTimestamp
         packet = neb.NebResponsePacket.createEulerAngleResponsePacket(\
-            timestamp, yawDegrees, pitchDegrees, rollDegrees)
+            timestamp, yawDegrees, pitchDegrees, rollDegrees, demoDegrees)
         packetList.append( packet )
     
     return packetList
