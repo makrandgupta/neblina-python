@@ -166,32 +166,38 @@ class MAGData(object):
     def __init__(self, dataString):
         self.mag = [0]*3
         self.accel = [0]*3
-        
         self.timestamp, \
         self.mag[0], self.mag[1], self.mag[2],\
         self.accel[0], self.accel[1], self.accel[2]\
          = struct.unpack( Neblina_MAG_fmt, dataString )
-            
+
+    def encode(self):
+        packetString = struct.pack( Neblina_MAG_fmt, \
+        self.timestamp, self.mag[0], self.mag[1], self.mag[2],\
+        self.accel[0], self.accel[1], self.accel[2])
+        return packetString
+    
     def __str__(self):
         return "{0}us: accelxyz:({1},{2},{3}) magxyz:({4},{5},{6})"\
         .format(self.timestamp,
                 self.accel[0], self.accel[1], self.accel[2],
                 self.mag[0], self.mag[1], self.mag[2])
 
-Neblina_Euler_fmt = "<I 3h 6s" # timestamp yaw, pitch, roll
+Neblina_Euler_fmt = "<I 4h 4s" # timestamp yaw, pitch, roll, demo heading
 class EulerAngleData(object):
     """docstring for EulerAngleData"""
     def __init__(self, dataString):
-        self.timestamp, self.yaw, self.pitch, self.roll, garbage \
-        = struct.unpack( Neblina_Euler_fmt, dataString )
+        self.timestamp, self.yaw, self.pitch, self.roll, self.demoHeading,\
+            garbage = struct.unpack( Neblina_Euler_fmt, dataString )
         self.yaw = self.yaw/10.0
         self.pitch = self.pitch/10.0
         self.roll = self.roll/10.0
+        self.demoHeading = self.demoHeading/10.0
 
     def encode(self):
-        garbage = ('\000'*6).encode('utf-8')
+        garbage = ('\000'*4).encode('utf-8')
         packetString = struct.pack(Neblina_Euler_fmt, self.timestamp,\
-         int(self.yaw*10), int(self.pitch*10), int(self.roll*10), garbage)
+         int(self.yaw*10), int(self.pitch*10), int(self.roll*10), int(self.demoHeading*10), garbage)
         return packetString
         
     def __str__(self):
@@ -273,7 +279,19 @@ class NebCommandPacket(object):
 
 class NebResponsePacket(object):
     """docstring for NebResponsePacket"""
-    
+
+    @classmethod
+    def createMAGResponsePacket(cls, timestamp, mag, accel):
+        dataString = struct.pack( Neblina_MAG_fmt, \
+        timestamp, int(mag[0]), int(mag[1]), int(mag[2]),\
+        int(accel[0]), int(accel[1]), int(accel[2]))
+        data = MAGData(dataString)
+        # Perform CRC of data bytes
+        crc = crc8(bytearray(dataString))
+        header = NebHeader(Subsys_MotionEngine, MotCmd_MAG_Data, crc, len(dataString))
+        responsePacket = NebResponsePacket(packetString=None, header=header, data=data)
+        return responsePacket
+
     @classmethod
     def createIMUResponsePacket(cls, timestamp, accel, gyro):
         dataString = struct.pack( Neblina_IMU_fmt, \
@@ -287,13 +305,14 @@ class NebResponsePacket(object):
         return responsePacket
 
     @classmethod
-    def createEulerAngleResponsePacket(cls, timestamp, yaw, pitch, roll):
+    def createEulerAngleResponsePacket(cls, timestamp, yaw, pitch, roll, demoHeading = 0.0):
         # Multiply the euler angle values by 10 to emulate the firmware behavior
         yaw = int(yaw*10)
         pitch = int(pitch*10)
         roll = int(roll*10)
-        garbage = '\000\000\000\000\000\000'.encode('utf-8')
-        dataString = struct.pack( Neblina_Euler_fmt, int(timestamp), yaw, pitch, roll, garbage )
+        demoHeading = int(demoHeading*10)
+        garbage = '\000\000\000\000'.encode('utf-8')
+        dataString = struct.pack( Neblina_Euler_fmt, int(timestamp), yaw, pitch, roll, demoHeading, garbage )
         data = EulerAngleData(dataString)
         # Perform CRC of data bytes
         crc = crc8(bytearray(dataString))

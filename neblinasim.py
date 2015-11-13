@@ -155,9 +155,11 @@ def createSpinningObjectPacketList(samplingFrequency = 50.0,\
         yawDegrees  =   round((((degreesPerSecond[0]*samplingPeriod*n) + 180 )% 360 ) - 180, 2 )
         pitchDegrees =  round((((degreesPerSecond[1]*samplingPeriod*n) + 90 )% 180 ) - 90, 2 )
         rollDegrees =   round((((degreesPerSecond[2]*samplingPeriod*n) + 180 )% 360 ) - 180, 2 )
+        # Simulate the heading 'demo mode' activated
+        demoDegrees =   round((((1.5*degreesPerSecond[0]*samplingPeriod*n) + 180 )% 360 ) - 180, 2 )
         timestamp =  ( n*samplingPeriod*usPerSecond ) + startTimestamp
         packet = neb.NebResponsePacket.createEulerAngleResponsePacket(\
-            timestamp, yawDegrees, pitchDegrees, rollDegrees)
+            timestamp, yawDegrees, pitchDegrees, rollDegrees, demoDegrees)
         packetList.append( packet )
     
     return packetList
@@ -171,18 +173,40 @@ def createRandomIMUDataPacketList(samplingFrequency = 50.0, numSamples = 300, fr
     maxIMUValue = 16739 #TBD
 
     for n in range(numSamples):
-        accel[0] = maxIMUValue*math.sin( ( (2*math.pi*freq*n)+(math.pi/4) )/samplingFrequency ) + random.gauss(0,0.2)
-        accel[1] = maxIMUValue*math.sin( ( (2*math.pi*freq*n)+(math.pi/2) )/samplingFrequency ) + random.gauss(0,0.2)
-        accel[2] = maxIMUValue*math.sin( (2*math.pi*freq*n)/samplingFrequency ) + random.gauss(0,0.2)
-        gyro[0] = maxIMUValue*math.cos( ( (2*math.pi*freq*n)+(math.pi/3) )/samplingFrequency ) + random.gauss(0,0.2)
-        gyro[1] = maxIMUValue*math.cos( ( (2*math.pi*freq*n)+(7*math.pi/12) )/samplingFrequency ) + random.gauss(0,0.2)
-        gyro[2] = maxIMUValue*math.cos( ( (2*math.pi*freq*n)+(9*math.pi/15) )/samplingFrequency ) + random.gauss(0,0.2)
+        accel[0] = maxIMUValue*math.sin(  (2*math.pi*freq*n)/samplingFrequency+(math.pi/4) ) + random.gauss(0,maxIMUValue/10)
+        accel[1] = maxIMUValue*math.sin(  (2*math.pi*freq*n)/samplingFrequency+(math.pi/2) ) + random.gauss(0,maxIMUValue/10)
+        accel[2] = maxIMUValue*math.sin( 2*math.pi*freq*n/samplingFrequency ) + random.gauss(0,maxIMUValue/10)
+        gyro[0] = maxIMUValue*math.cos( (2*math.pi*freq*n)/samplingFrequency+(math.pi/3)  ) + random.gauss(0,maxIMUValue/10)
+        gyro[1] = maxIMUValue*math.cos( (2*math.pi*freq*n)/samplingFrequency+(7*math.pi/12)  ) + random.gauss(0,maxIMUValue/10)
+        gyro[2] = maxIMUValue*math.cos( (2*math.pi*freq*n)/samplingFrequency+(9*math.pi/15)  ) + random.gauss(0,maxIMUValue/10)
         timestamp += int( (1.0/samplingFrequency)*usPerSecond )
 
         packet = neb.NebResponsePacket.createIMUResponsePacket(timestamp, accel, gyro)
         packetList.append( packet )
 
     return packetList
+
+def createRandomMAGDataPacketList(samplingFrequency = 50.0, numSamples = 300, freq = 1.0):
+    packetList = []
+    mag = [0]*3
+    accel = [0]*3
+    timestamp = 0
+    maxMAGValue = 10000 #TBD
+
+    for n in range(numSamples):
+        mag[0] = maxMAGValue*math.sin(  (2*math.pi*freq*n)/samplingFrequency+(math.pi/4) ) + random.gauss(0,maxMAGValue/20)
+        mag[1] = maxMAGValue*math.sin(  (2*math.pi*freq*n)/samplingFrequency+(math.pi/2) ) + random.gauss(0,maxMAGValue/20)
+        mag[2] = maxMAGValue*math.sin( 2*math.pi*freq*n/samplingFrequency ) + random.gauss(0,maxMAGValue/20)
+        accel[0] = maxMAGValue*math.cos( (2*math.pi*freq*n)/samplingFrequency+(math.pi/3)  ) + random.gauss(0,maxMAGValue/20)
+        accel[1] = maxMAGValue*math.cos( (2*math.pi*freq*n)/samplingFrequency+(7*math.pi/12)  ) + random.gauss(0,maxMAGValue/20)
+        accel[2] = maxMAGValue*math.cos( (2*math.pi*freq*n)/samplingFrequency+(9*math.pi/15)  ) + random.gauss(0,maxMAGValue/20)
+        timestamp += int( (1.0/samplingFrequency)*usPerSecond )
+
+        packet = neb.NebResponsePacket.createMAGResponsePacket(timestamp, mag, accel)
+        packetList.append( packet )
+
+    return packetList
+
 
 
 if __name__ == "__main__":
