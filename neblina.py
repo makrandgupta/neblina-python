@@ -166,12 +166,17 @@ class MAGData(object):
     def __init__(self, dataString):
         self.mag = [0]*3
         self.accel = [0]*3
-        
         self.timestamp, \
         self.mag[0], self.mag[1], self.mag[2],\
         self.accel[0], self.accel[1], self.accel[2]\
          = struct.unpack( Neblina_MAG_fmt, dataString )
-            
+
+    def encode(self):
+        packetString = struct.pack( Neblina_MAG_fmt, \
+        self.timestamp, self.mag[0], self.mag[1], self.mag[2],\
+        self.accel[0], self.accel[1], self.accel[2])
+        return packetString
+    
     def __str__(self):
         return "{0}us: accelxyz:({1},{2},{3}) magxyz:({4},{5},{6})"\
         .format(self.timestamp,
@@ -273,7 +278,19 @@ class NebCommandPacket(object):
 
 class NebResponsePacket(object):
     """docstring for NebResponsePacket"""
-    
+
+    @classmethod
+    def createMAGResponsePacket(cls, timestamp, mag, accel):
+        dataString = struct.pack( Neblina_MAG_fmt, \
+        timestamp, int(mag[0]), int(mag[1]), int(mag[2]),\
+        int(accel[0]), int(accel[1]), int(accel[2]))
+        data = MAGData(dataString)
+        # Perform CRC of data bytes
+        crc = crc8(bytearray(dataString))
+        header = NebHeader(Subsys_MotionEngine, MotCmd_MAG_Data, crc, len(dataString))
+        responsePacket = NebResponsePacket(packetString=None, header=header, data=data)
+        return responsePacket
+
     @classmethod
     def createIMUResponsePacket(cls, timestamp, accel, gyro):
         dataString = struct.pack( Neblina_IMU_fmt, \

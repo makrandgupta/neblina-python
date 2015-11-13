@@ -184,6 +184,28 @@ def createRandomIMUDataPacketList(samplingFrequency = 50.0, numSamples = 300, fr
 
     return packetList
 
+def createRandomMAGDataPacketList(samplingFrequency = 50.0, numSamples = 300, freq = 1.0):
+    packetList = []
+    mag = [0]*3
+    accel = [0]*3
+    timestamp = 0
+    maxMAGValue = 10000 #TBD
+
+    for n in range(numSamples):
+        mag[0] = maxMAGValue*math.sin(  (2*math.pi*freq*n)/samplingFrequency+(math.pi/4) ) + random.gauss(0,maxMAGValue/20)
+        mag[1] = maxMAGValue*math.sin(  (2*math.pi*freq*n)/samplingFrequency+(math.pi/2) ) + random.gauss(0,maxMAGValue/20)
+        mag[2] = maxMAGValue*math.sin( 2*math.pi*freq*n/samplingFrequency ) + random.gauss(0,maxMAGValue/20)
+        accel[0] = maxMAGValue*math.cos( (2*math.pi*freq*n)/samplingFrequency+(math.pi/3)  ) + random.gauss(0,maxMAGValue/20)
+        accel[1] = maxMAGValue*math.cos( (2*math.pi*freq*n)/samplingFrequency+(7*math.pi/12)  ) + random.gauss(0,maxMAGValue/20)
+        accel[2] = maxMAGValue*math.cos( (2*math.pi*freq*n)/samplingFrequency+(9*math.pi/15)  ) + random.gauss(0,maxMAGValue/20)
+        timestamp += int( (1.0/samplingFrequency)*usPerSecond )
+
+        packet = neb.NebResponsePacket.createMAGResponsePacket(timestamp, mag, accel)
+        packetList.append( packet )
+
+    return packetList
+
+
 
 if __name__ == "__main__":
     main()

@@ -144,7 +144,7 @@ class ut_NeblinaPackets(unittest.TestCase):
         self.assertEqual(packets[8].data.quaternions[3], -178)
 
     def testDecodeMAG(self):
-        print("\n*** Testing MA Stream Decoding ***")
+        print("\n*** Testing MAG Stream Decoding ***")
         packets, errorList = self.buildPacketListFromSLIP("SampleData/MAGStream.bin")
         # Make sure the error list is empty
         self.assertEqual(len(errorList), 0)
@@ -275,6 +275,23 @@ class ut_NeblinaPackets(unittest.TestCase):
             self.assertEqual( packets[idx].data.gyro[1], packet.data.gyro[1] )
             self.assertEqual( packets[idx].data.gyro[2], packet.data.gyro[2] )
 
+    def testCreateMAGPackets(self):
+        print("\n*** Testing Encoding and Decoding of MAG Packets ***")
+        responsePackets = []
+        packets = nebsim.createRandomMAGDataPacketList(50.0, 300, 1.0)
+        for packet in packets:
+            packetString = packet.stringEncode()
+            responsePackets.append(neb.NebResponsePacket(packetString))
+        for idx,packet in enumerate(responsePackets):
+            self.assertEqual( packets[idx].header.subSystem, neb.Subsys_MotionEngine)
+            self.assertEqual( packets[idx].header.command, neb.MotCmd_MAG_Data)
+            self.assertEqual( packets[idx].data.timestamp, packet.data.timestamp )
+            self.assertEqual( packets[idx].data.mag[0], packet.data.mag[0] )
+            self.assertEqual( packets[idx].data.mag[1], packet.data.mag[1] )
+            self.assertEqual( packets[idx].data.mag[2], packet.data.mag[2] )
+            self.assertEqual( packets[idx].data.accel[0], packet.data.accel[0] )
+            self.assertEqual( packets[idx].data.accel[1], packet.data.accel[1] )
+            self.assertEqual( packets[idx].data.accel[2], packet.data.accel[2] )
 
 
 
