@@ -9,18 +9,6 @@ from pyqtgraph.parametertree import Parameter, ParameterTree, ParameterItem, reg
 import sys
 import time
 
-plots = 4
-curvesPerPlot = 3
-plotsize = 200
-plotsTitle = ["Accelerometer Data","Gyroscope Data","Magnetometer Data","Euler Angles Data"]
-curvesName = ["Accel X","Accel Y","Accel Z","Gyro X","Gyro Y","Gyro Z","Mag X","Mag Y","Mag Z","Angles X","Angles Y","Angles Z"]
-colors = ["r","g","b"]
-
-plotList = []
-curvesList = []
-dataSeries = []
-bufferData = []
-
 class DataThread(QtCore.QThread):
     """docstring for DataThread"""
     def __init__(self, data, updateSignal, parent = None):
@@ -37,7 +25,7 @@ class DataThread(QtCore.QThread):
         while (self.exiting == False):
             self.data.update()
             self.updateSignal.emit()
-            time.sleep(0.02)        
+            time.sleep(0.02)
 
 class PlottingData(object):
     """docstring Por PlottingData"""
@@ -64,7 +52,6 @@ class PlottingData(object):
         for idx,axis in enumerate(self.gyroData):
             self.gyroData[idx] = list(np.roll(self.gyroData[idx], 1))
             self.gyroData[idx][0] = self.imuPackets[self.rollIdx].data.gyro[idx]
-        # print(self.gyroData[0])
         # Wrap around the samples
         self.rollIdx += 1
         self.rollIdx %= (self.numSamples)
@@ -80,11 +67,12 @@ class PlottingWindow(pg.GraphicsWindow):
         self.setWindowTitle('Neblina Data Plots')
         self.accelPlot = self.addPlot(title='Accelerometer Data')
         self.accelPlot.addLegend()
+        self.nextRow()
         self.gyroPlot = self.addPlot(title='Gyroscope Data')
         self.gyroPlot.addLegend()
         self.nextRow()
-        self.magPlot = self.addPlot(title='Magnetometer Data')
-        self.magPlot.addLegend()
+        # self.magPlot = self.addPlot(title='Magnetometer Data')
+        # self.magPlot.addLegend()
         self.accelXCurve = self.accelPlot.plot(self.data.timebase, self.data.accelData[0], pen='b', name='X')
         self.accelYCurve = self.accelPlot.plot(self.data.timebase, self.data.accelData[1], pen='g', name='Y')
         self.accelZCurve = self.accelPlot.plot(self.data.timebase, self.data.accelData[2], pen='r', name='Z')
@@ -123,33 +111,6 @@ def start():
     dataWorkerThread.start()
     plottingApplication.exec_()
 
-
-    # eulerPlot = win.addPlot(title='Euler Angles')
-
-    # while ii < plots:
-    #     plotList.append(win.addPlot(title=plotsTitle[ii]))
-    #     if ii%2 == 1:
-    #         win.nextRow()
-    #     plotList[ii].addLegend()
-    #     ii +=1
-
-
-
-    # ii = 0
-    # while jj < curvesPerPlot*plots:
-    #     dataSeries.append(np.zeros(plotsize))
-    #     curvesList.append(plotList[ii].plot(dataSeries[jj],pen=colors[kk], name=curvesName[jj]))
-    #     jj +=1
-    #     kk +=1
-    #     if jj % curvesPerPlot == 0:
-    #         ii +=1
-    #     if kk % 3 == 0:
-    #         kk = 0
-    #     #print "hello"
-    # ii = 0
-    # jj = 0
-    # kk = 0
-
     # timer = pg.QtCore.QTimer()      # timer used to call the updateGraphs function
     # timer.timebaseout.connect(updateGraphs)
     # timer.start(500)                  # timer restarts every 5ms ( freq = 200 Hz)
@@ -157,28 +118,6 @@ def start():
     # if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
     #     QtGui.QApplication.instance().exec_()
     # ser.close()
-
-timebasestamp = 0
-def updateGraphs():      # Function to update new set of data
-    global data, accelPlot, timebase, timebasestamp
-
-    gyro = [100, 200, -400]
-    accel = [-50, 74, -10]
-    timebasestamp += 20000
-    eulerAngleData = neb.NebResponsePacket.\
-    createEulerAngleResponsePacket(timebasestamp, 20.0, 0.0, -20.0)
-    IMUData = neb.NebResponsePacket.\
-    createIMUResponsePacket(timebasestamp,accel, gyro)
-    data = np.roll(data, 1)
-    curve.setData(data)
-    print(data)
-    # while jj < curvesPerPlot*2:
-    #     dataSeries[jj][0] = bufferData[jj]
-    #     dataSeries[jj] = np.roll(dataSeries[jj], -1)
-    #     curvesList[jj].setData(dataSeries[jj])
-    #     jj += 1
-    # jj = 0
-
 
 
 ## Start Qt event loop unless running in interactive mode or using pyside.
