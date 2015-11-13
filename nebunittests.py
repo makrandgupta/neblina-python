@@ -241,6 +241,7 @@ class ut_NeblinaPackets(unittest.TestCase):
             self.assertEqual(packets[idx].data.yaw, packet.data.yaw)
             self.assertEqual(packets[idx].data.pitch, packet.data.pitch)
             self.assertEqual(packets[idx].data.roll, packet.data.roll)
+            self.assertEqual(packets[idx].data.demoHeading, packet.data.demoHeading)
 
     def testCreatePedometerPackets(self):
         print("\n*** Testing Encoding and Decoding of Pedometer Packets ***")

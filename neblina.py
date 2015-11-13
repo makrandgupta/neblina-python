@@ -183,20 +183,21 @@ class MAGData(object):
                 self.accel[0], self.accel[1], self.accel[2],
                 self.mag[0], self.mag[1], self.mag[2])
 
-Neblina_Euler_fmt = "<I 3h 6s" # timestamp yaw, pitch, roll
+Neblina_Euler_fmt = "<I 4h 4s" # timestamp yaw, pitch, roll, demo heading
 class EulerAngleData(object):
     """docstring for EulerAngleData"""
     def __init__(self, dataString):
-        self.timestamp, self.yaw, self.pitch, self.roll, garbage \
-        = struct.unpack( Neblina_Euler_fmt, dataString )
+        self.timestamp, self.yaw, self.pitch, self.roll, self.demoHeading,\
+            garbage = struct.unpack( Neblina_Euler_fmt, dataString )
         self.yaw = self.yaw/10.0
         self.pitch = self.pitch/10.0
         self.roll = self.roll/10.0
+        self.demoHeading = self.demoHeading/10.0
 
     def encode(self):
-        garbage = ('\000'*6).encode('utf-8')
+        garbage = ('\000'*4).encode('utf-8')
         packetString = struct.pack(Neblina_Euler_fmt, self.timestamp,\
-         int(self.yaw*10), int(self.pitch*10), int(self.roll*10), garbage)
+         int(self.yaw*10), int(self.pitch*10), int(self.roll*10), int(self.demoHeading*10), garbage)
         return packetString
         
     def __str__(self):
@@ -309,8 +310,9 @@ class NebResponsePacket(object):
         yaw = int(yaw*10)
         pitch = int(pitch*10)
         roll = int(roll*10)
-        garbage = '\000\000\000\000\000\000'.encode('utf-8')
-        dataString = struct.pack( Neblina_Euler_fmt, int(timestamp), yaw, pitch, roll, garbage )
+        demoHeading = int(yaw*10)
+        garbage = '\000\000\000\000'.encode('utf-8')
+        dataString = struct.pack( Neblina_Euler_fmt, int(timestamp), yaw, pitch, roll, demoHeading, garbage )
         data = EulerAngleData(dataString)
         # Perform CRC of data bytes
         crc = crc8(bytearray(dataString))
