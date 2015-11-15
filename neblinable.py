@@ -5,6 +5,7 @@ import btle
 import struct
 import binascii
 import neblina as neb
+import time
 
 Battery_Service_UUID = "0000180F-0000-1000-8000-00805f9b34fb"
 EulerAngle_Service_UUID = "0DF9F021-1532-11E5-8960-0002A5D5C51B"
@@ -22,8 +23,8 @@ class NeblinaDelegate(btle.DefaultDelegate):
 class BLENeblinaStream(object):
     """docstring for BLENeblinaStream"""
     def __init__(self):
-        # self.periph = btle.Peripheral("F5:F2:09:FC:41:FC","random") # Promoty3
-        self.periph = btle.Peripheral("E6:2E:9B:39:53:2E","random") # Promoty4
+        self.periph = btle.Peripheral("F5:F2:09:FC:41:FC","random") # Promoty3
+        #self.periph = btle.Peripheral("E6:2E:9B:39:53:2E","random") # Promoty4
         # self.periph = btle.Peripheral("F0:12:84:D8:04:53","random") # Heblina
 
         print("Setup delegate")
@@ -91,13 +92,19 @@ class NeblinaDelegate(btle.DefaultDelegate):
 
 if(__name__ == "__main__"):
     outfile = open('data.bin','wb')
-    periph = btle.Peripheral("E6:2E:9B:39:53:2E","random") # Promoty4
+    count = 0;
+    #periph = btle.Peripheral("E6:2E:9B:39:53:2E","random") # Promoty4
+    periph = btle.Peripheral("F5:F2:09:FC:41:FC","random") # Promoty3
+
     service = periph.getServiceByUUID(EulerAngle_Service_UUID)
     char = service.getCharacteristics()
     while True:
         packetString = char[0].read()
         print binascii.hexlify(packetString)
         outfile.write(packetString)
+        outfile.close();
+        time.sleep(0.1);
+        outfile = open('data.bin', 'wb')
 
     outfile.close()
 
