@@ -1,1 +1,1 @@
-PYTHONPATH=../bluepy/bluepy python Neblina3D.py 
+PYTHONPATH=../bluepy/bluepy python neblina3d.py 

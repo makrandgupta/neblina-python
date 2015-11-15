@@ -350,8 +350,9 @@ class NebResponsePacket(object):
 
             # The string can either be bytes or an actual string
             # Force it to a string if that is the case.
-            if (type(packetString) == str):
-                packetString = packetString.encode('iso-8859-1')
+#            if (type(packetString) == str):
+#		print str
+#                packetString = packetString.encode('iso-8859-1')
 
             # Extract the header information
             self.headerLength = 4

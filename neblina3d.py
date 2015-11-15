@@ -1,11 +1,11 @@
 from visual import *
 import time
-import NeblinaSim as sim
-import NeblinaData as neb
-import BLENeblinaStream as nebStream
+import neblinasim as sim
+import neblina as neb
+import neblinable as nebStream
 
 def main():
-    simulatedData = True
+    simulatedData = False
     samplingFrequency = 2.0
     samplingPeriod = 1/samplingFrequency
 
@@ -45,20 +45,22 @@ def main():
             angles[2] = packetList[ii].data.roll
         else:
             angles = ble.getEulerAngles()
-        
-        f2 = frame()
-        f2.axis = (1,0,0) # change orientation of both objects
-        f2.origin = (0,0,0)
-        f2.rotate(angle = radians(angles[0]+180.0), axis = (0,0,1))
-        print(angles[0]+180.0)
-        # f2.rotate(angle = radians(angles[1]), axis = (0,1,0))
-        # f2.rotate(angle = radians(angles[2]), axis = (1,0,0))
-        # print '(y:{0},p:{1},r:{2})'.format(angles[0], angles[1], angles[2])
-        if simulatedData == True:
-            ii = ii + 1
-            ii = ii % len(packetList)
-        f.axis = f2.axis
-        time.sleep(samplingPeriod)
+ 	
+	print angles
+       
+#        f2 = frame()
+#        f2.axis = (1,0,0) # change orientation of both objects
+#        f2.origin = (0,0,0)
+#        f2.rotate(angle = radians(angles[0]+180.0), axis = (0,0,1))
+#        print(angles[0]+180.0)
+#        # f2.rotate(angle = radians(angles[1]), axis = (0,1,0))
+#        # f2.rotate(angle = radians(angles[2]), axis = (1,0,0))
+#        # print '(y:{0},p:{1},r:{2})'.format(angles[0], angles[1], angles[2])
+#        if simulatedData == True:
+#            ii = ii + 1
+#            ii = ii % len(packetList)
+#        f.axis = f2.axis
+#        time.sleep(samplingPeriod)
 
 if __name__ == "__main__":
     main()
