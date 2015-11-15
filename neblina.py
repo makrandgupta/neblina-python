@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Neblina Data Structures
+# (C) 2015 Motsai Research Inc.
 # Author: Alexandre Courtemanche (a.courtemanche@motsai.com)
 
 import struct

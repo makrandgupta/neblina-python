@@ -1,3 +1,6 @@
+# Neblina BLE Interface Basic Structures
+# (C) 2015 Motsai Research Inc.
+
 import sys
 import math
 import numpy as np

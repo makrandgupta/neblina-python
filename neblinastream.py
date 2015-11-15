@@ -1,3 +1,6 @@
+# Neblina streaming data utility
+# (C) 2015 Motsai Research Inc.
+
 import pyqtgraph as pg
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *

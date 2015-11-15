@@ -1,3 +1,6 @@
+# Neblina 3D plotting utility
+# (C) 2015 Motsai Research Inc.
+
 from visual import *
 import time
 import NeblinaSim as sim

@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Neblina unit testing framework
+# (C) 2015 Motsai Research Inc.
 
 import unittest
 import slip

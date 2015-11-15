@@ -1,3 +1,6 @@
+# Neblina Protocol Simulated output
+# (C) 2015 Motsai Research Inc.
+
 import neblina as neb
 import binascii
 import json
