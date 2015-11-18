@@ -4,7 +4,7 @@ Python scripts that interact with and simulate the behaviour of the Neblina Moti
 # Running the python scripts 
 Start by cloning the git repository onto your computer:
 ```
-git clone https://github.com/Motsai/latero.git
+git clone https://github.com/Motsai/neblina-python.git
 ```
 Execute the python scripts:
 ```
