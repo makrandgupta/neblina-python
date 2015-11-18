@@ -3,19 +3,19 @@
 
 from visual import *
 import time
-import NeblinaSim as sim
-import NeblinaData as neb
-import BLENeblinaStream as nebStream
+import neblinasim as sim
+import neblina as neb
+import neblinable as nebble
 
 def main():
-    simulatedData = True
+    simulatedData = False
     samplingFrequency = 2.0
     samplingPeriod = 1/samplingFrequency
 
     if simulatedData == True:
         packetList = sim.createSpinningObjectPacketList(samplingFrequency)    
     else:
-        ble = nebStream.BLENeblinaStream()
+        ble = nebble.BLENeblinaStream()
 
     scene = display(title='Neblina3D Demo',
      x=200, y=200, width=1000, height=800, scale=(0.21,0.21,0.21),
