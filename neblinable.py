@@ -7,7 +7,7 @@ import numpy as np
 import btle
 import struct
 import binascii
-import NeblinaData as neb
+import neblina as neb
 
 Battery_Service_UUID = "0000180F-0000-1000-8000-00805f9b34fb"
 EulerAngle_Service_UUID = "0DF9F021-1532-11E5-8960-0002A5D5C51B"
