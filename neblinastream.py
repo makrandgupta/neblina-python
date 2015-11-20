@@ -1,6 +1,8 @@
 # Neblina streaming data utility
 # (C) 2015 Motsai Research Inc.
 
+streamSerialComm = True
+
 import pyqtgraph as pg
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -18,7 +20,9 @@ import serial
 import serial.tools.list_ports
 import glob
 import time
-import slip
+if streamSerialComm:
+    import slip
+
 
 class DataThread(QThread):
     """docstring for DataThread"""
@@ -29,14 +33,16 @@ class DataThread(QThread):
         self.data = data
         self.IMUupdateSignal = IMUupdateSignal
         self.headingWindow = headingWindow
-        self.slip = slip.slip()
+        if streamSerialComm:
+            self.slip = slip.slip()
 
     def __del__(self):
         self.exiting = True
         self.wait()
 
     def run(self):
-        self.slip.attachSerialComm(self.serial)
+        if streamSerialComm:
+            self.slip.attachSerialComm(self.serial)
         while (self.exiting == False):
             self.data.update()
             self.IMUupdateSignal.emit()
@@ -258,7 +264,6 @@ class StartDialog(QDialog, cd.Ui_Dialog):
             self.listWidget.addItem(port[0])
 
     def serialPortSelected(self):
-        print('accepted')
         item = self.listWidget.selectedItems()[0]
         self.thread.serial = item.text()
         self.w1.show()
@@ -269,16 +274,8 @@ class StartDialog(QDialog, cd.Ui_Dialog):
         self.w2.move(1000,0)
         self.thread.start()
 
-    # http://stackoverflow.com/questions/12090503/listing-available-com-ports-with-python
     def serialPorts(self):
-        """ Lists serial port names
-            :raises EnvironmentError:
-                On unsupported or unknown platforms
-            :returns:
-                A list of the serial ports available on the system
-        """
         ports = list(serial.tools.list_ports.comports())
-        print(ports)
         return ports
 
 
@@ -287,9 +284,6 @@ class StartDialog(QDialog, cd.Ui_Dialog):
     
     # Start the threads
     # drawThread.start()
-
-
-
 
 def start():
     # here you can argparse your CLI arguments, so you can choose
@@ -305,22 +299,22 @@ def start():
     plottingWindow = PlottingWindow(data) # Create the instance of the plotting window
     headingWindow = HeadingWindow() # Create the instance of the heading window
     dataWorkerThread = DataThread(data, plottingWindow.packetReceivedSignal, headingWindow)
-    dialog = StartDialog()
-    dialog.w1 = plottingWindow
-    dialog.w2 = headingWindow
-    dialog.thread = dataWorkerThread
-    dialog.show()
-
-    # Show windows
-    # plottingWindow.raise_() # Raise instance on top of window stack
-    # plottingWindow.resize(500,500)
-    # headingWindow.raise_() # Raise instance on top of window stack
-    # headingWindow.move(500,0)
-    # plottingWindow.show() # Make the instance visible
-    # headingWindow.show() # Make the instance visible
-
-    # dataWorkerThread.start()
-
+    if streamSerialComm:
+        dialog = StartDialog()
+        dialog.w1 = plottingWindow
+        dialog.w2 = headingWindow
+        dialog.thread = dataWorkerThread
+        dialog.show()
+    else:
+        # Show windows
+        plottingWindow.raise_() # Raise instance on top of window stack
+        plottingWindow.resize(500,500)
+        headingWindow.raise_() # Raise instance on top of window stack
+        headingWindow.move(500,0)
+        plottingWindow.show() # Make the instance visible
+        headingWindow.show() # Make the instance visible
+        dataWorkerThread.start()
+        
     plottingApplication.exec_()
 
 
