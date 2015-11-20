@@ -8,3 +8,6 @@ python:
 install:
 - pip install numpy
 - pip install pyqtgraph
+
+script:
+- ./runNeblinaDataTests.sh
