@@ -10,4 +10,4 @@ install:
 - pip install pyqtgraph
 
 script:
-- ./runNeblinaDataTests.sh
+- sh runNeblinaDataTests.sh
