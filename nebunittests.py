@@ -203,7 +203,7 @@ class ut_NeblinaPackets(unittest.TestCase):
         self.assertEqual(packets[10].data.timestamp, 43738384)
         self.assertEqual(packets[10].data.startStop, True)
 
-    def testEncodePackets(self):
+    def testEncodeCommandPackets(self):
         print("\n*** Testing Encoding of Packets ***")
         packetList = []
         downSampleFactor = 10
@@ -211,7 +211,7 @@ class ut_NeblinaPackets(unittest.TestCase):
         packetString = downSampleCommandPacket.stringEncode()
         packetBytes = bytearray(packetString)
         self.assertEqual(len(packetBytes), 20)
-        self.assertEqual(packetBytes[0], neb.Subsys_MotionEngine)
+        self.assertEqual(packetBytes[0], neb.Subsys_MotionEngine | neb.Subsys_CmdOrRespMask)
         self.assertEqual(packetBytes[1], 16)
         self.assertEqual(packetBytes[3], neb.MotCmd_Downsample)
         self.assertEqual(packetBytes[4], downSampleFactor)

@@ -8,6 +8,9 @@ import binascii
 
 # Error Masks (applies to the subsystem code)
 Subsys_ErrMask              =   0x80
+Subsys_CmdOrRespMask        =   0x40
+Subsys_ValueMask            =   0x1F
+
 # Subsystem codes
 Subsys_MotionEngine         =   0x01
 Subsys_PowerManagement      =   0x02
@@ -241,16 +244,23 @@ MotionCommandsStrings = {
 # Header = 4 bytes
 NeblinaPacketHeader_fmt = "<4B"
 class NebHeader(object):
-    """docstring for NebHeader"""
-    def __init__(self, subSystem, commandType, crc, length = 16):
+    """ docstring for NebHeader
+        cmdOrResp = True if a command packet
+        cmdOrResp = False if a response packet
+    """
+    def __init__(self, subSystem, cmdOrResp, commandType, crc, length = 16):
         self.subSystem = subSystem
         self.length = length
         self.crc = crc
         self.command = commandType
+        self.cmdOrResp = cmdOrResp
 
     def encode(self):
+        packedSubSystem = self.subSystem
+        if self.cmdOrResp:
+            packedSubSystem |= Subsys_CmdOrRespMask
         headerStringCode = struct.pack(NeblinaPacketHeader_fmt,\
-        self.subSystem, self.length, self.crc, self.command)
+        packedSubSystem, self.length, self.crc, self.command)
         return headerStringCode
 
     def __str__(self):
@@ -267,7 +277,7 @@ class NebCommandPacket(object):
         self.data = NebCommandData(enable)
         # Perform CRC calculation
         crc = crc8(bytearray(self.data.encode()))
-        self.header = NebHeader(subSystem, commandType, crc)
+        self.header = NebHeader(subSystem, True, commandType, crc)
 
     def stringEncode(self):
         headerStringCode = self.header.encode()
@@ -290,7 +300,7 @@ class NebResponsePacket(object):
         data = MAGData(dataString)
         # Perform CRC of data bytes
         crc = crc8(bytearray(dataString))
-        header = NebHeader(Subsys_MotionEngine, MotCmd_MAG_Data, crc, len(dataString))
+        header = NebHeader(Subsys_MotionEngine, False, MotCmd_MAG_Data, crc, len(dataString))
         responsePacket = NebResponsePacket(packetString=None, header=header, data=data)
         return responsePacket
 
@@ -302,7 +312,7 @@ class NebResponsePacket(object):
         data = IMUData(dataString)
         # Perform CRC of data bytes
         crc = crc8(bytearray(dataString))
-        header = NebHeader(Subsys_MotionEngine, MotCmd_IMU_Data, crc, len(dataString))
+        header = NebHeader(Subsys_MotionEngine, False, MotCmd_IMU_Data, crc, len(dataString))
         responsePacket = NebResponsePacket(packetString=None, header=header, data=data)
         return responsePacket
 
@@ -318,7 +328,7 @@ class NebResponsePacket(object):
         data = EulerAngleData(dataString)
         # Perform CRC of data bytes
         crc = crc8(bytearray(dataString))
-        header = NebHeader(Subsys_MotionEngine, MotCmd_EulerAngle, crc, len(dataString))
+        header = NebHeader(Subsys_MotionEngine, False, MotCmd_EulerAngle, crc, len(dataString))
         responsePacket = NebResponsePacket(packetString=None, header=header, data=data)
         return responsePacket
 
@@ -332,7 +342,7 @@ class NebResponsePacket(object):
         data = PedometerData(dataString)
         # Perform CRC of data bytes
         crc = crc8(bytearray(dataString))
-        header = NebHeader(Subsys_MotionEngine, MotCmd_Pedometer, crc, len(dataString))
+        header = NebHeader(Subsys_MotionEngine, False, MotCmd_Pedometer, crc, len(dataString))
         responsePacket = NebResponsePacket(packetString=None, header=header, data=data)
         return responsePacket
 
@@ -358,10 +368,19 @@ class NebResponsePacket(object):
             # Extract the header information
             self.headerLength = 4
             headerString = packetString[:self.headerLength]
-            subSystem, packetLength, crc, command \
+            subSystemByte, packetLength, crc, command \
             =  struct.unpack(NeblinaPacketHeader_fmt, headerString)
             
-            self.header = NebHeader( subSystem, command, crc, packetLength )
+            # Extract the value from the subsystem byte            
+            subSystem = subSystemByte & Subsys_ValueMask
+            
+            # See if the packet is a response or a command packet
+            cmdOrRespBit = subSystemByte & Subsys_CmdOrRespMask
+            cmdOrResp = cmdOrRespBit == Subsys_CmdOrRespMask
+            if(cmdOrResp):
+                raise InvalidPacketFormatError('Cannot create a response packet with the string of a command packet.') 
+
+            self.header = NebHeader( subSystem, cmdOrResp, command, crc, packetLength )
 
             # Extract the data substring
             dataString = packetString[self.headerLength:self.headerLength+packetLength]
