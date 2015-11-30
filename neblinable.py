@@ -43,14 +43,37 @@ class BLENeblinaStream(object):
                 print(descriptor)
         except btle.BTLEException as e:
             print("Exception =>",e)
+
+    def getNeblinaPacket(self):
+        try:
+            serv = self.periph.getServiceByUUID(EulerAngle_Service_UUID)
+            charact = serv.getCharacteristics()
+            packetString = charact[0].read()
+
+            try:
+                nebPacket = neb.NebResponsePacket(packetString)
+            except KeyError as keyError:
+                print(keyError)
+            except NotImplementedError as notImplError:
+                print(notImplError)
+            except neb.CRCError as crcError:
+                print(crcError)
+            except neb.InvalidPacketFormatError as invPacketError:
+                print(invPacketError)
+
+            return nebPacket
+
+        except btle.BTLEException as e:
+            print("Exception =>",e)
+            self.periph.disconnect()
+
     
     def getEulerAngles(self):
         try:
             serv = self.periph.getServiceByUUID(EulerAngle_Service_UUID)
-            buff = [0]*20
             angle = [0]*3
-            char = serv.getCharacteristics()
-            packetString = char[0].read()
+            charact = serv.getCharacteristics()
+            packetString = charact[0].read()
 
             try:
                 nebPacket = neb.NebResponsePacket(packetString)

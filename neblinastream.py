@@ -22,6 +22,8 @@ import glob
 import time
 if streamSerialComm:
     import slip
+elif streamBLE:
+    import neblinable as nebble
 
 
 class DataThread(QThread):
@@ -62,21 +64,31 @@ class PlottingData(object):
         self.gyroData = [[],[],[]]
         self.headingData = 0.0
         self.demoHeading = 0.0
-        self.imuPackets = sim.createRandomIMUDataPacketList(
-            self.samplingFrequency, self.numIMUSamples, 0.5)
-        self.eulerAnglePackets = sim.createSpinningObjectPacketList(
-            self.samplingFrequency, yawRPS=0.25)
 
-        # Populate the initial IMU data list
-        for elem in (packet for idx,packet in enumerate(self.imuPackets) if idx < graphSize):
-            # For all three axis
-            for idx,axisSample in enumerate(elem.data.accel):
-                # Gyro and Accel have same num of axis
-                self.accelData[idx].append(axisSample)
-                self.gyroData[idx].append(axisSample)
-        # Populate the initial euler heading data
-        self.headingData = self.eulerAnglePackets[0].data.yaw
-        self.demoHeading = self.eulerAnglePackets[0].data.demoHeading
+        if(streamBLE):
+            packet = ble.getNeblinaPacket()
+            if (packet.header.subSytem == Subsys_MotionEngine)
+                if packet.header.command == MotCmd_EulerAngle :
+                    pass
+                else:
+
+        else:
+            self.imuPackets = sim.createRandomIMUDataPacketList(
+                self.samplingFrequency, self.numIMUSamples, 0.5)
+            self.eulerAnglePackets = sim.createSpinningObjectPacketList(
+                self.samplingFrequency, yawRPS=0.25)
+
+            # Populate the initial IMU data list
+            for elem in (packet for idx,packet in enumerate(self.imuPackets) if idx < graphSize):
+                # For all three axis
+                for idx,axisSample in enumerate(elem.data.accel):
+                    # Gyro and Accel have same num of axis
+                    self.accelData[idx].append(axisSample)
+                    self.gyroData[idx].append(axisSample)
+            # Populate the initial euler heading data
+            self.headingData = self.eulerAnglePackets[0].data.yaw
+            self.demoHeading = self.eulerAnglePackets[0].data.demoHeading
+
 
     def update(self):
         # Update all three axis for both accel and gyro
@@ -305,7 +317,7 @@ def start():
         dialog.w2 = headingWindow
         dialog.thread = dataWorkerThread
         dialog.show()
-    else:
+    else if streamBLE:
         # Show windows
         plottingWindow.raise_() # Raise instance on top of window stack
         plottingWindow.resize(500,500)
