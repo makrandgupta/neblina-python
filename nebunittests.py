@@ -17,13 +17,9 @@ class ut_NeblinaPackets(unittest.TestCase):
     def getTestStream(self, filepath):
         self.testFile = open(filepath, "rb")
 
-        # Bring the whole file into memory
-        fileBytes = self.testFile.read()
-        self.testFile.close()
-
         # Decode the slip packets
-        self.nebSlip.append(fileBytes)
-        testSlipPackets = self.nebSlip.decode()
+        testSlipPackets = self.nebSlip.decodePackets(self.testFile)
+        self.testFile.close()
 
         return testSlipPackets
 
@@ -48,7 +44,7 @@ class ut_NeblinaPackets(unittest.TestCase):
                 # print('Got a CRCError at packet #{0}'\
                     # .format(idx))
             except neb.InvalidPacketFormatError as invPacketError:
-                errorList.append(invPacketError)                
+                errorList.append(invPacketError)
         return (packets, errorList)
 
     def buildPacketListFromSLIP(self, filename):

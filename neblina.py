@@ -387,6 +387,7 @@ class NebResponsePacket(object):
 
             # Perform CRC of data bytes
             calculatedCRC = crc8(bytearray(dataString))
+            # calculatedCRC = crc8special(bytearray(dataString))
             if (calculatedCRC != self.header.crc):
                 raise CRCError(calculatedCRC, self.header.crc)
                 # raise Exception('Invalid CRC. expected '+str(self.crc)+ 'but got '+crc8(bytearray(dataString)) )
@@ -432,3 +433,17 @@ def crc8(bytes):
         ff = (ee) ^ (ee>>4) ^ (ee>>7)
         crc = ((ff<<1)%256) ^ ((ff<<4) % 256)
     return crc
+
+def genNebCRC8(packetBytes):
+    crc = 0
+    crc_backup = packetBytes[2]
+    packetBytes[2] = 255
+    ii = 0
+    while ii < packetSize:
+       ee = (crc) ^ (packetBytes[ii])
+       ff = (ee) ^ (ee>>4) ^ (ee>>7)
+       crc = ((ff<<1)%256) ^ ((ff<<4) % 256)
+       ii += 1
+    packetBytes[2] = crc_backup
+
+

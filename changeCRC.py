@@ -40,8 +40,8 @@ def main():
     else:
         testFile.seek(0)
 
-    nebSlip.stream = testFile
-    packets = nebSlip.decodePackets()
+    fileStream = testFile
+    packets = nebSlip.decodePackets(fileStream)
     testFile.close()
     
     testCopyFile = open("SampleData/QuaternionStreamRegenerated.bin", "wb")
