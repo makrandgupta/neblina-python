@@ -20,12 +20,25 @@ def genCRC(packetBytes):
     packetBytes[2] = bytes([crc])
     # print(packetBytes)
 
-
+# Routine to change the CRC of the Neblina sample packets to include the whole
+# packet instead of just the data bytes.
 def main():
+
+    # File Name Strings
+    directoryName = "SampleData/"
+    packetTypeName = "Pedometer"
+    binaryFileSuffix = "Stream.bin"
+
+    # Construct the file names for different output types
+    testInputFileName = directoryName+packetTypeName+binaryFileSuffix
+    testOutputCopyFileName = directoryName+packetTypeName+"Regen"+binaryFileSuffix
+    testCRCChangeFileName = directoryName+packetTypeName+binaryFileSuffix
+
     outputBytesList = []
     nebSlip = slip.slip()
-    testFile = open("SampleData/QuaternionStream.bin", "rb")
+    testFile = open(testInputFileName, "rb")
     
+    # Determine where to start decoding packets
     firstByte = testFile.read(1)
     startPosition = 1
     firstPacketBytes = b''
@@ -40,18 +53,21 @@ def main():
     else:
         testFile.seek(0)
 
+    # Once the location is found, start decoding packets
     fileStream = testFile
     packets = nebSlip.decodePackets(fileStream)
     testFile.close()
     
-    testCopyFile = open("SampleData/QuaternionStreamRegenerated.bin", "wb")
-    testCRCChangeFile = open("SampleData/QuaternionStreamCRCChange.bin", "wb")
+    # Start writing to the copy and CRC changed packets
+    testCopyFile = open(testOutputCopyFileName, "wb")
+    testCRCChangeFile = open(testCRCChangeFileName, "wb")
     testCopyFile.write(firstPacketBytes)
     testCRCChangeFile.write(firstPacketBytes)
     for packet in packets:
         packetBytes = [packet[ii:ii+1] for ii in range(len(packet))]
         genCRC(packetBytes)
         contBytes = b''
+    
         for byte in packetBytes:
             contBytes += byte
         encodedPacket = nebSlip.encode(packet)
@@ -61,12 +77,12 @@ def main():
         testCRCChangeFile.write(changedEncodedPacket)
     testCopyFile.close()
 
-    file1 = open("SampleData/QuaternionStream.bin", "rb")
-    file2 = open("SampleData/QuaternionStreamRegenerated.bin", "rb")
-
+    # Check to see if there are any differences between the original bytes 
+    # and the SLIP encoded bytes
+    file1 = open(testInputFileName, "rb")
+    file2 = open(testOutputCopyFileName, "rb")
     origBytes = file1.read()
     regenBytes = file2.read()
-    
     origBytes = [origBytes[ii:ii+1] for ii in range(len(origBytes))]
     regenBytes = [regenBytes[ii:ii+1] for ii in range(len(regenBytes))]
 

@@ -90,31 +90,23 @@ class ut_NeblinaPackets(unittest.TestCase):
 
     def testDecodeEuler(self):
         print("\n*** Testing Euler Angle Stream Decoding ***")
-        packets, errorList = self.buildPacketListFromSLIP("SampleData/EulerAngleStreamShort.bin")
-
+        packets, errorList = self.buildPacketListFromSLIP("SampleData/EulerAngleStream.bin")
         # Make sure the timestamps are well extracted
-        self.assertEqual(packets[10].data.timestamp, 190483824)
-        self.assertEqual(packets[20].data.timestamp, 190683824)
+        self.assertEqual(packets[12].data.timestamp, 190503824)
+        self.assertEqual(packets[19].data.timestamp, 190643824)
         # Make sure the first packet is recognized as garbage
         self.assertEqual(type(errorList[0]), NotImplementedError)
         # Check intentional CRC Errors
         self.assertEqual(type(errorList[1]), neb.CRCError)
-        self.assertEqual(errorList[1].expected, 70)
-        self.assertEqual(errorList[1].actual, 14)
+        self.assertEqual(errorList[1].expected, 134)
+        self.assertEqual(errorList[1].actual, 182)
         self.assertEqual(type(errorList[2]), neb.CRCError)
-        self.assertEqual(errorList[2].expected, 112)
-        self.assertEqual(errorList[2].actual, 34)
-        # Check intentional CRC Errors
-        self.assertEqual(type(errorList[1]), neb.CRCError)
-        self.assertEqual(errorList[1].expected, 70)
-        self.assertEqual(errorList[1].actual, 14)
-        self.assertEqual(type(errorList[2]), neb.CRCError)
-        self.assertEqual(errorList[2].expected, 112)
-        self.assertEqual(errorList[2].actual, 34)
+        self.assertEqual(errorList[2].expected, 12)
+        self.assertEqual(errorList[2].actual, 19)
         # Check euler angle decoding
-        self.assertEqual(packets[6].data.yaw, -51.6)
-        self.assertEqual(packets[6].data.pitch, -60.9)
-        self.assertEqual(packets[6].data.roll, 121.5)
+        self.assertEqual(packets[6].data.yaw, -51.9)
+        self.assertEqual(packets[6].data.pitch, -60.1)
+        self.assertEqual(packets[6].data.roll, 121.8)
 
     def testDecodePedometer(self):
         print("\n*** Testing Pedometer Decoding ***")
@@ -133,71 +125,72 @@ class ut_NeblinaPackets(unittest.TestCase):
     def testDecodeQuat(self):
         print("\n*** Testing Quaternion Stream Decoding ***")
         packets, errorList = self.buildPacketListFromSLIP("SampleData/QuaternionStream.bin")
-        # Make sure the error list is empty
-        self.assertEqual(len(errorList), 0)
+        # The first packet should result in an error since it is incomplete
+        self.assertEqual(len(errorList), 1)
+        self.assertEqual(type(errorList[0]), NotImplementedError)
         # Check quaternion packet decoding
-        self.assertEqual(packets[8].data.quaternions[0], 21949)
-        self.assertEqual(packets[8].data.quaternions[1], 12649)
-        self.assertEqual(packets[8].data.quaternions[2], -20696)
-        self.assertEqual(packets[8].data.quaternions[3], -178)
+        self.assertEqual(packets[8].data.quaternions[0], 21947)
+        self.assertEqual(packets[8].data.quaternions[1], 12650)
+        self.assertEqual(packets[8].data.quaternions[2], -20698)
+        self.assertEqual(packets[8].data.quaternions[3], -177)
 
     def testDecodeMAG(self):
         print("\n*** Testing MAG Stream Decoding ***")
         packets, errorList = self.buildPacketListFromSLIP("SampleData/MAGStream.bin")
-        # Make sure the error list is empty
-        self.assertEqual(len(errorList), 0)
+        # Make sure the first CRC Error is there
+        self.assertEqual(len(errorList), 1)
         # Check MAG packet decoding
-        self.assertEqual(packets[12].data.accel[0], -7527)
-        self.assertEqual(packets[12].data.accel[1], 1119)
-        self.assertEqual(packets[12].data.accel[2], -15106)
-        self.assertEqual(packets[12].data.mag[0], 1009)
-        self.assertEqual(packets[12].data.mag[1], -1903)
-        self.assertEqual(packets[12].data.mag[2], 3933)
+        self.assertEqual(packets[11].data.accel[0], -7527)
+        self.assertEqual(packets[11].data.accel[1], 1119)
+        self.assertEqual(packets[11].data.accel[2], -15106)
+        self.assertEqual(packets[11].data.mag[0], 1009)
+        self.assertEqual(packets[11].data.mag[1], -1903)
+        self.assertEqual(packets[11].data.mag[2], 3933)
 
     def testDecodeIMU(self):
         print("\n*** Testing IMU Stream Decoding ***")
         packets, errorList = self.buildPacketListFromSLIP("SampleData/IMUStream.bin")
-        # Make sure the error list is empty
-        self.assertEqual(len(errorList), 0)
+        # Make sure the first CRC Error is there
+        self.assertEqual(len(errorList), 1)
         # Check MAG packet decoding
-        self.assertEqual(packets[12].data.timestamp, 12377048)
-        self.assertEqual(packets[12].data.accel[0], -12376)
-        self.assertEqual(packets[12].data.accel[1], 6870)
-        self.assertEqual(packets[12].data.accel[2], -8843)
-        self.assertEqual(packets[12].data.gyro[0], -21)
-        self.assertEqual(packets[12].data.gyro[1], -23)
-        self.assertEqual(packets[12].data.gyro[2], 42)
+        self.assertEqual(packets[11].data.timestamp, 12377048)
+        self.assertEqual(packets[11].data.accel[0], -12376)
+        self.assertEqual(packets[11].data.accel[1], 6870)
+        self.assertEqual(packets[11].data.accel[2], -8843)
+        self.assertEqual(packets[11].data.gyro[0], -21)
+        self.assertEqual(packets[11].data.gyro[1], -23)
+        self.assertEqual(packets[11].data.gyro[2], 42)
 
     def testDecodeTrajectory(self):
         print("\n*** Testing Decode Trajectory Decoding ***")
         packets, errorList = self.buildPacketListFromSLIP("SampleData/TrajectoryDistanceStream.bin")
-        # Make sure the error list is empty
-        self.assertEqual(len(errorList), 0)
+        # Make sure the first CRC Error is there
+        self.assertEqual(len(errorList), 1)
         # Check MAG packet decoding
-        self.assertEqual(packets[15].data.timestamp, 36838400)
-        self.assertEqual(packets[15].data.eulerAngleErrors[0], -22)
-        self.assertEqual(packets[15].data.eulerAngleErrors[1], -1)
-        self.assertEqual(packets[15].data.eulerAngleErrors[2], -8)
+        self.assertEqual(packets[14].data.timestamp, 36838400)
+        self.assertEqual(packets[14].data.eulerAngleErrors[0], -22)
+        self.assertEqual(packets[14].data.eulerAngleErrors[1], -1)
+        self.assertEqual(packets[14].data.eulerAngleErrors[2], -8)
 
     def testDecodeExtForce(self):
         print("\n*** Testing External Force Decoding ***")
         packets, errorList = self.buildPacketListFromSLIP("SampleData/ForceStream.bin")
-        # Make sure the error list is empty
-        self.assertEqual(len(errorList), 0)
+        # Make sure the first CRC Error is there
+        self.assertEqual(len(errorList), 1)
         # Check Ext packet decoding
-        self.assertEqual(packets[3].data.timestamp, 3878480)
-        self.assertEqual(packets[3].data.externalForces[0], 2559)
-        self.assertEqual(packets[3].data.externalForces[1], -257)
-        self.assertEqual(packets[3].data.externalForces[2], 597)
+        self.assertEqual(packets[2].data.timestamp, 3878480)
+        self.assertEqual(packets[2].data.externalForces[0], 2559)
+        self.assertEqual(packets[2].data.externalForces[1], -257)
+        self.assertEqual(packets[2].data.externalForces[2], 597)
 
     def testDecodeMotionState(self):
         print("\n*** Testing Motion State Decoding ***")
         packets, errorList = self.buildPacketListFromSLIP("SampleData/MotionStateStream.bin")
-        # Make sure the error list is empty
-        self.assertEqual(len(errorList), 0)
+        # Make sure the first CRC Error is there
+        self.assertEqual(len(errorList), 1)
         # Check Ext packet decoding
-        self.assertEqual(packets[10].data.timestamp, 43738384)
-        self.assertEqual(packets[10].data.startStop, True)
+        self.assertEqual(packets[9].data.timestamp, 43738384)
+        self.assertEqual(packets[9].data.startStop, True)
 
     def testEncodeCommandPackets(self):
         print("\n*** Testing Encoding of Packets ***")
@@ -291,8 +284,6 @@ class ut_NeblinaPackets(unittest.TestCase):
             self.assertEqual( packets[idx].data.accel[0], packet.data.accel[0] )
             self.assertEqual( packets[idx].data.accel[1], packet.data.accel[1] )
             self.assertEqual( packets[idx].data.accel[2], packet.data.accel[2] )
-
-
 
 
 if __name__ == "__main__":
