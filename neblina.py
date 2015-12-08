@@ -8,6 +8,9 @@ import binascii
 
 # Error Masks (applies to the subsystem code)
 Subsys_ErrMask              =   0x80
+Subsys_CmdOrRespMask        =   0x40
+Subsys_ValueMask            =   0x1F
+
 # Subsystem codes
 Subsys_MotionEngine         =   0x01
 Subsys_PowerManagement      =   0x02
@@ -87,7 +90,6 @@ class TrajectoryDistanceData(object):
     """docstring for TrajectoryDistance"""
     def __init__(self, dataString):
         self.eulerAngleErrors = [0]*3
-
         self.timestamp,\
         self.eulerAngleErrors[0],\
         self.eulerAngleErrors[1],\
@@ -125,7 +127,6 @@ class QuaternionData(object):
     """docstring for QuaternionData"""
     def __init__(self, dataString):
         self.quaternions = [0]*4
-        
         self.timestamp,\
         self.quaternions[0],\
         self.quaternions[1],\
@@ -144,7 +145,6 @@ class IMUData(object):
     def __init__(self, dataString):
         self.accel = [0]*3
         self.gyro = [0]*3
-        
         self.timestamp, \
         self.accel[0], self.accel[1], self.accel[2],\
         self.gyro[0], self.gyro[1], self.gyro[2]\
@@ -241,16 +241,23 @@ MotionCommandsStrings = {
 # Header = 4 bytes
 NeblinaPacketHeader_fmt = "<4B"
 class NebHeader(object):
-    """docstring for NebHeader"""
-    def __init__(self, subSystem, commandType, crc, length = 16):
+    """ docstring for NebHeader
+        cmdOrResp = True if a command packet
+        cmdOrResp = False if a response packet
+    """
+    def __init__(self, subSystem, cmdOrResp, commandType, crc=255, length = 16, ):
         self.subSystem = subSystem
         self.length = length
         self.crc = crc
         self.command = commandType
+        self.cmdOrResp = cmdOrResp
 
     def encode(self):
+        packedSubSystem = self.subSystem
+        if self.cmdOrResp:
+            packedSubSystem |= Subsys_CmdOrRespMask
         headerStringCode = struct.pack(NeblinaPacketHeader_fmt,\
-        self.subSystem, self.length, self.crc, self.command)
+        packedSubSystem, self.length, self.crc, self.command)
         return headerStringCode
 
     def __str__(self):
@@ -265,9 +272,9 @@ class NebCommandPacket(object):
     """docstring for NebCommandPacket"""
     def __init__(self, subSystem, commandType, enable, length = 16):
         self.data = NebCommandData(enable)
+        self.header = NebHeader(subSystem, True, commandType)
         # Perform CRC calculation
-        crc = crc8(bytearray(self.data.encode()))
-        self.header = NebHeader(subSystem, commandType, crc)
+        self.header.crc = crc8(bytearray(self.header.encode() + self.data.encode()))
 
     def stringEncode(self):
         headerStringCode = self.header.encode()
@@ -289,9 +296,9 @@ class NebResponsePacket(object):
         int(accel[0]), int(accel[1]), int(accel[2]))
         data = MAGData(dataString)
         # Perform CRC of data bytes
-        crc = crc8(bytearray(dataString))
-        header = NebHeader(Subsys_MotionEngine, MotCmd_MAG_Data, crc, len(dataString))
-        responsePacket = NebResponsePacket(packetString=None, header=header, data=data)
+        header = NebHeader(Subsys_MotionEngine, False, MotCmd_MAG_Data, len(dataString))
+        responsePacket = NebResponsePacket(packetString=None, header=header, data=data, checkCRC=False)
+        responsePacket.header.crc = genNebCRC8(bytearray(responsePacket.stringEncode()))
         return responsePacket
 
     @classmethod
@@ -301,9 +308,9 @@ class NebResponsePacket(object):
         int(gyro[0]), int(gyro[1]), int(gyro[2]))
         data = IMUData(dataString)
         # Perform CRC of data bytes
-        crc = crc8(bytearray(dataString))
-        header = NebHeader(Subsys_MotionEngine, MotCmd_IMU_Data, crc, len(dataString))
-        responsePacket = NebResponsePacket(packetString=None, header=header, data=data)
+        header = NebHeader(Subsys_MotionEngine, False, MotCmd_IMU_Data, len(dataString))
+        responsePacket = NebResponsePacket(packetString=None, header=header, data=data, checkCRC=False)
+        responsePacket.header.crc = genNebCRC8(bytearray(responsePacket.stringEncode()))
         return responsePacket
 
     @classmethod
@@ -317,9 +324,9 @@ class NebResponsePacket(object):
         dataString = struct.pack( Neblina_Euler_fmt, int(timestamp), yaw, pitch, roll, demoHeading, garbage )
         data = EulerAngleData(dataString)
         # Perform CRC of data bytes
-        crc = crc8(bytearray(dataString))
-        header = NebHeader(Subsys_MotionEngine, MotCmd_EulerAngle, crc, len(dataString))
-        responsePacket = NebResponsePacket(packetString=None, header=header, data=data)
+        header = NebHeader(Subsys_MotionEngine, False, MotCmd_EulerAngle, len(dataString))
+        responsePacket = NebResponsePacket(packetString=None, header=header, data=data, checkCRC=False)
+        responsePacket.header.crc = genNebCRC8(bytearray(responsePacket.stringEncode()))
         return responsePacket
 
     @classmethod
@@ -332,12 +339,13 @@ class NebResponsePacket(object):
         data = PedometerData(dataString)
         # Perform CRC of data bytes
         crc = crc8(bytearray(dataString))
-        header = NebHeader(Subsys_MotionEngine, MotCmd_Pedometer, crc, len(dataString))
-        responsePacket = NebResponsePacket(packetString=None, header=header, data=data)
+        header = NebHeader(Subsys_MotionEngine, False, MotCmd_Pedometer, crc, len(dataString))
+        responsePacket = NebResponsePacket(packetString=None, header=header, data=data, checkCRC=False)
+        responsePacket.header.crc = genNebCRC8(bytearray(responsePacket.stringEncode()))
         return responsePacket
 
 
-    def __init__(self, packetString=None, header=None, data=None):
+    def __init__(self, packetString=None, header=None, data=None, checkCRC=True):
         if (packetString != None):
             # Sanity check
             packetStringLength = len(packetString)
@@ -358,19 +366,28 @@ class NebResponsePacket(object):
             # Extract the header information
             self.headerLength = 4
             headerString = packetString[:self.headerLength]
-            subSystem, packetLength, crc, command \
+            subSystemByte, packetLength, crc, command \
             =  struct.unpack(NeblinaPacketHeader_fmt, headerString)
             
-            self.header = NebHeader( subSystem, command, crc, packetLength )
+            # Extract the value from the subsystem byte            
+            subSystem = subSystemByte & Subsys_ValueMask
+            
+            # See if the packet is a response or a command packet
+            cmdOrRespBit = subSystemByte & Subsys_CmdOrRespMask
+            cmdOrResp = cmdOrRespBit == Subsys_CmdOrRespMask
+            if(cmdOrResp):
+                raise InvalidPacketFormatError('Cannot create a response packet with the string of a command packet.') 
+
+            self.header = NebHeader( subSystem, cmdOrResp, command, crc, packetLength )
 
             # Extract the data substring
             dataString = packetString[self.headerLength:self.headerLength+packetLength]
 
             # Perform CRC of data bytes
-            calculatedCRC = crc8(bytearray(dataString))
-            if (calculatedCRC != self.header.crc):
-                raise CRCError(calculatedCRC, self.header.crc)
-                # raise Exception('Invalid CRC. expected '+str(self.crc)+ 'but got '+crc8(bytearray(dataString)) )
+            if(checkCRC):
+                calculatedCRC = genNebCRC8(bytearray(packetString))
+                if (calculatedCRC != self.header.crc):
+                    raise CRCError(calculatedCRC, self.header.crc)
 
             # Build the data object based on the subsystem and command.
             if subSystem == Subsys_PowerManagement:
@@ -398,8 +415,9 @@ class CRCError(Exception):
     def __init__(self, expected, actual):
         self.expected = expected
         self.actual = actual
-        # super(CRCError, self).__init__(self, 'Invalid CRC. expected {0} but got {1}'\
-        #     .format(expected, actual))
+    def __str__(self):
+        return 'Invalid CRC. expected {0} but got {1}'\
+            .format(self.expected, self.actual)
 
 class InvalidPacketFormatError(Exception):
     """docstring for InvalidPacketFormatError"""
@@ -413,3 +431,21 @@ def crc8(bytes):
         ff = (ee) ^ (ee>>4) ^ (ee>>7)
         crc = ((ff<<1)%256) ^ ((ff<<4) % 256)
     return crc
+
+# Special CRC routine that skips the expected position of the CRC calculation
+# in a Neblina packet
+def genNebCRC8(packetBytes):
+    crc = 0
+    # The CRC should be placed as the third byte in the packet
+    crc_backup = packetBytes[2]
+    packetBytes[2] = 255
+    ii = 0
+    while ii < len(packetBytes):
+       ee = (crc) ^ (packetBytes[ii])
+       ff = (ee) ^ (ee>>4) ^ (ee>>7)
+       crc = ((ff<<1)%256) ^ ((ff<<4) % 256)
+       ii += 1
+    packetBytes[2] = crc_backup
+    return crc
+
+
