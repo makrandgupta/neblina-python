@@ -1,9 +1,15 @@
 # Neblina streaming data utility
 # (C) 2015 Motsai Research Inc.
 
+streamSerialComm = True
+streamBLE = False
+
 import pyqtgraph as pg
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+from PyQt4 import uic
+import comportdialog as cd
+
 import numpy as np
 import neblina as neb
 import neblinasim as sim
@@ -11,7 +17,15 @@ import math
 import pyqtgraph.parametertree.parameterTypes as pTypes
 from pyqtgraph.parametertree import Parameter, ParameterTree, ParameterItem, registerParameterType
 import sys
+import glob
 import time
+if streamSerialComm:
+    import slip
+    import serial.tools.list_ports
+elif streamBLE:
+    import neblinable as nebble
+
+streamString = '/dev/ttySAF'
 
 class DataThread(QThread):
     """docstring for DataThread"""
@@ -47,21 +61,26 @@ class PlottingData(object):
         self.gyroData = [[],[],[]]
         self.headingData = 0.0
         self.demoHeading = 0.0
-        self.imuPackets = sim.createRandomIMUDataPacketList(
-            self.samplingFrequency, self.numIMUSamples, 0.5)
-        self.eulerAnglePackets = sim.createSpinningObjectPacketList(
-            self.samplingFrequency, yawRPS=0.25)
 
-        # Populate the initial IMU data list
-        for elem in (packet for idx,packet in enumerate(self.imuPackets) if idx < graphSize):
-            # For all three axis
-            for idx,axisSample in enumerate(elem.data.accel):
-                # Gyro and Accel have same num of axis
-                self.accelData[idx].append(axisSample)
-                self.gyroData[idx].append(axisSample)
-        # Populate the initial euler heading data
-        self.headingData = self.eulerAnglePackets[0].data.yaw
-        self.demoHeading = self.eulerAnglePackets[0].data.demoHeading
+        if(streamBLE):
+            packet = ble.getNeblinaPacket()
+            if (packet.header.subSytem == Subsys_MotionEngine):
+        else:
+            self.imuPackets = sim.createRandomIMUDataPacketList(
+                self.samplingFrequency, self.numIMUSamples, 0.5)
+            self.eulerAnglePackets = sim.createSpinningObjectPacketList(
+                self.samplingFrequency, yawRPS=0.25)
+
+            # Populate the initial IMU data list
+            for elem in (packet for idx,packet in enumerate(self.imuPackets) if idx < graphSize):
+                # For all three axis
+                for idx,axisSample in enumerate(elem.data.accel):
+                    # Gyro and Accel have same num of axis
+                    self.accelData[idx].append(axisSample)
+                    self.gyroData[idx].append(axisSample)
+            # Populate the initial euler heading data
+            self.headingData = self.eulerAnglePackets[0].data.yaw
+            self.demoHeading = self.eulerAnglePackets[0].data.demoHeading
 
     def update(self):
         # Update all three axis for both accel and gyro
@@ -235,32 +254,73 @@ class PlottingWindow(pg.GraphicsWindow):
         self.gyroYCurve.setData(self.data.gyroData[1])
         self.gyroZCurve.setData(self.data.gyroData[2])
 
+class StartDialog(QDialog, cd.Ui_Dialog):
+    """docstring for StartDialog"""
+    def __init__(self, parent=None):
+        super(StartDialog, self).__init__(parent)
+        self.setupUi(self)
+        # self.plottingWindow = plottingWindow
+        # self.headingWindow = headingWindow
+        self.buttonBox.accepted.connect(self.serialPortSelected)
+        self.ports = self.serialPorts()
+        for port in self.ports:
+            # item.setText(port)
+            self.listWidget.addItem(port[0])
+
+    def serialPortSelected(self):
+        item = self.listWidget.selectedItems()[0]
+        self.thread.serial = item.text()
+        self.w1.show()
+        self.w2.show()
+        self.w1.raise_() # Raise instance on top of window stack
+        self.w1.resize(500,500)
+        self.w2.raise_() # Raise instance on top of window stack
+        self.w2.move(1000,0)
+        self.thread.start()
+
+    def serialPorts(self):
+        ports = list(serial.tools.list_ports.comports())
+        return ports
+
+
+    # drawThread = DrawingThread(plottingWindow)
+
+    
+    # Start the threads
+    # drawThread.start()
+
 def start():
     # here you can argparse your CLI arguments, so you can choose
     # your interface (readline, ncurses, Qt, web, whatever...?)
     # and setup your application (logfile, port to bind to, look 
     # of the GUI...)
 
-    data = PlottingData(1)
     plottingApplication = QApplication(sys.argv) # create application
+
+    # comPortDialog = uic.loadUi("./ui/comportdialog.ui")
+
+    data = PlottingData(1)
     plottingWindow = PlottingWindow(data) # Create the instance of the plotting window
     headingWindow = HeadingWindow() # Create the instance of the heading window
-
     dataWorkerThread = DataThread(data, plottingWindow.packetReceivedSignal, headingWindow)
-    # drawThread = DrawingThread(plottingWindow)
-
-    # Show windows
-    plottingWindow.show() # Make the instance visible
-    plottingWindow.raise_() # Raise instance on top of window stack
-    plottingWindow.resize(500,500)
-    headingWindow.show() # Make the instance visible
-    headingWindow.raise_() # Raise instance on top of window stack
-    headingWindow.move(500,0)
-    
-    # Start the threads
-    # drawThread.start()
-    dataWorkerThread.start()
+    if streamSerialComm:
+        dialog = StartDialog()
+        dialog.w1 = plottingWindow
+        dialog.w2 = headingWindow
+        dialog.thread = dataWorkerThread
+        dialog.show()
+    elif streamBLE:
+        # Show windows
+        plottingWindow.raise_() # Raise instance on top of window stack
+        plottingWindow.resize(500,500)
+        headingWindow.raise_() # Raise instance on top of window stack
+        headingWindow.move(500,0)
+        plottingWindow.show() # Make the instance visible
+        headingWindow.show() # Make the instance visible
+        dataWorkerThread.start()
+        
     plottingApplication.exec_()
+
 
 
 ## Start Qt event loop unless running in interactive mode or using pyside.
