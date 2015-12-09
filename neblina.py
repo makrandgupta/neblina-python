@@ -6,9 +6,10 @@
 import struct
 import binascii
 
-# Error Masks (applies to the subsystem code)
+# Code Masks (applies to the subsystem byte)
 Subsys_ErrMask              =   0x80
 Subsys_CmdOrRespMask        =   0x40
+Subsys_AckMask              =   0x20
 Subsys_ValueMask            =   0x1F
 
 # Subsystem codes
@@ -32,20 +33,31 @@ MotCmd_TrajectoryDistance   =   0x0A # calculating the distance from a pre-recor
 MotCmd_Pedometer            =   0x0B # streaming pedometer data
 MotCmd_MAG_Data             =   0x0C # streaming magnetometer data
 
-NeblinaCommandPacketData_fmt = "<B 15s"
+NeblinaCommandPacketData_fmt = "<I B 11s" # Timestamp (unused for now), enable/disable
 class NebCommandData(object):
     """docstring for NebCommandData"""
     def __init__(self, enable):
         self.enable = enable
+        self.timestamp = 0 # Not really used for now
 
     def encode(self):
-        garbage = ('\000'*15).encode('utf-8')
+        garbage = ('\000'*11).encode('utf-8')
         commandDataString = struct.pack(NeblinaCommandPacketData_fmt,\
-            self.enable, garbage)
+            self.timestamp, self.enable, garbage)
         return commandDataString
 
     def __str__(self):
         return "enable: {0}".format(self.enable)
+
+NeblinaDownsampleCommandPacketData_fmt = ">I H 10s" # Timestamp (unused for now), downsample factor
+class NebDownsampleCommandData(NebCommandData):
+    """docstring for NebDownsampleCommandData"""
+
+    def encode(self):
+        garbage = ('\000'*10).encode('utf-8')
+        commandDataString = struct.pack(NeblinaDownsampleCommandPacketData_fmt,\
+            self.timestamp, self.enable, garbage)
+        return commandDataString
 
 Neblina_BatteryLevel_fmt = "<h 14s" # Battery Level (%)
 class BatteryLevelData(object):
@@ -270,8 +282,11 @@ class NebHeader(object):
 NeblinaPacket_fmt = "<4s 16s"
 class NebCommandPacket(object):
     """docstring for NebCommandPacket"""
-    def __init__(self, subSystem, commandType, enable, length = 16):
-        self.data = NebCommandData(enable)
+    def __init__(self, subSystem, commandType, enable):
+        if(subSystem == Subsys_MotionEngine and commandType == MotCmd_Downsample ):
+            self.data = NebDownsampleCommandData(enable)
+        else:
+            self.data = NebCommandData(enable)
         self.header = NebHeader(subSystem, True, commandType)
         # Perform CRC calculation
         self.header.crc = crc8(bytearray(self.header.encode() + self.data.encode()))
