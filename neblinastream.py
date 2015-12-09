@@ -2,6 +2,7 @@
 # (C) 2015 Motsai Research Inc.
 
 streamSerialComm = True
+streamBLE = False
 
 import pyqtgraph as pg
 from PyQt4.QtCore import *
@@ -16,15 +17,15 @@ import math
 import pyqtgraph.parametertree.parameterTypes as pTypes
 from pyqtgraph.parametertree import Parameter, ParameterTree, ParameterItem, registerParameterType
 import sys
-import serial
-import serial.tools.list_ports
 import glob
 import time
 if streamSerialComm:
     import slip
+    import serial.tools.list_ports
 elif streamBLE:
     import neblinable as nebble
 
+streamString = '/dev/ttySAF'
 
 class DataThread(QThread):
     """docstring for DataThread"""
@@ -35,16 +36,12 @@ class DataThread(QThread):
         self.data = data
         self.IMUupdateSignal = IMUupdateSignal
         self.headingWindow = headingWindow
-        if streamSerialComm:
-            self.slip = slip.slip()
 
     def __del__(self):
         self.exiting = True
         self.wait()
 
     def run(self):
-        if streamSerialComm:
-            self.slip.attachSerialComm(self.serial)
         while (self.exiting == False):
             self.data.update()
             self.IMUupdateSignal.emit()
@@ -67,11 +64,7 @@ class PlottingData(object):
 
         if(streamBLE):
             packet = ble.getNeblinaPacket()
-            if (packet.header.subSytem == Subsys_MotionEngine)
-                if packet.header.command == MotCmd_EulerAngle :
-                    pass
-                else:
-
+            if (packet.header.subSytem == Subsys_MotionEngine):
         else:
             self.imuPackets = sim.createRandomIMUDataPacketList(
                 self.samplingFrequency, self.numIMUSamples, 0.5)
@@ -88,7 +81,6 @@ class PlottingData(object):
             # Populate the initial euler heading data
             self.headingData = self.eulerAnglePackets[0].data.yaw
             self.demoHeading = self.eulerAnglePackets[0].data.demoHeading
-
 
     def update(self):
         # Update all three axis for both accel and gyro
@@ -317,7 +309,7 @@ def start():
         dialog.w2 = headingWindow
         dialog.thread = dataWorkerThread
         dialog.show()
-    else if streamBLE:
+    elif streamBLE:
         # Show windows
         plottingWindow.raise_() # Raise instance on top of window stack
         plottingWindow.resize(500,500)
