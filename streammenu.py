@@ -49,6 +49,16 @@ class StreamMenu(cmd.Cmd):
         ## The only reason to define this method is for the help text in the doc string
         cmd.Cmd.do_help(self, args)
 
+    def do_getBatteryLevel(self, args):
+        errorList = []
+        myslip = slip.slip()
+        commandPacket = neb.NebCommandPacket(neb.Subsys_PowerManagement,
+            neb.PowCmd_GetBatteryLevel, True)
+        myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
+        consoleBytes = myslip.receivePacketFromStream(self.sc)
+        packet = neb.NebResponsePacket(consoleBytes)
+        print(packet)
+
     def do_streamEulerAngles(self, args):
         errorList = []
         myslip = slip.slip()

@@ -15,6 +15,16 @@ Subsys_ValueMask            =   0x1F
 # Subsystem codes
 Subsys_MotionEngine         =   0x01
 Subsys_PowerManagement      =   0x02
+Subsys_DigitalIO            =   0x03
+Subsys_LED                  =   0x04
+Subsys_ADC                  =   0x05
+Subsys_DAC                  =   0x06
+Subsys_I2C                  =   0x07
+Subsys_SPI                  =   0x08
+Subsys_FirmwareManagement   =   0x09
+Subsys_Crypto               =   0x0A
+Subsys_Storage              =   0x0B
+Subsys_EEPROM               =   0x0C
 
 # Power Management commands
 PowCmd_GetBatteryLevel      =   0x00
@@ -59,12 +69,17 @@ class NebDownsampleCommandData(NebCommandData):
             self.timestamp, self.enable, garbage)
         return commandDataString
 
-Neblina_BatteryLevel_fmt = "<h 14s" # Battery Level (%)
+Neblina_BatteryLevel_fmt = "<I H 10s" # Battery Level (%)
 class BatteryLevelData(object):
     """docstring for BatteryLevelData"""
     def __init__(self, dataString):
+        print(dataString)
+        # timestamp = 0
+        timestamp, \
         self.batteryLevel,\
         garbage = struct.unpack( Neblina_BatteryLevel_fmt, dataString )
+        self.batteryLevel = self.batteryLevel/10
+        print(self.batteryLevel)
 
     def __str__(self):
         return "batteryLevel: {0}%".format(self.batteryLevel)
@@ -274,8 +289,14 @@ class NebHeader(object):
 
     def __str__(self):
         stringFormat = "subSystem = {0}, packetLength = {1}, crc = {2}, command = {3}"
+        if self.subSystem == Subsys_PowerManagement:
+            commandString = PowerManagementCommandStrings[self.command]
+        elif self.subSystem == Subsys_MotionEngine:
+            commandString = MotionCommandsStrings[self.command]
+        else:
+            commandString = ''
         stringDescriptor = stringFormat.format(self.subSystem, self.length,self.crc, \
-            MotionCommandsStrings[self.command])
+            commandString)
         return stringDescriptor
 
 # Data = 16 bytes
@@ -386,6 +407,9 @@ class NebResponsePacket(object):
             
             # Extract the value from the subsystem byte            
             subSystem = subSystemByte & Subsys_ValueMask
+
+            # Check if the response byte is an acknowledge
+            AckBit = subSystemByte & Subsys_AckMask
             
             # See if the packet is a response or a command packet
             cmdOrRespBit = subSystemByte & Subsys_CmdOrRespMask
