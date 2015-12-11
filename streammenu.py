@@ -19,6 +19,7 @@ class StreamMenu(cmd.Cmd):
     """docstring for StreamMenu"""
     def __init__(self):
         cmd.Cmd.__init__(self)
+        self.sc = serial.Serial(port='/dev/ttyACM0',baudrate=230400)
         self.prompt = '>>'
         self.intro = "Welcome to the Neblina Streaming Menu!"
 
@@ -50,23 +51,24 @@ class StreamMenu(cmd.Cmd):
 
     def do_streamEulerAngles(self, args):
         errorList = []
-        sc = serial.Serial(port='/dev/ttyACM0',baudrate=230400)
         myslip = slip.slip()
         commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine,
             neb.MotCmd_EulerAngle, True)
-        myslip.sendPacketToStream(sc, commandPacket.stringEncode())
-        print(binascii.hexlify(commandPacket.stringEncode()))
+        myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
 
         while(True):
-            consoleBytes = myslip.receivePacketFromStream(sc)
             try:
+                consoleBytes = myslip.receivePacketFromStream(self.sc)
                 packet = neb.NebResponsePacket(consoleBytes)
-                print(packet)
-            except e:
-                # There could be some garbage packets
-                print(e)
-                errorList.append(e)
-        sc.close()
+                print('yaw:{0},pitch:{1},roll:{2}'.format(packet.data.yaw,
+                    packet.data.pitch, packet.data.roll))
+            except NotImplementedError as nie:
+                print(nie)
+            except KeyboardInterrupt as ki:
+                commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine,
+                    neb.MotCmd_EulerAngle, False)
+                myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
+                return
 
     ## Override methods in Cmd object ##
     def preloop(self):
@@ -82,6 +84,7 @@ class StreamMenu(cmd.Cmd):
         """Take care of any unfinished business.
            Despite the claims in the Cmd documentaion, Cmd.postloop() is not a stub.
         """
+        self.sc.close()
         cmd.Cmd.postloop(self)   ## Clean up command completion
         print ("Exiting...")
 
