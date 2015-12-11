@@ -5,9 +5,15 @@
 import os
 import cmd
 import readline
+import binascii
+import curses
+import serial
 import slip
 import neblina as neb
-import neblinastream as streamingGUI
+import sys
+import select
+import tty
+import termios
 
 class StreamMenu(cmd.Cmd):
     """docstring for StreamMenu"""
@@ -43,19 +49,24 @@ class StreamMenu(cmd.Cmd):
         cmd.Cmd.do_help(self, args)
 
     def do_streamEulerAngles(self, args):
-        if (len(args) == 0):
-            print('Need to specify a COM port (Example: /dev/ttyACM0 or COM3)')
-            return
+        errorList = []
+        sc = serial.Serial(port='/dev/ttyACM0',baudrate=230400)
         myslip = slip.slip()
-        consoleStream = open(args, 'rb')
-        while(True):
-            consoleBytes = myslip.receivePacketFromStream(consoleStream)
-            nebPacket = neb.NebResponsePacket(consoleBytes)
-            print('yaw, pitch, roll: {0},{1},{2}'.format(nebPacket.data.yaw, 
-                nebPacket.data.pitch, nebPacket.data.roll))
-        # print(type(consoleBytes))
-        consoleStream.close()
+        commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine,
+            neb.MotCmd_EulerAngle, True)
+        myslip.sendPacketToStream(sc, commandPacket.stringEncode())
+        print(binascii.hexlify(commandPacket.stringEncode()))
 
+        while(True):
+            consoleBytes = myslip.receivePacketFromStream(sc)
+            try:
+                packet = neb.NebResponsePacket(consoleBytes)
+                print(packet)
+            except e:
+                # There could be some garbage packets
+                print(e)
+                errorList.append(e)
+        sc.close()
 
     ## Override methods in Cmd object ##
     def preloop(self):
