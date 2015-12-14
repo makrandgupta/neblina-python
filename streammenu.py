@@ -68,7 +68,7 @@ class StreamMenu(cmd.Cmd):
         
         # Drop all packets until you get an ack
         packet = self.waitForAck(myslip)
-        print(packet)
+        print('Battery Level: {0}%'.format(packet.data.batteryLevel))
 
     def do_streamEulerAngles(self, args):
         errorList = []
@@ -78,7 +78,7 @@ class StreamMenu(cmd.Cmd):
         myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
 
         packet = self.waitForAck(myslip)
-        
+
         while(True):
             try:
                 consoleBytes = myslip.receivePacketFromStream(self.sc)
