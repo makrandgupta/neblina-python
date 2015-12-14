@@ -33,6 +33,14 @@ Subsys_Crypto               =   0x0A
 Subsys_Storage              =   0x0B
 Subsys_EEPROM               =   0x0C
 
+PacketTypeStrings = {
+    PacketType_RegularResponse      : "RegularResponse",
+    PacketType_Ack                  : "Acknowledge",
+    PacketType_Command              : "Command",
+    PacketType_ErrorLogResp         : "Error Response",
+    PacketType_ErrorLogCmd          : "Error Command"
+}
+
 # Power Management commands
 PowCmd_GetBatteryLevel      =   0x00
 
@@ -300,15 +308,15 @@ class NebHeader(object):
         return headerStringCode
 
     def __str__(self):
-        stringFormat = "subSystem = {0}, packetLength = {1}, crc = {2}, command = {3}"
+        stringFormat = "packetType = {0}, subSystem = {1}, packetLength = {2}, crc = {3}, command = {4}"
         if self.subSystem == Subsys_PowerManagement:
             commandString = PowerManagementCommandStrings[self.command]
         elif self.subSystem == Subsys_MotionEngine:
             commandString = MotionCommandsStrings[self.command]
         else:
             commandString = ''
-        stringDescriptor = stringFormat.format(self.subSystem, self.length,self.crc, \
-            commandString)
+        stringDescriptor = stringFormat.format(PacketTypeStrings[self.packetType], \
+             self.subSystem, self.length,self.crc, commandString)
         return stringDescriptor
 
 # Data = 16 bytes
