@@ -1,7 +1,7 @@
 # neblina-python
 Python scripts that interact with and simulate the behaviour of the Neblina Motion Capture module.
 
-# Running the python scripts 
+# Running the python scripts
 Start by cloning the git repository onto your computer:
 ```
 git clone https://github.com/Motsai/neblina-python.git
@@ -15,7 +15,7 @@ git submodule init
 git submodule update
 ```
 
-Execute the interaction commands:
+Execute the interaction shell:
 ```
 PYTHONPATH=./pyslip/ python3 streammenu.py
 ```
