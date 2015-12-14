@@ -93,6 +93,32 @@ class StreamMenu(cmd.Cmd):
                 myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
                 return
 
+    def do_streamIMUData(self, args):
+        errorList = []
+        myslip = slip.slip()
+        commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine,
+            neb.MotCmd_IMU_Data, True)
+        myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
+
+        packet = self.waitForAck(myslip)
+
+        while(True):
+            try:
+                consoleBytes = myslip.receivePacketFromStream(self.sc)
+                packet = neb.NebResponsePacket(consoleBytes)
+                accel = packet.data.accel
+                gyro = packet.data.gyro
+                print('accelXYZ: {0}, {1}, {2}'.format(accel[0], accel[1], accel[2]))
+                print('gyroXYZ: {0}, {1}, {2}'.format(gyro[0], gyro[1], gyro[2]))
+            except NotImplementedError as nie:
+                print(nie)
+            except KeyboardInterrupt as ki:
+                commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine,
+                    neb.MotCmd_IMU_Data, False)
+                myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
+                return
+
+
     ## Override methods in Cmd object ##
     def preloop(self):
         """Initialization before prompting user for commands.
