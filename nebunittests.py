@@ -203,7 +203,7 @@ class ut_NeblinaPackets(unittest.TestCase):
         packetString = downSampleCommandPacket.stringEncode()
         packetBytes = bytearray(packetString)
         self.assertEqual(len(packetBytes), 20)
-        self.assertEqual(packetBytes[0], neb.Subsys_MotionEngine | neb.Subsys_CmdOrRespMask)
+        self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_MotionEngine)
         self.assertEqual(packetBytes[1], 16)
         self.assertEqual(packetBytes[3], neb.MotCmd_Downsample)
         self.assertEqual(packetBytes[8], struct.pack('>H', downSampleFactor)[0])

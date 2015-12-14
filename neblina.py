@@ -6,13 +6,20 @@
 import struct
 import binascii
 
-# Code Masks (applies to the subsystem byte)
-Subsys_ErrMask              =   0x80
-Subsys_CmdOrRespMask        =   0x40
-Subsys_AckMask              =   0x20
-Subsys_ValueMask            =   0x1F
+# Control Byte Masks
+Subsys_BitMask              =   0x1F
+PacketType_BitMask          =   0xE0
+PacketType_BitPosition      =   5
+
+# Packet Type codes
+PacketType_RegularResponse  =   0x00
+PacketType_Ack              =   0x01
+PacketType_Command          =   0x02
+PacketType_ErrorLogResp     =   0x04
+PacketType_ErrorLogCmd      =   0x06
 
 # Subsystem codes
+Subsys_Debug                =   0x00
 Subsys_MotionEngine         =   0x01
 Subsys_PowerManagement      =   0x02
 Subsys_DigitalIO            =   0x03
@@ -73,13 +80,11 @@ Neblina_BatteryLevel_fmt = "<I H 10s" # Battery Level (%)
 class BatteryLevelData(object):
     """docstring for BatteryLevelData"""
     def __init__(self, dataString):
-        print(dataString)
         # timestamp = 0
         timestamp, \
         self.batteryLevel,\
         garbage = struct.unpack( Neblina_BatteryLevel_fmt, dataString )
         self.batteryLevel = self.batteryLevel/10
-        print(self.batteryLevel)
 
     def __str__(self):
         return "batteryLevel: {0}%".format(self.batteryLevel)
@@ -269,22 +274,29 @@ MotionCommandsStrings = {
 NeblinaPacketHeader_fmt = "<4B"
 class NebHeader(object):
     """ docstring for NebHeader
-        cmdOrResp = True if a command packet
-        cmdOrResp = False if a response packet
+        The header section consists of four bytes.
+        Byte 0: Control Byte (PKT_TYPE/SUB)
+        Byte 1: Data length
+        Byte 2: CRC
+        Byte 3: Command type
+
+        The Control Byte contains the Packet type code and the subsystem code
+        CtrlByte(7:5) = PacketType
+        CtrlByte(4:0) = Subsytem Code
     """
-    def __init__(self, subSystem, cmdOrResp, commandType, crc=255, length = 16, ):
+    def __init__(self, subSystem, packetType, commandType, crc=255, length = 16 ):
         self.subSystem = subSystem
         self.length = length
         self.crc = crc
         self.command = commandType
-        self.cmdOrResp = cmdOrResp
+        self.packetType = packetType
 
     def encode(self):
-        packedSubSystem = self.subSystem
-        if self.cmdOrResp:
-            packedSubSystem |= Subsys_CmdOrRespMask
+        packedCtrlByte = self.subSystem
+        if self.packetType:
+            packedCtrlByte |= (self.packetType << PacketType_BitPosition)
         headerStringCode = struct.pack(NeblinaPacketHeader_fmt,\
-        packedSubSystem, self.length, self.crc, self.command)
+        packedCtrlByte, self.length, self.crc, self.command)
         return headerStringCode
 
     def __str__(self):
@@ -308,7 +320,7 @@ class NebCommandPacket(object):
             self.data = NebDownsampleCommandData(enable)
         else:
             self.data = NebCommandData(enable)
-        self.header = NebHeader(subSystem, True, commandType)
+        self.header = NebHeader(subSystem, PacketType_Command, commandType)
         # Perform CRC calculation
         self.header.crc = crc8(bytearray(self.header.encode() + self.data.encode()))
 
@@ -402,22 +414,21 @@ class NebResponsePacket(object):
             # Extract the header information
             self.headerLength = 4
             headerString = packetString[:self.headerLength]
-            subSystemByte, packetLength, crc, command \
+            ctrlByte, packetLength, crc, command \
             =  struct.unpack(NeblinaPacketHeader_fmt, headerString)
             
             # Extract the value from the subsystem byte            
-            subSystem = subSystemByte & Subsys_ValueMask
+            subSystem = ctrlByte & Subsys_BitMask
 
             # Check if the response byte is an acknowledge
-            AckBit = subSystemByte & Subsys_AckMask
-            
-            # See if the packet is a response or a command packet
-            cmdOrRespBit = subSystemByte & Subsys_CmdOrRespMask
-            cmdOrResp = cmdOrRespBit == Subsys_CmdOrRespMask
-            if(cmdOrResp):
-                raise InvalidPacketFormatError('Cannot create a response packet with the string of a command packet.') 
+            packetTypeCode = ctrlByte & PacketType_BitMask
+            packetType = packetTypeCode >> PacketType_BitPosition
 
-            self.header = NebHeader( subSystem, cmdOrResp, command, crc, packetLength )
+            # See if the packet is a response or a command packet
+            if(packetType == PacketType_Command):
+                raise InvalidPacketFormatError('Cannot create a response packet with the string of a command packet.')
+
+            self.header = NebHeader( subSystem, packetType, command, crc, packetLength )
 
             # Extract the data substring
             dataString = packetString[self.headerLength:self.headerLength+packetLength]
