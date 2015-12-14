@@ -23,6 +23,16 @@ class StreamMenu(cmd.Cmd):
         self.prompt = '>>'
         self.intro = "Welcome to the Neblina Streaming Menu!"
 
+    # Helper Functions
+    def waitForAck(self, myslip):
+        consoleBytes = myslip.receivePacketFromStream(self.sc)
+        packet = neb.NebResponsePacket(consoleBytes)
+        while(packet.header.packetType != neb.PacketType_Ack):
+            consoleBytes = myslip.receivePacketFromStream(self.sc)
+            packet = neb.NebResponsePacket(consoleBytes)
+        return packet
+
+
     ## Command definitions ##
     def do_hist(self, args):
         """Print a list of commands that have been entered"""
@@ -55,8 +65,9 @@ class StreamMenu(cmd.Cmd):
         commandPacket = neb.NebCommandPacket(neb.Subsys_PowerManagement,
             neb.PowCmd_GetBatteryLevel, True)
         myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
-        consoleBytes = myslip.receivePacketFromStream(self.sc)
-        packet = neb.NebResponsePacket(consoleBytes)
+        
+        # Drop all packets until you get an ack
+        packet = self.waitForAck(myslip)
         print(packet)
 
     def do_streamEulerAngles(self, args):
@@ -66,6 +77,8 @@ class StreamMenu(cmd.Cmd):
             neb.MotCmd_EulerAngle, True)
         myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
 
+        packet = self.waitForAck(myslip)
+        
         while(True):
             try:
                 consoleBytes = myslip.receivePacketFromStream(self.sc)
