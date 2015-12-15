@@ -4,22 +4,23 @@
 
 import os
 import cmd
-import readline
+# import readline
 import binascii
-import curses
+# import curses
 import serial
 import slip
 import neblina as neb
 import sys
 import select
-import tty
-import termios
+# import tty
+# import termios
 
 class StreamMenu(cmd.Cmd):
     """docstring for StreamMenu"""
     def __init__(self):
         cmd.Cmd.__init__(self)
-        self.sc = serial.Serial(port='/dev/ttyACM0',baudrate=230400)
+        # self.sc = serial.Serial(port='/dev/ttyACM0',baudrate=230400)
+        self.sc = serial.Serial(port='COM4',baudrate=230400)
         self.prompt = '>>'
         self.intro = "Welcome to the Neblina Streaming Menu!"
 
