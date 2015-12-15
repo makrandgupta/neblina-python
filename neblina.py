@@ -58,6 +58,11 @@ MotCmd_TrajectoryDistance   =   0x0A # calculating the distance from a pre-recor
 MotCmd_Pedometer            =   0x0B # streaming pedometer data
 MotCmd_MAG_Data             =   0x0C # streaming magnetometer data
 
+# Storage commands
+StorageCmd_EraseAll         =   0x01 # Full-erase for the on-chip NOR flash memory
+StorageCmd_Record           =   0x02 # Either start a new recording session, or close the currently open one
+StorageCmd_Playback         =   0x03 # Either open a previously recorded session for playback or close the one that is currently open and being played
+
 NeblinaCommandPacketData_fmt = "<I B 11s" # Timestamp (unused for now), enable/disable
 class NebCommandData(object):
     """docstring for NebCommandData"""
@@ -73,6 +78,16 @@ class NebCommandData(object):
 
     def __str__(self):
         return "enable: {0}".format(self.enable)
+
+class BlankData(object):
+    """docstring for BlankData
+        This object is for packet data 
+        containing no meaningful info in it.
+    """
+    def __init__(self, dataString):
+        self.blankBytes = struct.unpack( "16s", dataString )
+    def __str__(self):
+        return '{0}'.format(self.blankBytes)
 
 NeblinaDownsampleCommandPacketData_fmt = ">I H 10s" # Timestamp (unused for now), downsample factor
 class NebDownsampleCommandData(NebCommandData):
@@ -96,6 +111,21 @@ class BatteryLevelData(object):
 
     def __str__(self):
         return "batteryLevel: {0}%".format(self.batteryLevel)
+
+Neblina_FlashSession_fmt = ">I B H 9s" # Timestamp, open/close, session ID
+class FlashSessionData(object):
+    """docstring for MotionStateData"""
+    def __init__(self, dataString):
+        timestamp,\
+        openCloseByte,\
+        self.sessionID,\
+        garbage = struct.unpack( Neblina_FlashSession_fmt, dataString )
+        # open = True, close = False
+        self.openClose = (openCloseByte == 1)
+    def __str__(self):
+        openCloseString = 'open' if self.openClose else 'close'
+        return "Session {0}: {1}"\
+        .format(self.sessionID, openCloseString)
 
 Neblina_MotionState_fmt = "<I B 11s" # Timestamp, start/stop
 class MotionStateData(object):
@@ -246,12 +276,24 @@ class EulerAngleData(object):
         return "{0}us: yaw/pitch/roll:({1},{2},{3}))"\
         .format(self.timestamp,self.yaw, self.pitch, self.roll)
 
+StorageCommands = {
+    StorageCmd_EraseAll         : BlankData,
+    StorageCmd_Record           : FlashSessionData,
+    StorageCmd_Playback         : FlashSessionData
+}
+
+StorageCommandStrings = {
+    StorageCmd_EraseAll         : "Erase",
+    StorageCmd_Record           : "Record",
+    StorageCmd_Playback         : "Playback"
+}
+
 PowerManagementCommands = {
     PowCmd_GetBatteryLevel      : BatteryLevelData,
 }
 
 PowerManagementCommandStrings = {
-    PowCmd_GetBatteryLevel      : "BatteryLevelData",
+    PowCmd_GetBatteryLevel      : "BatteryLevel",
 }
 
 MotionCommands = {
@@ -313,6 +355,8 @@ class NebHeader(object):
             commandString = PowerManagementCommandStrings[self.command]
         elif self.subSystem == Subsys_MotionEngine:
             commandString = MotionCommandsStrings[self.command]
+        elif self.subSystem == Subsys_Storage:
+            commandString = StorageCommandStrings[self.command]
         else:
             commandString = ''
         stringDescriptor = stringFormat.format(PacketTypeStrings[self.packetType], \
@@ -452,6 +496,8 @@ class NebResponsePacket(object):
                 self.data = PowerManagementCommands[self.header.command](dataString)
             elif subSystem == Subsys_MotionEngine:
                 self.data = MotionCommands[self.header.command](dataString)
+            elif subSystem == Subsys_Storage:
+                self.data = StorageCommands[self.header.command](dataString)
             else:
                 raise InvalidPacketFormatError('Invalid subsystem.')
         elif(header != None and data != None):

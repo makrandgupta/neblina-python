@@ -34,16 +34,16 @@ class ut_NeblinaPackets(unittest.TestCase):
                 # print('Appending {0}'.format(nebPacket))
                 packets.append(nebPacket)
             except KeyError as keyError:
-                # print('Invalid Motion Engine Code')
+                # print('Invalid Subsystem or Command Code')
                 errorList.append(keyError)
             except NotImplementedError as notImplError:
                 # print('Got a non-standard packet at #{0}'\
-                    # .format(idx))
+                #     .format(idx))
                 errorList.append(notImplError)
             except neb.CRCError as crcError:
                 errorList.append(crcError)
                 # print('Got a CRCError at packet #{0}'\
-                    # .format(idx))
+                #     .format(idx))
             except neb.InvalidPacketFormatError as invPacketError:
                 errorList.append(invPacketError)
         return (packets, errorList)
@@ -88,6 +88,21 @@ class ut_NeblinaPackets(unittest.TestCase):
         print('roll = {0}'.format( roll ))
         print('garbage = {0}'.format( garbage ))
 
+    def testDecodeStorage(self):
+        print("\n*** Testing Flash Storage Decoding ***")
+        packets, errorList = self.buildPacketListFromSLIP("SampleData/FlashRecordPlayback.bin")
+        # Make sure the first CRC Error is there
+        self.assertEqual(len(errorList), 0)
+        self.assertEqual(len(packets), 5)
+        # Check response packet decoding
+        self.assertEqual(packets[0].data.openClose, True)
+        self.assertEqual(packets[0].data.sessionID, 0)
+        self.assertEqual(packets[1].data.openClose, False)
+        self.assertEqual(packets[1].data.sessionID, 513)
+        self.assertEqual(packets[3].data.openClose, True)
+        self.assertEqual(packets[3].data.sessionID, 318)
+        self.assertEqual(packets[4].data.openClose, False)
+        self.assertEqual(packets[4].data.sessionID, 318)
 
     def testDecodeEuler(self):
         print("\n*** Testing Euler Angle Stream Decoding ***")
@@ -226,6 +241,41 @@ class ut_NeblinaPackets(unittest.TestCase):
         commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine, neb.MotCmd_Pedometer, False)
         commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine, neb.MotCmd_MAG_Data, True)
         commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine, neb.MotCmd_MAG_Data, False)
+
+        # Test encoding of recording packets
+        recordCommandPacket = neb.NebCommandPacket(neb.Subsys_Storage, neb.StorageCmd_EraseAll, True)
+        packetBytes = bytearray(recordCommandPacket.stringEncode())
+        self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_Storage)
+        self.assertEqual(packetBytes[3], neb.StorageCmd_EraseAll)
+        self.assertEqual(packetBytes[8], 0x01)
+        recordCommandPacket = neb.NebCommandPacket(neb.Subsys_Storage, neb.StorageCmd_EraseAll, False)
+        packetBytes = bytearray(recordCommandPacket.stringEncode())
+        self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_Storage)
+        self.assertEqual(packetBytes[3], neb.StorageCmd_EraseAll)
+        self.assertEqual(packetBytes[8], 0x00)
+
+        recordCommandPacket = neb.NebCommandPacket(neb.Subsys_Storage, neb.StorageCmd_Record, True)
+        packetBytes = bytearray(recordCommandPacket.stringEncode())
+        self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_Storage)
+        self.assertEqual(packetBytes[3], neb.StorageCmd_Record)
+        self.assertEqual(packetBytes[8], 0x01)
+        recordCommandPacket = neb.NebCommandPacket(neb.Subsys_Storage, neb.StorageCmd_Record, False)
+        packetBytes = bytearray(recordCommandPacket.stringEncode())
+        self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_Storage)
+        self.assertEqual(packetBytes[3], neb.StorageCmd_Record)
+        self.assertEqual(packetBytes[8], 0x00)
+
+        recordCommandPacket = neb.NebCommandPacket(neb.Subsys_Storage, neb.StorageCmd_Playback, True)
+        packetBytes = bytearray(recordCommandPacket.stringEncode())
+        self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_Storage)
+        self.assertEqual(packetBytes[3], neb.StorageCmd_Playback)
+        self.assertEqual(packetBytes[8], 0x01)
+        recordCommandPacket = neb.NebCommandPacket(neb.Subsys_Storage, neb.StorageCmd_Playback, False)
+        packetBytes = bytearray(recordCommandPacket.stringEncode())
+        self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_Storage)
+        self.assertEqual(packetBytes[3], neb.StorageCmd_Playback)
+        self.assertEqual(packetBytes[8], 0x00)
+
 
     def testCreateEulerPackets(self):
         print("\n*** Testing Encoding and Decoding of Euler Angle Packets ***")
