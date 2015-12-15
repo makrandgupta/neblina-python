@@ -29,6 +29,12 @@ class StreamMenu(cmd.Cmd):
                 packet = neb.NebResponsePacket(consoleBytes)
         except NotImplementedError as nie:
             print('Dropped bad packet')
+        except neb.CRCError as crce:
+            print('CRCError')
+            print(crce)
+        except Exception as e:
+            print(e)
+
         return packet
 
     ## Command definitions ##
