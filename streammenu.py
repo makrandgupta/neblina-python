@@ -36,6 +36,25 @@ class StreamMenu(cmd.Cmd):
             print(e)
 
         return packet
+        
+    def waitForPacket(self, myslip, packetType, subSystem, command):
+        try:
+            consoleBytes = myslip.receivePacketFromStream(self.sc)
+            packet = neb.NebResponsePacket(consoleBytes)
+            while(packet.header.packetType != packetType and \
+            packet.header.subSystem != subSystem and \
+            packet.header.command != command):
+                consoleBytes = myslip.receivePacketFromStream(self.sc)
+                packet = neb.NebResponsePacket(consoleBytes)
+        except NotImplementedError as nie:
+            print('Dropped bad packet')
+        except neb.CRCError as crce:
+            print('CRCError')
+            print(crce)
+        except Exception as e:
+            print(e)
+
+        return packet
 
     ## Command definitions ##
     def do_hist(self, args):
@@ -109,6 +128,61 @@ class StreamMenu(cmd.Cmd):
 
     def do_streamIMU(self, args):
         self.motionStream(neb.MotCmd_IMU_Data)
+
+    def do_flash(self, args):
+        errorList = []
+        myslip = slip.slip()
+
+        # Step 1
+        commandPacket = neb.NebCommandPacket(neb.Subsys_Storage,
+            StorageCmd_Record, True)
+        myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
+
+        # Step 2
+        packet = self.waitForPacket(myslip, neb.PacketType_RegularResponse,\
+            neb.Subsys_Storage, neb.StorageCmd_Record)
+        sessionID = packet.data.sessionID
+        print('sessionID = {0}'.format(sessionID))
+
+        # Step 3
+        commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine,
+            streamingType, True)
+        myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
+
+        # Step 4
+        self.waitForAck(myslip)
+        
+        # Step 5
+
+        # Step 6
+        print('Recording a bit...')
+        time.sleep(1)
+        print('.')
+        time.sleep(1)
+        print('.')
+        time.sleep(1)
+        print('.')
+
+        # Step 7
+        commandPacket = neb.NebCommandPacket(neb.Subsys_Storage,
+            StorageCmd_Record, False)
+        myslip.sendPacketToStream(sef.sc, commandPacket.stringEncode())
+
+        # Step 8
+        packet = self.waitForPacket(myslip, neb.PacketType_RegularResponse,\
+            neb.Subsys_Storage, neb.StorageCmd_Record)
+
+        # Step 9
+
+        # Step 10
+        commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine,
+            streamingType, False)
+        myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
+
+        # Step 11
+        self.waitForAck(myslip)
+
+        # Step 12
 
 
     ## Override methods in Cmd object ##
