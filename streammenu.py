@@ -81,8 +81,12 @@ class StreamMenu(cmd.Cmd):
             try:
                 consoleBytes = myslip.receivePacketFromStream(self.sc)
                 packet = neb.NebResponsePacket(consoleBytes)
-                print('yaw:{0},pitch:{1},roll:{2}'.format(packet.data.yaw,
-                    packet.data.pitch, packet.data.roll))
+                if(packet.header.subSystem == neb.Subsys_MotionEngine and \
+                packet.header.command == neb.MotCmd_EulerAngle):
+                    print('yaw:{0},pitch:{1},roll:{2}'.format(packet.data.yaw,
+                        packet.data.pitch, packet.data.roll))
+                else:
+                    print('Unexpected packet: {0}'.format(packet))
             except NotImplementedError as nie:
                 print(nie)
             except KeyboardInterrupt as ki:
@@ -104,10 +108,14 @@ class StreamMenu(cmd.Cmd):
             try:
                 consoleBytes = myslip.receivePacketFromStream(self.sc)
                 packet = neb.NebResponsePacket(consoleBytes)
-                accel = packet.data.accel
-                gyro = packet.data.gyro
-                print('accelXYZ: {0}, {1}, {2}'.format(accel[0], accel[1], accel[2]))
-                print('gyroXYZ: {0}, {1}, {2}'.format(gyro[0], gyro[1], gyro[2]))
+                if(packet.header.subSystem == neb.Subsys_MotionEngine and \
+                packet.header.command == neb.MotCmd_IMU_Data):
+                    accel = packet.data.accel
+                    gyro = packet.data.gyro
+                    print('accelXYZ: {0}, {1}, {2}'.format(accel[0], accel[1], accel[2]))
+                    print('gyroXYZ: {0}, {1}, {2}'.format(gyro[0], gyro[1], gyro[2]))
+                else:
+                    print('Unexpected packet: {0}'.format(packet))
             except NotImplementedError as nie:
                 print(nie)
             except KeyboardInterrupt as ki:
