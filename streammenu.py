@@ -4,16 +4,12 @@
 
 import os
 import cmd
-# import readline
 import binascii
-# import curses
 import serial
 import slip
 import neblina as neb
 import sys
 import select
-# import tty
-# import termios
 
 class StreamMenu(cmd.Cmd):
     """docstring for StreamMenu"""
@@ -26,11 +22,14 @@ class StreamMenu(cmd.Cmd):
 
     # Helper Functions
     def waitForAck(self, myslip):
-        consoleBytes = myslip.receivePacketFromStream(self.sc)
-        packet = neb.NebResponsePacket(consoleBytes)
-        while(packet.header.packetType != neb.PacketType_Ack):
+        try:
             consoleBytes = myslip.receivePacketFromStream(self.sc)
             packet = neb.NebResponsePacket(consoleBytes)
+            while(packet.header.packetType != neb.PacketType_Ack):
+                consoleBytes = myslip.receivePacketFromStream(self.sc)
+                packet = neb.NebResponsePacket(consoleBytes)
+        except NotImplementedError nie:
+            print('Dropped bad packet')
         return packet
 
 
