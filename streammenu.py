@@ -68,11 +68,12 @@ class StreamMenu(cmd.Cmd):
         packet = self.waitForAck(myslip)
         print('Battery Level: {0}%'.format(packet.data.batteryLevel))
 
-    def do_streamEulerAngles(self, args):
+    def motionStream(self, streamingType):
         errorList = []
         myslip = slip.slip()
+
         commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine,
-            neb.MotCmd_EulerAngle, True)
+            streamingType, True)
         myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
 
         packet = self.waitForAck(myslip)
@@ -82,47 +83,26 @@ class StreamMenu(cmd.Cmd):
                 consoleBytes = myslip.receivePacketFromStream(self.sc)
                 packet = neb.NebResponsePacket(consoleBytes)
                 if(packet.header.subSystem == neb.Subsys_MotionEngine and \
-                packet.header.command == neb.MotCmd_EulerAngle):
-                    print('yaw:{0},pitch:{1},roll:{2}'.format(packet.data.yaw,
-                        packet.data.pitch, packet.data.roll))
+                packet.header.command == streamingType):
+                    print(packet.data)
                 else:
                     print('Unexpected packet: {0}'.format(packet))
             except NotImplementedError as nie:
                 print(nie)
             except KeyboardInterrupt as ki:
                 commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine,
-                    neb.MotCmd_EulerAngle, False)
+                    streamingType, False)
                 myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
                 return
+            except neb.CRCError as crce:
+                print('CRCError')
+                print(crce)
 
-    def do_streamIMUData(self, args):
-        errorList = []
-        myslip = slip.slip()
-        commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine,
-            neb.MotCmd_IMU_Data, True)
-        myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
+    def do_streamEuler(self, args):
+        self.motionStream(neb.MotCmd_EulerAngle)
 
-        packet = self.waitForAck(myslip)
-
-        while(True):
-            try:
-                consoleBytes = myslip.receivePacketFromStream(self.sc)
-                packet = neb.NebResponsePacket(consoleBytes)
-                if(packet.header.subSystem == neb.Subsys_MotionEngine and \
-                packet.header.command == neb.MotCmd_IMU_Data):
-                    accel = packet.data.accel
-                    gyro = packet.data.gyro
-                    print('accelXYZ: {0}, {1}, {2}'.format(accel[0], accel[1], accel[2]))
-                    print('gyroXYZ: {0}, {1}, {2}'.format(gyro[0], gyro[1], gyro[2]))
-                else:
-                    print('Unexpected packet: {0}'.format(packet))
-            except NotImplementedError as nie:
-                print(nie)
-            except KeyboardInterrupt as ki:
-                commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine,
-                    neb.MotCmd_IMU_Data, False)
-                myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
-                return
+    def do_streamIMU(self, args):
+        self.motionStream(neb.MotCmd_IMU_Data)
 
 
     ## Override methods in Cmd object ##
