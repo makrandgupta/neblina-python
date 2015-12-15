@@ -9,7 +9,6 @@ import serial
 import slip
 import neblina as neb
 import sys
-import select
 
 class StreamMenu(cmd.Cmd):
     """docstring for StreamMenu"""
@@ -28,10 +27,9 @@ class StreamMenu(cmd.Cmd):
             while(packet.header.packetType != neb.PacketType_Ack):
                 consoleBytes = myslip.receivePacketFromStream(self.sc)
                 packet = neb.NebResponsePacket(consoleBytes)
-        except NotImplementedError nie:
+        except NotImplementedError as nie:
             print('Dropped bad packet')
         return packet
-
 
     ## Command definitions ##
     def do_hist(self, args):
