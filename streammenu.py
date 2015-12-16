@@ -65,17 +65,22 @@ class StreamMenu(cmd.Cmd):
     def do_streamIMU(self, args):
         self.comm.motionStream(neb.MotCmd_IMU_Data)
 
+    def do_stopStreams(self, args):
+        self.comm.sendCommand(neb.Subsys_MotionEngine,\
+            neb.MotCmd_DisableStreaming, True)
+
     def do_flash(self, args):
         errorList = []
-        myslip = slip.slip()
 
         # Step 1
-        self.comm.sendCommand(neb.Subsys_Storage,StorageCmd_Record, True)
+        self.comm.sendCommand(neb.Subsys_Storage, neb.StorageCmd_Record, True)
+        self.comm.waitForAck()
 
         # Step 2
-        packet = self.comm.waitForPacket(myslip, neb.PacketType_RegularResponse,\
+        packet = self.comm.waitForPacket(neb.PacketType_RegularResponse,\
             neb.Subsys_Storage, neb.StorageCmd_Record)
         sessionID = packet.data.sessionID
+        print(packet)
         print('sessionID = {0}'.format(sessionID))
 
         # Step 3
@@ -99,7 +104,7 @@ class StreamMenu(cmd.Cmd):
         self.comm.sendCommand(neb.Subsys_Storage,neb.StorageCmd_Record, True)
 
         # Step 8
-        packet = self.comm.waitForPacket(myslip, neb.PacketType_RegularResponse,\
+        packet = self.comm.waitForPacket(neb.PacketType_RegularResponse,\
             neb.Subsys_Storage, neb.StorageCmd_Record)
 
         # Step 9
@@ -108,7 +113,7 @@ class StreamMenu(cmd.Cmd):
         self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, False)
 
         # Step 11
-        self.comm.waitForAck(myslip)
+        self.comm.waitForAck()
 
         # Step 12
 
