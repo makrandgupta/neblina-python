@@ -8,53 +8,19 @@ import binascii
 import serial
 import slip
 import neblina as neb
+import neblinacomm as nebcomm
 import sys
+import time
 
 class StreamMenu(cmd.Cmd):
     """docstring for StreamMenu"""
     def __init__(self):
         cmd.Cmd.__init__(self)
-        # self.sc = serial.Serial(port='/dev/ttyACM0',baudrate=230400)
-        self.sc = serial.Serial(port='COM4',baudrate=230400)
+        sc = serial.Serial(port='/dev/ttyACM0',baudrate=230400)
+        # self.sc = serial.Serial(port='COM4',baudrate=230400)
+        self.comm = nebcomm.NeblinaComm(sc)
         self.prompt = '>>'
         self.intro = "Welcome to the Neblina Streaming Menu!"
-
-    # Helper Functions
-    def waitForAck(self, myslip):
-        try:
-            consoleBytes = myslip.receivePacketFromStream(self.sc)
-            packet = neb.NebResponsePacket(consoleBytes)
-            while(packet.header.packetType != neb.PacketType_Ack):
-                consoleBytes = myslip.receivePacketFromStream(self.sc)
-                packet = neb.NebResponsePacket(consoleBytes)
-        except NotImplementedError as nie:
-            print('Dropped bad packet')
-        except neb.CRCError as crce:
-            print('CRCError')
-            print(crce)
-        except Exception as e:
-            print(e)
-
-        return packet
-        
-    def waitForPacket(self, myslip, packetType, subSystem, command):
-        try:
-            consoleBytes = myslip.receivePacketFromStream(self.sc)
-            packet = neb.NebResponsePacket(consoleBytes)
-            while(packet.header.packetType != packetType and \
-            packet.header.subSystem != subSystem and \
-            packet.header.command != command):
-                consoleBytes = myslip.receivePacketFromStream(self.sc)
-                packet = neb.NebResponsePacket(consoleBytes)
-        except NotImplementedError as nie:
-            print('Dropped bad packet')
-        except neb.CRCError as crce:
-            print('CRCError')
-            print(crce)
-        except Exception as e:
-            print(e)
-
-        return packet
 
     ## Command definitions ##
     def do_hist(self, args):
@@ -84,73 +50,39 @@ class StreamMenu(cmd.Cmd):
 
     def do_getBatteryLevel(self, args):
         errorList = []
-        myslip = slip.slip()
-        commandPacket = neb.NebCommandPacket(neb.Subsys_PowerManagement,
+        self.comm.sendCommand(neb.Subsys_PowerManagement,\
             neb.PowCmd_GetBatteryLevel, True)
-        myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
         
         # Drop all packets until you get an ack
-        packet = self.waitForAck(myslip)
+        packet = self.comm.waitForAck()
+        print('ack: {0}'.format(packet))
+        packet = self.comm.receivePacket()
         print('Battery Level: {0}%'.format(packet.data.batteryLevel))
 
-    def motionStream(self, streamingType):
-        errorList = []
-        myslip = slip.slip()
-
-        commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine,
-            streamingType, True)
-        myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
-
-        packet = self.waitForAck(myslip)
-
-        while(True):
-            try:
-                consoleBytes = myslip.receivePacketFromStream(self.sc)
-                packet = neb.NebResponsePacket(consoleBytes)
-                if(packet.header.subSystem == neb.Subsys_MotionEngine and \
-                packet.header.command == streamingType):
-                    print(packet.data)
-                else:
-                    print('Unexpected packet: {0}'.format(packet))
-            except NotImplementedError as nie:
-                print(nie)
-            except KeyboardInterrupt as ki:
-                commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine,
-                    streamingType, False)
-                myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
-                return
-            except neb.CRCError as crce:
-                print('CRCError')
-                print(crce)
-
     def do_streamEuler(self, args):
-        self.motionStream(neb.MotCmd_EulerAngle)
+        self.comm.motionStream(neb.MotCmd_EulerAngle)
 
     def do_streamIMU(self, args):
-        self.motionStream(neb.MotCmd_IMU_Data)
+        self.comm.motionStream(neb.MotCmd_IMU_Data)
 
     def do_flash(self, args):
         errorList = []
         myslip = slip.slip()
 
         # Step 1
-        commandPacket = neb.NebCommandPacket(neb.Subsys_Storage,
-            StorageCmd_Record, True)
-        myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
+        self.comm.sendCommand(neb.Subsys_Storage,StorageCmd_Record, True)
 
         # Step 2
-        packet = self.waitForPacket(myslip, neb.PacketType_RegularResponse,\
+        packet = self.comm.waitForPacket(myslip, neb.PacketType_RegularResponse,\
             neb.Subsys_Storage, neb.StorageCmd_Record)
         sessionID = packet.data.sessionID
         print('sessionID = {0}'.format(sessionID))
 
         # Step 3
-        commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine,
-            streamingType, True)
-        myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
+        self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
 
         # Step 4
-        self.waitForAck(myslip)
+        self.comm.waitForAck()
         
         # Step 5
 
@@ -164,23 +96,19 @@ class StreamMenu(cmd.Cmd):
         print('.')
 
         # Step 7
-        commandPacket = neb.NebCommandPacket(neb.Subsys_Storage,
-            StorageCmd_Record, False)
-        myslip.sendPacketToStream(sef.sc, commandPacket.stringEncode())
+        self.comm.sendCommand(neb.Subsys_Storage,neb.StorageCmd_Record, True)
 
         # Step 8
-        packet = self.waitForPacket(myslip, neb.PacketType_RegularResponse,\
+        packet = self.comm.waitForPacket(myslip, neb.PacketType_RegularResponse,\
             neb.Subsys_Storage, neb.StorageCmd_Record)
 
         # Step 9
 
         # Step 10
-        commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine,
-            streamingType, False)
-        myslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
+        self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, False)
 
         # Step 11
-        self.waitForAck(myslip)
+        self.comm.waitForAck(myslip)
 
         # Step 12
 
@@ -199,7 +127,7 @@ class StreamMenu(cmd.Cmd):
         """Take care of any unfinished business.
            Despite the claims in the Cmd documentaion, Cmd.postloop() is not a stub.
         """
-        self.sc.close()
+        self.comm.sc.close()
         cmd.Cmd.postloop(self)   ## Clean up command completion
         print ("Exiting...")
 
