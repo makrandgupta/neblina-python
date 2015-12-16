@@ -57,6 +57,9 @@ MotCmd_TrajectoryRecStop    =   0x09 # stop recording orientation trajectory
 MotCmd_TrajectoryDistance   =   0x0A # calculating the distance from a pre-recorded orientation trajectory
 MotCmd_Pedometer            =   0x0B # streaming pedometer data
 MotCmd_MAG_Data             =   0x0C # streaming magnetometer data
+MotCmd_SittingStanding      =   0x0D # streaming magnetometer data
+MotCmd_AccRange             =   0x0E # streaming magnetometer data
+MotCmd_DisableStreaming     =   0x0F # disable everything that is currently being streamed
 
 # Storage commands
 StorageCmd_EraseAll         =   0x01 # Full-erase for the on-chip NOR flash memory
