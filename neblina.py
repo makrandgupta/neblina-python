@@ -115,7 +115,7 @@ class BatteryLevelData(object):
     def __str__(self):
         return "batteryLevel: {0}%".format(self.batteryLevel)
 
-Neblina_FlashSession_fmt = ">I B H 9s" # Timestamp, open/close, session ID
+Neblina_FlashSession_fmt = "<I B H 9s" # Timestamp, open/close, session ID
 class FlashSessionData(object):
     """docstring for MotionStateData"""
     def __init__(self, dataString):
@@ -524,7 +524,7 @@ class CRCError(Exception):
         self.actual = actual
     def __str__(self):
         return 'Invalid CRC. expected {0} but got {1}'\
-            .format(self.expected, self.actual)
+            .format(hex(self.expected), hex(self.actual))
 
 class InvalidPacketFormatError(Exception):
     """docstring for InvalidPacketFormatError"""

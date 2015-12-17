@@ -44,6 +44,7 @@ class ut_NeblinaPackets(unittest.TestCase):
                 errorList.append(crcError)
                 # print('Got a CRCError at packet #{0}'\
                 #     .format(idx))
+                # print(crcError)
             except neb.InvalidPacketFormatError as invPacketError:
                 errorList.append(invPacketError)
         return (packets, errorList)
@@ -98,11 +99,11 @@ class ut_NeblinaPackets(unittest.TestCase):
         self.assertEqual(packets[0].data.openClose, True)
         self.assertEqual(packets[0].data.sessionID, 0)
         self.assertEqual(packets[1].data.openClose, False)
-        self.assertEqual(packets[1].data.sessionID, 513)
+        self.assertEqual(packets[1].data.sessionID, 258)
         self.assertEqual(packets[3].data.openClose, True)
-        self.assertEqual(packets[3].data.sessionID, 318)
+        self.assertEqual(packets[3].data.sessionID, 4878)
         self.assertEqual(packets[4].data.openClose, False)
-        self.assertEqual(packets[4].data.sessionID, 318)
+        self.assertEqual(packets[4].data.sessionID, 1)
 
     def testDecodeEuler(self):
         print("\n*** Testing Euler Angle Stream Decoding ***")
