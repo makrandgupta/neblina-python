@@ -22,6 +22,27 @@ class NeblinaComm(object):
         packet = neb.NebResponsePacket(consoleBytes)
         return packet
 
+    def storePacketsUntil(self, packetType, subSystem, command):
+        packetList = []
+        try:
+            packet = self.receivePacket()
+            #print('waiting and got: {0}'.format(packet))
+            while(packet.header.packetType != packetType or \
+                packet.header.subSystem != subSystem or \
+                packet.header.command != command):
+                packetList.append(packet)
+                packet = self.receivePacket()
+                #print('waiting and got: {0}'.format(packet))
+        except NotImplementedError as nie:
+            print('Dropped bad packet')
+            print(nie)
+        except neb.CRCError as crce:
+            print('CRCError')
+            print(crce)
+        except Exception as e:
+            print(e)
+        return packetList
+
     # Helper Functions
     def waitForAck(self, subSystem, command):
         try:

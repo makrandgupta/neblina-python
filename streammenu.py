@@ -16,8 +16,8 @@ class StreamMenu(cmd.Cmd):
     """docstring for StreamMenu"""
     def __init__(self):
         cmd.Cmd.__init__(self)
-        # sc = serial.Serial(port='/dev/ttyACM0',baudrate=230400)
-        sc = serial.Serial(port='COM4',baudrate=230400)
+        sc = serial.Serial(port='/dev/ttyACM0',baudrate=230400)
+        # sc = serial.Serial(port='COM4',baudrate=230400)
         self.comm = nebcomm.NeblinaComm(sc)
         self.prompt = '>>'
         self.intro = "Welcome to the Neblina Streaming Menu!"
@@ -119,8 +119,15 @@ class StreamMenu(cmd.Cmd):
             neb.Subsys_Storage, neb.StorageCmd_Record)
 
     def do_flashPlayback(self, args):
-        self.comm.sendCommand(neb.Subsys_Storage, neb.StorageCmd_Playback, True, sessionID=12)
-        self.comm.waitForPacket(neb.PacketType_RegularResponse, neb.Subsys_Storage, neb.StorageCmd_Playback)
+        print(args)
+        if(len(args) == 0):
+            mySessionID=0xFFFF
+        elif(len(args) > 0):
+            mySessionID = int(args[0])
+        self.comm.sendCommand(neb.Subsys_Storage, neb.StorageCmd_Playback, True, sessionID=mySessionID)
+        packetList = self.comm.storePacketsUntil(neb.PacketType_RegularResponse, neb.Subsys_Storage, neb.StorageCmd_Playback)
+        for packet in packetList:
+            print(packet.data)
 
     ## Override methods in Cmd object ##
     def preloop(self):
