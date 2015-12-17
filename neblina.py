@@ -66,7 +66,7 @@ StorageCmd_EraseAll         =   0x01 # Full-erase for the on-chip NOR flash memo
 StorageCmd_Record           =   0x02 # Either start a new recording session, or close the currently open one
 StorageCmd_Playback         =   0x03 # Either open a previously recorded session for playback or close the one that is currently open and being played
 
-NeblinaCommandPacketData_fmt = "<I B 11s" # Timestamp (unused for now), enable/disable
+Neblina_CommandPacketData_fmt = "<I B 11s" # Timestamp (unused for now), enable/disable
 class NebCommandData(object):
     """docstring for NebCommandData"""
     def __init__(self, enable):
@@ -75,7 +75,7 @@ class NebCommandData(object):
 
     def encode(self):
         garbage = ('\000'*11).encode('utf-8')
-        commandDataString = struct.pack(NeblinaCommandPacketData_fmt,\
+        commandDataString = struct.pack(Neblina_CommandPacketData_fmt,\
             self.timestamp, self.enable, garbage)
         return commandDataString
 
@@ -92,13 +92,13 @@ class BlankData(object):
     def __str__(self):
         return '{0}'.format(self.blankBytes)
 
-NeblinaDownsampleCommandPacketData_fmt = ">I H 10s" # Timestamp (unused for now), downsample factor
+Neblina_DownsampleCommandPacketData_fmt = ">I H 10s" # Timestamp (unused for now), downsample factor
 class NebDownsampleCommandData(NebCommandData):
     """docstring for NebDownsampleCommandData"""
 
     def encode(self):
         garbage = ('\000'*10).encode('utf-8')
-        commandDataString = struct.pack(NeblinaDownsampleCommandPacketData_fmt,\
+        commandDataString = struct.pack(Neblina_DownsampleCommandPacketData_fmt,\
             self.timestamp, self.enable, garbage)
         return commandDataString
 
@@ -324,7 +324,7 @@ MotionCommandsStrings = {
 
 
 # Header = 4 bytes
-NeblinaPacketHeader_fmt = "<4B"
+Neblina_PacketHeader_fmt = "<4B"
 class NebHeader(object):
     """ docstring for NebHeader
         The header section consists of four bytes.
@@ -348,7 +348,7 @@ class NebHeader(object):
         packedCtrlByte = self.subSystem
         if self.packetType:
             packedCtrlByte |= (self.packetType << PacketType_BitPosition)
-        headerStringCode = struct.pack(NeblinaPacketHeader_fmt,\
+        headerStringCode = struct.pack(Neblina_PacketHeader_fmt,\
         packedCtrlByte, self.length, self.crc, self.command)
         return headerStringCode
 
@@ -470,7 +470,7 @@ class NebResponsePacket(object):
             self.headerLength = 4
             headerString = packetString[:self.headerLength]
             ctrlByte, packetLength, crc, command \
-            =  struct.unpack(NeblinaPacketHeader_fmt, headerString)
+            =  struct.unpack(Neblina_PacketHeader_fmt, headerString)
             
             # Extract the value from the subsystem byte            
             subSystem = ctrlByte & Subsys_BitMask
