@@ -11,8 +11,8 @@ class NeblinaComm(object):
         self.comslip = slip.slip()
         self.sc = serialcom
 
-    def sendCommand(self, subsystem, command, enable):
-        commandPacket = neb.NebCommandPacket(subsystem, command, enable)
+    def sendCommand(self, subsystem, command, enable, **kwargs):
+        commandPacket = neb.NebCommandPacket(subsystem, command, enable, **kwargs)
         self.comslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
 
     def receivePacket(self):
@@ -41,17 +41,6 @@ class NeblinaComm(object):
         except Exception as e:
             print(e)
         return packet
-        #try:
-        #    packet = self.receivePacket()
-        #    while(packet.header.packetType != neb.PacketType_Ack):
-        #        packet = self.receivePacket()
-        #except neb.CRCError as crce:
-        #    print('CRCError')
-        #   print(crce)
-        #except Exception as e:
-        #    print(e)
-        #    self.waitForAck()
-        #return packet
         
     def waitForPacket(self, packetType, subSystem, command):
         try:

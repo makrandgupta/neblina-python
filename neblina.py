@@ -92,6 +92,26 @@ class BlankData(object):
     def __str__(self):
         return '{0}'.format(self.blankBytes)
 
+Neblina_FlashSession_fmt = "<I B H 9s" # Timestamp, open/close, session ID
+class NebFlashPlaybackCommandData(object):
+    """docstring for MotionStateData"""
+    def __init__(self, openClose, sessionID):
+        self.openClose = openClose
+        self.sessionID = sessionID
+    def encode(self):
+        garbage = ('\000'*9).encode('utf-8')
+        timestamp = 0
+        if self.openClose == 1:
+            pass
+        openCloseVal = 1 if self.openClose else 0
+        commandDataString = struct.pack(Neblina_FlashSession_fmt,\
+            timestamp, openCloseVal, self.sessionID, garbage)
+        return commandDataString
+    def __str__(self):
+        openCloseString = 'open' if self.openClose else 'close'
+        return "Flash Command Session {0}: {1}"\
+        .format(self.sessionID, openCloseString)
+
 Neblina_DownsampleCommandPacketData_fmt = ">I H 10s" # Timestamp (unused for now), downsample factor
 class NebDownsampleCommandData(NebCommandData):
     """docstring for NebDownsampleCommandData"""
@@ -115,7 +135,7 @@ class BatteryLevelData(object):
     def __str__(self):
         return "batteryLevel: {0}%".format(self.batteryLevel)
 
-Neblina_FlashSession_fmt = "<I B H 9s" # Timestamp, open/close, session ID
+# Neblina_FlashSession_fmt = "<I B H 9s" # Timestamp, open/close, session ID
 class FlashSessionData(object):
     """docstring for MotionStateData"""
     def __init__(self, dataString):
@@ -370,9 +390,11 @@ class NebHeader(object):
 NeblinaPacket_fmt = "<4s 16s"
 class NebCommandPacket(object):
     """docstring for NebCommandPacket"""
-    def __init__(self, subSystem, commandType, enable):
+    def __init__(self, subSystem, commandType, enable, **kwargs):
         if(subSystem == Subsys_MotionEngine and commandType == MotCmd_Downsample ):
             self.data = NebDownsampleCommandData(enable)
+        elif(subSystem == Subsys_Storage and commandType == StorageCmd_Playback ):
+            self.data = NebFlashPlaybackCommandData(enable, kwargs['sessionID'])
         else:
             self.data = NebCommandData(enable)
         self.header = NebHeader(subSystem, PacketType_Command, commandType)

@@ -54,7 +54,8 @@ class StreamMenu(cmd.Cmd):
             neb.PowCmd_GetBatteryLevel, True)
         
         # Drop all packets until you get an ack
-        packet = self.comm.waitForAck()
+        packet = self.comm.waitForAck(neb.Subsys_PowerManagement,\
+            neb.PowCmd_GetBatteryLevel)
         print('ack: {0}'.format(packet))
         packet = self.comm.receivePacket()
         print('Battery Level: {0}%'.format(packet.data.batteryLevel))
@@ -117,11 +118,9 @@ class StreamMenu(cmd.Cmd):
         packet = self.comm.waitForPacket(neb.PacketType_RegularResponse,\
             neb.Subsys_Storage, neb.StorageCmd_Record)
 
-    def do_flashPlayback(self):
-        self.comm.sendCommand(neb.Subsys_Storage, neb.StorageCmd_Playback, True)
-        pass
-
-
+    def do_flashPlayback(self, args):
+        self.comm.sendCommand(neb.Subsys_Storage, neb.StorageCmd_Playback, True, sessionID=12)
+        self.comm.waitForPacket(neb.PacketType_RegularResponse, neb.Subsys_Storage, neb.StorageCmd_Playback)
 
     ## Override methods in Cmd object ##
     def preloop(self):
