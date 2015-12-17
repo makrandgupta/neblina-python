@@ -69,9 +69,7 @@ class StreamMenu(cmd.Cmd):
         self.comm.sendCommand(neb.Subsys_MotionEngine,\
             neb.MotCmd_DisableStreaming, True)
 
-    def do_flash(self, args):
-        errorList = []
-
+    def do_flashRecord(self, args):
         # Step 1
         self.comm.sendCommand(neb.Subsys_Storage, neb.StorageCmd_Record, True)
         self.comm.waitForAck()
@@ -101,7 +99,7 @@ class StreamMenu(cmd.Cmd):
         print('.')
 
         # Step 7
-        self.comm.sendCommand(neb.Subsys_Storage,neb.StorageCmd_Record, True)
+        self.comm.sendCommand(neb.Subsys_Storage,neb.StorageCmd_Record, False)
 
         # Step 8
         packet = self.comm.waitForPacket(neb.PacketType_RegularResponse,\
@@ -116,6 +114,11 @@ class StreamMenu(cmd.Cmd):
         self.comm.waitForAck()
 
         # Step 12
+
+    def do_flashPlayback(self):
+        self.comm.sendCommand(neb.Subsys_Storage, neb.StorageCmd_Playback, True)
+        pass
+
 
 
     ## Override methods in Cmd object ##
