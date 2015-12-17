@@ -16,8 +16,8 @@ class StreamMenu(cmd.Cmd):
     """docstring for StreamMenu"""
     def __init__(self):
         cmd.Cmd.__init__(self)
-        sc = serial.Serial(port='/dev/ttyACM0',baudrate=230400)
-        # self.sc = serial.Serial(port='COM4',baudrate=230400)
+        # sc = serial.Serial(port='/dev/ttyACM0',baudrate=230400)
+        sc = serial.Serial(port='COM4',baudrate=230400)
         self.comm = nebcomm.NeblinaComm(sc)
         self.prompt = '>>'
         self.intro = "Welcome to the Neblina Streaming Menu!"
@@ -98,7 +98,8 @@ class StreamMenu(cmd.Cmd):
         
         # Step 7 - continue recording for n samples
         n = 1000
-        for x in range(1, n+1)
+        for x in range(1, n+1):
+            self.comm.receivePacket()
             print('Recording packet %d out of %d' % (x, n))
 
         # Step 8 - Stop the streaming
