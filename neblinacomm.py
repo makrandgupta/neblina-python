@@ -17,6 +17,8 @@ class NeblinaComm(object):
 
     def receivePacket(self):
         consoleBytes = self.comslip.receivePacketFromStream(self.sc)
+        while(len(consoleBytes) != 20):
+            consoleBytes = self.comslip.receivePacketFromStream(self.sc)
         packet = neb.NebResponsePacket(consoleBytes)
         return packet
 
