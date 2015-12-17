@@ -98,9 +98,10 @@ class StreamMenu(cmd.Cmd):
         
         # Step 7 - continue recording for n samples
         n = 1000
+        print ('Recording %d packets takes about %d seconds' % (n,n/50))
         for x in range(1, n+1):
             self.comm.receivePacket()
-            print('Recording packet %d out of %d' % (x, n))
+            #print('Recording packet %d out of %d' % (x, n))
 
         # Step 8 - Stop the streaming
         self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, False)
