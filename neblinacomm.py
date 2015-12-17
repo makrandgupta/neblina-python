@@ -23,28 +23,45 @@ class NeblinaComm(object):
         return packet
 
     # Helper Functions
-    def waitForAck(self):
+    def waitForAck(self, subSystem, command):
         try:
             packet = self.receivePacket()
-            while(packet.header.packetType != neb.PacketType_Ack):
+            #print('waiting and got: {0}'.format(packet))
+            while(packet.header.packetType != neb.PacketType_Ack or \
+                packet.header.subSystem != subSystem or \
+                packet.header.command != command):
                 packet = self.receivePacket()
+                #print('waiting and got: {0}'.format(packet))
+        except NotImplementedError as nie:
+            print('Dropped bad packet')
+            print(nie)
         except neb.CRCError as crce:
             print('CRCError')
             print(crce)
         except Exception as e:
             print(e)
-            self.waitForAck()
         return packet
+        #try:
+        #    packet = self.receivePacket()
+        #    while(packet.header.packetType != neb.PacketType_Ack):
+        #        packet = self.receivePacket()
+        #except neb.CRCError as crce:
+        #    print('CRCError')
+        #   print(crce)
+        #except Exception as e:
+        #    print(e)
+        #    self.waitForAck()
+        #return packet
         
     def waitForPacket(self, packetType, subSystem, command):
         try:
             packet = self.receivePacket()
-            print('waiting and got: {0}'.format(packet))
+            #print('waiting and got: {0}'.format(packet))
             while(packet.header.packetType != packetType or \
                 packet.header.subSystem != subSystem or \
                 packet.header.command != command):
                 packet = self.receivePacket()
-                print('waiting and got: {0}'.format(packet))
+                #print('waiting and got: {0}'.format(packet))
         except NotImplementedError as nie:
             print('Dropped bad packet')
             print(nie)

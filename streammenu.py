@@ -70,50 +70,50 @@ class StreamMenu(cmd.Cmd):
             neb.MotCmd_DisableStreaming, True)
 
     def do_flashRecord(self, args):
-        # Step 1
-        self.comm.sendCommand(neb.Subsys_Storage, neb.StorageCmd_Record, True)
-        self.comm.waitForAck()
 
-        # Step 2
+        # Step 1 - Initialization
+        self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
+        self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming, True)
+
+        # Step 2 - wait for ack
+        self.comm.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming)
+
+        # Step 3 - Start recording
+        self.comm.sendCommand(neb.Subsys_Storage, neb.StorageCmd_Record, True)
+
+        # Step 4 - wait for ack and the session number
+        self.comm.waitForAck(neb.Subsys_Storage, neb.StorageCmd_Record)
         packet = self.comm.waitForPacket(neb.PacketType_RegularResponse,\
             neb.Subsys_Storage, neb.StorageCmd_Record)
         sessionID = packet.data.sessionID
+
         print(packet)
         print('sessionID = {0}'.format(sessionID))
 
-        # Step 3
+        # Step 5 - enable IMU streaming
         self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
 
-        # Step 4
-        self.comm.waitForAck()
+        # Step 6 - wait for ack
+        self.comm.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data)
         
-        # Step 5
+        # Step 7 - continue recording for n samples
+        n = 1000
+        for x in range(1, n+1)
+            print('Recording packet %d out of %d' % (x, n))
 
-        # Step 6
-        print('Recording a bit...')
-        time.sleep(1)
-        print('.')
-        time.sleep(1)
-        print('.')
-        time.sleep(1)
-        print('.')
-
-        # Step 7
-        self.comm.sendCommand(neb.Subsys_Storage,neb.StorageCmd_Record, False)
-
-        # Step 8
-        packet = self.comm.waitForPacket(neb.PacketType_RegularResponse,\
-            neb.Subsys_Storage, neb.StorageCmd_Record)
-
-        # Step 9
-
-        # Step 10
+        # Step 8 - Stop the streaming
         self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, False)
 
-        # Step 11
-        self.comm.waitForAck()
+        # Step 9 - wait for ack
+        self.comm.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data)
 
-        # Step 12
+        # Step 10 - Stop the recording
+        self.comm.sendCommand(neb.Subsys_Storage,neb.StorageCmd_Record, False)
+
+        # Step 11 - wait for ack and the closed session confirmation
+        self.comm.waitForAck(neb.Subsys_Storage,neb.StorageCmd_Record)
+        packet = self.comm.waitForPacket(neb.PacketType_RegularResponse,\
+            neb.Subsys_Storage, neb.StorageCmd_Record)
 
     def do_flashPlayback(self):
         self.comm.sendCommand(neb.Subsys_Storage, neb.StorageCmd_Playback, True)
