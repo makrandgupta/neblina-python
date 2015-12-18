@@ -16,8 +16,8 @@ class StreamMenu(cmd.Cmd):
     """docstring for StreamMenu"""
     def __init__(self):
         cmd.Cmd.__init__(self)
-        sc = serial.Serial(port='/dev/ttyACM0',baudrate=230400)
-        # sc = serial.Serial(port='COM4',baudrate=230400)
+        # sc = serial.Serial(port='/dev/ttyACM0',baudrate=230400)
+        sc = serial.Serial(port='COM4',baudrate=230400)
         self.comm = nebcomm.NeblinaComm(sc)
         self.prompt = '>>'
         self.intro = "Welcome to the Neblina Streaming Menu!"
@@ -79,6 +79,8 @@ class StreamMenu(cmd.Cmd):
         # Step 2 - wait for ack
         self.comm.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming)
 
+        print ("Initialization passed!")
+
         # Step 3 - Start recording
         self.comm.sendCommand(neb.Subsys_Storage, neb.StorageCmd_Record, True)
 
@@ -119,9 +121,15 @@ class StreamMenu(cmd.Cmd):
             neb.Subsys_Storage, neb.StorageCmd_Record)
 
     def do_flashPlayback(self, args):
+        # Step 1 - Initialization
+        #self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
+        #self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming, True)
+        # Step 2 - wait for ack
+        #self.comm.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming)
+
         print(args)
         if(len(args) == 0):
-            mySessionID=0xFFFF
+            mySessionID = 65535
         elif(len(args) > 0):
             mySessionID = int(args[0])
         self.comm.sendCommand(neb.Subsys_Storage, neb.StorageCmd_Playback, True, sessionID=mySessionID)
