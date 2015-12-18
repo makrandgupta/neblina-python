@@ -133,10 +133,10 @@ class StreamMenu(cmd.Cmd):
 
     def do_flashPlayback(self, args):
         # Step 1 - Initialization
-        #self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
-        #self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming, True)
+        self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
+        self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming, True)
         # Step 2 - wait for ack
-        #self.comm.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming)
+        self.comm.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming)
 
         print(args)
         if(len(args) == 0):
@@ -144,8 +144,12 @@ class StreamMenu(cmd.Cmd):
         elif(len(args) > 0):
             mySessionID = int(args[0])
         self.comm.sendCommand(neb.Subsys_Storage, neb.StorageCmd_Playback, True, sessionID=mySessionID)
+        print('Sent the start playback command, waiting for response...')
         #wait for confirmation
-        print('Playback routine started...');
+        #packet = self.comm.waitForPacket(neb.PacketType_RegularResponse,\
+        #    neb.Subsys_Storage, neb.StorageCmd_Playback)
+        #mySessionID = packet.data.sessionID
+        #print('Playback routine started from session number %d' % mySessionID);
         packetList = self.comm.storePacketsUntil(neb.PacketType_RegularResponse, neb.Subsys_Storage, neb.StorageCmd_Playback)
         print('Finished playback!')
         #for packet in packetList:

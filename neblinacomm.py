@@ -40,7 +40,7 @@ class NeblinaComm(object):
             print('CRCError')
             print(crce)
         except Exception as e:
-            print(e)
+            print(type(e))
         return packetList
 
     # Helper Functions
