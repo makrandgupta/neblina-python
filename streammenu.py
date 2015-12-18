@@ -159,7 +159,10 @@ class StreamMenu(cmd.Cmd):
         print('Acknowledge packet was received!')
         
         # Step 7 - continue recording for n samples
-        n = 1000
+        if(len(args) <= 0):
+            n = 1000
+        else:
+            n = int(args)
         # print ('Recording %d packets takes about %d seconds' % (n,n/50))
         for x in range(1, n+1):
             self.comm.receivePacket()
@@ -190,11 +193,11 @@ class StreamMenu(cmd.Cmd):
         # Step 2 - wait for ack
         #self.comm.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data)
 
-        print(args)
-        if(len(args) == 0):
+        #print(args[0])
+        if(len(args) <= 0):
             mySessionID = 65535
         elif(len(args) > 0):
-            mySessionID = int(args[0])
+            mySessionID = int(args)
         self.comm.sendCommand(neb.Subsys_Storage, neb.StorageCmd_Playback, True, sessionID=mySessionID)
         print('Sent the start playback command, waiting for response...')
         #wait for confirmation
