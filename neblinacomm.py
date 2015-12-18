@@ -45,23 +45,8 @@ class NeblinaComm(object):
 
     # Helper Functions
     def waitForAck(self, subSystem, command):
-        try:
-            packet = self.receivePacket()
-            #print('waiting and got: {0}'.format(packet))
-            while(packet.header.packetType != neb.PacketType_Ack or \
-                packet.header.subSystem != subSystem or \
-                packet.header.command != command):
-                packet = self.receivePacket()
-                #print('waiting and got: {0}'.format(packet))
-        except NotImplementedError as nie:
-            print('Dropped bad packet')
-            print(nie)
-        except neb.CRCError as crce:
-            print('CRCError')
-            print(crce)
-        except Exception as e:
-            print(type(e))
-        return packet
+        ackPacket = self.waitForPacket(neb.PacketType_Ack, subSystem, command)
+        return ackPacket
         
     def waitForPacket(self, packetType, subSystem, command):
         try:
@@ -87,7 +72,7 @@ class NeblinaComm(object):
         # Send command to start streaming
         self.sendCommand(neb.Subsys_MotionEngine, streamingType, True)
 
-        packet = self.waitForAck()
+        packet = self.waitForAck(neb.Subsys_MotionEngine, streamingType)
         print('Got Ack: {0}'.format(packet))
 
         while(True):
