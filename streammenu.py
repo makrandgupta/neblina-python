@@ -106,7 +106,6 @@ class StreamMenu(cmd.Cmd):
 
         # Step 1 - Initialization
         self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
-        self.comm.comslip.receivePacketFromStream(self.comm.sc)
         self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming, True)
         print('Sending the DisableAllStreaming command, and waiting for a response...')
 
@@ -159,7 +158,7 @@ class StreamMenu(cmd.Cmd):
         self.comm.waitForAck(neb.Subsys_Storage,neb.StorageCmd_Record)
         packet = self.comm.waitForPacket(neb.PacketType_RegularResponse,\
             neb.Subsys_Storage, neb.StorageCmd_Record)
-        print('The acknowledge packet is received, and the session is closed successfully')
+        print('The acknowledge packet is received, and session %d is closed successfully' % sessionID)
 
     def do_flashPlayback(self, args):
         # Step 1 - Initialization
