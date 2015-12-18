@@ -118,13 +118,13 @@ class StreamMenu(cmd.Cmd):
 
         # Step 4 - wait for ack
         self.comm.waitForAck(neb.Subsys_Storage,neb.StorageCmd_EraseAll)
-        print('Acknowledge packet was received! Started erasing... This takes a couple of minutes...')
+        print('Acknowledge packet was received! Started erasing... This takes about 3 minutes...')
 
         # Step 5 - wait for the completion notice
         self.comm.waitForPacket(neb.PacketType_RegularResponse,\
             neb.Subsys_Storage, neb.StorageCmd_EraseAll)
 
-        print('Flash recorder is completely erased!')
+        print('Flash erase has completed successfully!')
 
     def do_flashRecord(self, args):
 
