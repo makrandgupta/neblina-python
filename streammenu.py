@@ -102,6 +102,30 @@ class StreamMenu(cmd.Cmd):
         self.comm.sendCommand(neb.Subsys_MotionEngine,\
             neb.MotCmd_DisableStreaming, True)
 
+    def do_flasherase(self, args):
+        # Step 1 - Initialization
+        self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
+        self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming, True)
+        print('Sending the DisableAllStreaming command, and waiting for a response...')
+
+        # Step 2 - wait for ack
+        self.comm.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming)
+        print('Acknowledge packet was received!')
+
+        # Step 3 - erase the flash command
+        self.comm.sendCommand(neb.Subsys_Storage, neb.StorageCmd_EraseAll, True)
+        print('Sent the EraseAll command, and waiting for a response...')
+
+        # Step 4 - wait for ack
+        self.comm.waitForAck(neb.Subsys_Storage,neb.StorageCmd_EraseAll)
+        print('Acknowledge packet was received! Started erasing... This takes a couple of minutes...')
+
+        # Step 5 - wait for the completion notice
+        self.comm.waitForPacket(neb.PacketType_RegularResponse,\
+            neb.Subsys_Storage, neb.StorageCmd_EraseAll)
+
+        print('Flash recorder is completely erased!')
+
     def do_flashRecord(self, args):
 
         # Step 1 - Initialization
