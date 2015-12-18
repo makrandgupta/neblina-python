@@ -7,6 +7,7 @@ import os
 import cmd
 import binascii
 import serial
+import serial.tools.list_ports
 import slip
 import neblina as neb
 import neblinacomm as nebcomm
@@ -16,13 +17,25 @@ import time
 
 class StreamMenu(cmd.Cmd):
     """docstring for StreamMenu"""
+    
     def __init__(self):
         cmd.Cmd.__init__(self)
-        # sc = serial.Serial(port='/dev/ttyACM0',baudrate=230400)
-        sc = serial.Serial(port='COM4',baudrate=230400)
-        self.comm = nebcomm.NeblinaComm(sc)
+
+        self.bigLine = '-------------------------------------------------------------------\n'
+        self.configFileName = 'streamconfig.txt'
         self.prompt = '>>'
         self.intro = "Welcome to the Neblina Streaming Menu!"
+        
+        # Check if config file exitst
+        if(not os.path.exists(self.configFileName)):
+            self.setCOMPortName()
+
+        # Read the config file to get the name
+        with open(self.configFileName, 'r') as configFile:
+                comPortName = configFile.readline()
+
+        sc = serial.Serial(port=comPortName,baudrate=230400)
+        self.comm = nebcomm.NeblinaComm(sc)
 
     ## Command definitions ##
     def do_hist(self, args):
@@ -49,6 +62,23 @@ class StreamMenu(cmd.Cmd):
         """
         ## The only reason to define this method is for the help text in the doc string
         cmd.Cmd.do_help(self, args)
+
+    def setCOMPortName(self):
+        portList = [port[0] for port in serial.tools.list_ports.comports()]
+        port = input('Select the COM port to use:' + '\n'.join(portList) + '\n' +  \
+            self.bigLine + self.prompt)
+        while(port not in portList):
+            print('{0} not in the available COM ports'.format(port))
+            port = input('Select the COM port to use:' + '\n'.join(portList[0]) + '\n' + \
+                self.bigLine + self.prompt)
+        
+        # Write it to the config file
+        configFile = open(self.configFileName, 'w')
+        configFile.write(port)
+        configFile.close()
+
+    def do_setCOMPort(self, args):
+        self.setCOMPortName()
 
     def do_getBatteryLevel(self, args):
         errorList = []
