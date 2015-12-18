@@ -57,8 +57,8 @@ MotCmd_TrajectoryRecStop    =   0x09 # stop recording orientation trajectory
 MotCmd_TrajectoryDistance   =   0x0A # calculating the distance from a pre-recorded orientation trajectory
 MotCmd_Pedometer            =   0x0B # streaming pedometer data
 MotCmd_MAG_Data             =   0x0C # streaming magnetometer data
-MotCmd_SittingStanding      =   0x0D # streaming magnetometer data
-MotCmd_AccRange             =   0x0E # streaming magnetometer data
+MotCmd_SittingStanding      =   0x0D # streaming sitting standing
+MotCmd_AccRange             =   0x0E # set accelerometer range
 MotCmd_DisableStreaming     =   0x0F # disable everything that is currently being streamed
 
 # Storage commands
@@ -299,38 +299,45 @@ class EulerAngleData(object):
         return "{0}us: yaw/pitch/roll:({1},{2},{3}))"\
         .format(self.timestamp,self.yaw, self.pitch, self.roll)
 
-StorageCommands = {
+StorageResponse = {
     StorageCmd_EraseAll         : BlankData,
     StorageCmd_Record           : FlashSessionData,
     StorageCmd_Playback         : FlashSessionData
 }
 
-StorageCommandStrings = {
+StorageStrings = {
     StorageCmd_EraseAll         : "Erase",
     StorageCmd_Record           : "Record",
     StorageCmd_Playback         : "Playback"
 }
 
-PowerManagementCommands = {
+PowerManagementResponses = {
     PowCmd_GetBatteryLevel      : BatteryLevelData,
 }
 
-PowerManagementCommandStrings = {
+PowerManagementStrings = {
     PowCmd_GetBatteryLevel      : "BatteryLevel",
 }
 
-MotionCommands = {
-    MotCmd_EulerAngle           : EulerAngleData,
-    MotCmd_IMU_Data             : IMUData,
-    MotCmd_Pedometer            : PedometerData,
-    MotCmd_MAG_Data             : MAGData,
-    MotCmd_Quaternion           : QuaternionData,
-    MotCmd_TrajectoryDistance   : TrajectoryDistanceData,
-    MotCmd_ExtForce             : ExternalForceData,
-    MotCmd_MotionState          : MotionStateData,
+MotionResponseData = {
+    MotCmd_Downsample           : BlankData,              # Downsampling factor definition
+    MotCmd_MotionState          : MotionStateData,        # streaming Motion State
+    MotCmd_IMU_Data             : IMUData,                # streaming the 6-axis IMU data
+    MotCmd_Quaternion           : QuaternionData,         # streaming the quaternion data
+    MotCmd_EulerAngle           : EulerAngleData,         # streaming the Euler angles
+    MotCmd_ExtForce             : ExternalForceData,      # streaming the external force
+    MotCmd_SetFusionType        : BlankData,              # setting the Fusion type to either 6-axis or 9-axis
+    MotCmd_TrajectoryRecStart   : TrajectoryDistanceData, # start recording orientation trajectory
+    MotCmd_TrajectoryRecStop    : TrajectoryDistanceData, # stop recording orientation trajectory
+    MotCmd_TrajectoryDistance   : TrajectoryDistanceData, # calculating the distance from a pre-recorded orientation trajectory
+    MotCmd_Pedometer            : PedometerData,          # streaming pedometer data
+    MotCmd_MAG_Data             : MAGData,                # streaming magnetometer data
+    MotCmd_SittingStanding      : BlankData,              # streaming sitting standing
+    MotCmd_AccRange             : BlankData,              # set accelerometer range
+    MotCmd_DisableStreaming     : BlankData,              # disable everything that is currently being streamed
 }
 
-MotionCommandsStrings = {
+MotionStrings = {
     MotCmd_Downsample           : "Downsample",
     MotCmd_EulerAngle           : "EulerAngle",
     MotCmd_IMU_Data             : "IMU",
@@ -375,11 +382,11 @@ class NebHeader(object):
     def __str__(self):
         stringFormat = "packetType = {0}, subSystem = {1}, packetLength = {2}, crc = {3}, command = {4}"
         if self.subSystem == Subsys_PowerManagement:
-            commandString = PowerManagementCommandStrings[self.command]
+            commandString = PowerManagementStrings[self.command]
         elif self.subSystem == Subsys_MotionEngine:
-            commandString = MotionCommandsStrings[self.command]
+            commandString = MotionStrings[self.command]
         elif self.subSystem == Subsys_Storage:
-            commandString = StorageCommandStrings[self.command]
+            commandString = StorageStrings[self.command]
         else:
             commandString = ''
         stringDescriptor = stringFormat.format(PacketTypeStrings[self.packetType], \
@@ -518,11 +525,11 @@ class NebResponsePacket(object):
 
             # Build the data object based on the subsystem and command.
             if subSystem == Subsys_PowerManagement:
-                self.data = PowerManagementCommands[self.header.command](dataString)
+                self.data = PowerManagementResponses[self.header.command](dataString)
             elif subSystem == Subsys_MotionEngine:
-                self.data = MotionCommands[self.header.command](dataString)
+                self.data = MotionResponseData[self.header.command](dataString)
             elif subSystem == Subsys_Storage:
-                self.data = StorageCommands[self.header.command](dataString)
+                self.data = StorageResponse[self.header.command](dataString)
             else:
                 raise InvalidPacketFormatError('Invalid subsystem.')
         elif(header != None and data != None):
