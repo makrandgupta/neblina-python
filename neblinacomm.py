@@ -32,7 +32,7 @@ class NeblinaComm(object):
                 packet.header.command != command):
                 packetList.append(packet)
                 packet = self.receivePacket()
-                #print('waiting and got: {0}'.format(packet))
+                print('waiting and got: {0}'.format(packet))
         except NotImplementedError as nie:
             print('Dropped bad packet')
             print(nie)
@@ -60,7 +60,7 @@ class NeblinaComm(object):
             print('CRCError')
             print(crce)
         except Exception as e:
-            print(e)
+            print(type(e))
         return packet
         
     def waitForPacket(self, packetType, subSystem, command):

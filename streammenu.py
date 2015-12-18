@@ -2,6 +2,7 @@
 # (C) 2015 Motsai Research Inc.
 # Author: Alexandre Courtemanche (a.courtemanche@motsai.com)
 
+from __future__ import print_function
 import os
 import cmd
 import binascii
@@ -11,6 +12,7 @@ import neblina as neb
 import neblinacomm as nebcomm
 import sys
 import time
+
 
 class StreamMenu(cmd.Cmd):
     """docstring for StreamMenu"""
@@ -74,51 +76,60 @@ class StreamMenu(cmd.Cmd):
 
         # Step 1 - Initialization
         self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
+        self.comm.comslip.receivePacketFromStream(self.comm.sc)
         self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming, True)
+        print('Sending the DisableAllStreaming command, and waiting for a response...')
 
         # Step 2 - wait for ack
         self.comm.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming)
-
-        print ("Initialization passed!")
+        print('Acknowledge packet was received!')
 
         # Step 3 - Start recording
         self.comm.sendCommand(neb.Subsys_Storage, neb.StorageCmd_Record, True)
-
+        print('Sending the command to start the flash recorder, and waiting for a response...')
         # Step 4 - wait for ack and the session number
         self.comm.waitForAck(neb.Subsys_Storage, neb.StorageCmd_Record)
         packet = self.comm.waitForPacket(neb.PacketType_RegularResponse,\
             neb.Subsys_Storage, neb.StorageCmd_Record)
+        print('Acknowledge packet was received with the session number %d!' % packet.data.sessionID)
         sessionID = packet.data.sessionID
 
-        print(packet)
-        print('sessionID = {0}'.format(sessionID))
+        #print(packet)
+        #print('sessionID = {0}'.format(sessionID))
 
         # Step 5 - enable IMU streaming
         self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
+        print('Sending the enable IMU streaming command, and waiting for a response...')
 
         # Step 6 - wait for ack
         self.comm.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data)
+        print('Acknowledge packet was received!')
         
         # Step 7 - continue recording for n samples
         n = 1000
-        print ('Recording %d packets takes about %d seconds' % (n,n/50))
+        # print ('Recording %d packets takes about %d seconds' % (n,n/50))
         for x in range(1, n+1):
             self.comm.receivePacket()
-            #print('Recording packet %d out of %d' % (x, n))
+            print('Recording %d packets, current packet: %d\r' % (n, x), end="", flush=True)
 
+        print('\n')
         # Step 8 - Stop the streaming
         self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, False)
+        print('Sending the stop streaming command, and waiting for a response...')
 
         # Step 9 - wait for ack
         self.comm.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data)
+        print('Acknowledge packet was received!')
 
         # Step 10 - Stop the recording
         self.comm.sendCommand(neb.Subsys_Storage,neb.StorageCmd_Record, False)
+        print('Sending the command to stop the flash recorder, and waiting for a response...')
 
         # Step 11 - wait for ack and the closed session confirmation
         self.comm.waitForAck(neb.Subsys_Storage,neb.StorageCmd_Record)
         packet = self.comm.waitForPacket(neb.PacketType_RegularResponse,\
             neb.Subsys_Storage, neb.StorageCmd_Record)
+        print('The acknowledge packet is received, and the session is closed successfully')
 
     def do_flashPlayback(self, args):
         # Step 1 - Initialization
@@ -133,9 +144,12 @@ class StreamMenu(cmd.Cmd):
         elif(len(args) > 0):
             mySessionID = int(args[0])
         self.comm.sendCommand(neb.Subsys_Storage, neb.StorageCmd_Playback, True, sessionID=mySessionID)
+        #wait for confirmation
+        print('Playback routine started...');
         packetList = self.comm.storePacketsUntil(neb.PacketType_RegularResponse, neb.Subsys_Storage, neb.StorageCmd_Playback)
-        for packet in packetList:
-            print(packet.data)
+        print('Finished playback!')
+        #for packet in packetList:
+            #print(packet.data)
 
     ## Override methods in Cmd object ##
     def preloop(self):
