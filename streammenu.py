@@ -102,7 +102,7 @@ class StreamMenu(cmd.Cmd):
         self.comm.sendCommand(neb.Subsys_MotionEngine,\
             neb.MotCmd_DisableStreaming, True)
 
-    def do_flasherase(self, args):
+    def do_flashErase(self, args):
         # Step 1 - Initialization
         self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
         self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming, True)
