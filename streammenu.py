@@ -180,7 +180,7 @@ class StreamMenu(cmd.Cmd):
         mySessionID = packet.data.sessionID
         print('Playback routine started from session number %d' % mySessionID);
         packetList = self.comm.storePacketsUntil(neb.PacketType_RegularResponse, neb.Subsys_Storage, neb.StorageCmd_Playback)
-        print('Finished playback!')
+        print('Finished playback from session number %d!' % mySessionID)
         #for packet in packetList:
             #print(packet.data)
 
