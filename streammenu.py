@@ -129,7 +129,6 @@ class StreamMenu(cmd.Cmd):
     def do_flashRecord(self, args):
 
         # Step 1 - Initialization
-        self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
         self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming, True)
         print('Sending the DisableAllStreaming command, and waiting for a response...')
 
