@@ -58,3 +58,9 @@ target/
 
 # Generated binary files
 generated/
+
+# Config file
+streamconfig.txt
+
+# IDE related files
+.idea/*
