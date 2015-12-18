@@ -178,7 +178,7 @@ class StreamMenu(cmd.Cmd):
         packet = self.comm.waitForPacket(neb.PacketType_RegularResponse,\
             neb.Subsys_Storage, neb.StorageCmd_Playback)
         mySessionID = packet.data.sessionID
-        #print('Playback routine started from session number %d' % mySessionID);
+        print('Playback routine started from session number %d' % mySessionID);
         packetList = self.comm.storePacketsUntil(neb.PacketType_RegularResponse, neb.Subsys_Storage, neb.StorageCmd_Playback)
         print('Finished playback!')
         #for packet in packetList:
