@@ -52,7 +52,7 @@ class NeblinaComm(object):
         try:
             packet = self.receivePacket()
             #print('waiting and got: {0}'.format(packet))
-            while(packet.header.packetType != packetType or \
+            while( ( (packet.header.packetType != packetType) and (packet.header.packetType != neb.PacketType_ErrorLogResp) ) or \
                 packet.header.subSystem != subSystem or \
                 packet.header.command != command):
                 packet = self.receivePacket()

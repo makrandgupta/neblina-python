@@ -129,6 +129,7 @@ class StreamMenu(cmd.Cmd):
     def do_flashRecord(self, args):
 
         # Step 1 - Initialization
+        self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
         self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming, True)
         print('Sending the DisableAllStreaming command, and waiting for a response...')
 
@@ -188,7 +189,7 @@ class StreamMenu(cmd.Cmd):
 
     def do_flashPlayback(self, args):
         # Step 1 - Initialization
-        #self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
+        self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
         # Step 2 - wait for ack
         #self.comm.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data)
 
@@ -202,12 +203,16 @@ class StreamMenu(cmd.Cmd):
         #wait for confirmation
         packet = self.comm.waitForPacket(neb.PacketType_RegularResponse,\
             neb.Subsys_Storage, neb.StorageCmd_Playback)
-        mySessionID = packet.data.sessionID
-        print('Playback routine started from session number %d' % mySessionID);
-        packetList = self.comm.storePacketsUntil(neb.PacketType_RegularResponse, neb.Subsys_Storage, neb.StorageCmd_Playback)
-        print('Finished playback from session number %d!' % mySessionID)
-        #for packet in packetList:
-            #print(packet.data)
+        if(packet.header.packetType==neb.PacketType_ErrorLogResp):
+            print('Playback failed due to an invalid session number request!')
+            return
+        else:
+            mySessionID = packet.data.sessionID
+            print('Playback routine started from session number %d' % mySessionID);
+            packetList = self.comm.storePacketsUntil(neb.PacketType_RegularResponse, neb.Subsys_Storage, neb.StorageCmd_Playback)
+            print('Finished playback from session number %d!' % mySessionID)
+            #for packet in packetList:
+                #print(packet.data)
 
     ## Override methods in Cmd object ##
     def preloop(self):
