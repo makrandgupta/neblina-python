@@ -113,7 +113,7 @@ class NebFlashPlaybackCommandData(object):
         return "Flash Command Session {0}: {1}"\
         .format(self.sessionID, openCloseString)
 
-Neblina_DownsampleCommandPacketData_fmt = ">I H 10s" # Timestamp (unused for now), downsample factor
+Neblina_DownsampleCommandPacketData_fmt = "<I H 10s" # Timestamp (unused for now), downsample factor
 class NebDownsampleCommandData(NebCommandData):
     """docstring for NebDownsampleCommandData"""
 

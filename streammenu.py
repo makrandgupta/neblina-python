@@ -106,6 +106,18 @@ class StreamMenu(cmd.Cmd):
         self.comm.sendCommand(neb.Subsys_MotionEngine,\
             neb.MotCmd_ResetTimeStamp, True)
 
+    def do_downsample(self, args):
+        if(len(args) <= 0):
+            print('The argument should be a multiplicand of 20, i.e., 20, 40, 60, etc!')
+            return
+        n = int(args)
+        if ((n % 20)!=0):
+            print('The argument should be a multiplicand of 20, i.e., 20, 40, 60, etc!')
+            return
+        self.comm.sendCommand(neb.Subsys_MotionEngine,\
+            neb.MotCmd_Downsample, n)
+
+
     def do_setAccFullScale(self, args):
         if(len(args) <= 0):
             print('The argument should be 2, 4, 8, or 16, representing the accelerometer range in g')
