@@ -124,7 +124,7 @@ class StreamMenu(cmd.Cmd):
             self.comm.sendCommand(neb.Subsys_MotionEngine,\
             neb.MotCmd_AccRange, 2)
         elif (n==16):
-            #send the command with the mode bye equal to "0x03
+            #send the command with the mode byte equal to "0x03
             self.comm.sendCommand(neb.Subsys_MotionEngine,\
             neb.MotCmd_AccRange, 3)
         else:
