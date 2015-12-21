@@ -60,6 +60,7 @@ MotCmd_MAG_Data             =   0x0C # streaming magnetometer data
 MotCmd_SittingStanding      =   0x0D # streaming sitting standing
 MotCmd_AccRange             =   0x0E # set accelerometer range
 MotCmd_DisableStreaming     =   0x0F # disable everything that is currently being streamed
+MotCmd_ResetTimeStamp       =   0x10 # Reset timestamp
 
 # Storage commands
 StorageCmd_EraseAll         =   0x01 # Full-erase for the on-chip NOR flash memory

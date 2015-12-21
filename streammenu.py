@@ -102,6 +102,35 @@ class StreamMenu(cmd.Cmd):
         self.comm.sendCommand(neb.Subsys_MotionEngine,\
             neb.MotCmd_DisableStreaming, True)
 
+    def do_resetTimestamp(self, args):
+        self.comm.sendCommand(neb.Subsys_MotionEngine,\
+            neb.MotCmd_ResetTimeStamp, True)
+
+    def do_setAccFullScale(self, args):
+        if(len(args) <= 0):
+            print('The argument should be 2, 4, 8, or 16, representing the accelerometer range in g')
+            return
+        n = int(args)
+        if (n==2):
+            # send the command with the mode byte equal to "0x00"
+            self.comm.sendCommand(neb.Subsys_MotionEngine,\
+            neb.MotCmd_AccRange, 0)
+        elif (n==4):
+            # send the command with the mode byte equal to "0x01"
+            self.comm.sendCommand(neb.Subsys_MotionEngine,\
+            neb.MotCmd_AccRange, 1)
+        elif (n==8):
+            #send the command with the mode byte equal to "0x02"
+            self.comm.sendCommand(neb.Subsys_MotionEngine,\
+            neb.MotCmd_AccRange, 2)
+        elif (n==16):
+            #send the command with the mode bye equal to "0x03
+            self.comm.sendCommand(neb.Subsys_MotionEngine,\
+            neb.MotCmd_AccRange, 3)
+        else:
+            print('The argument should be 2, 4, 8, or 16, representing the accelerometer range in g')
+            return
+
     def do_flashErase(self, args):
         # Step 1 - Initialization
         self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
