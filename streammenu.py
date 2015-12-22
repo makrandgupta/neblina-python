@@ -83,10 +83,11 @@ class StreamMenu(cmd.Cmd):
         if len(arguments) < 2:
             print('EEPROMWrite <pageNumber> <8-byte string>')
             return
-        writeBytes = arguments[1].encode('utf-8')
-        if len(arguments[1]) != 8:
-            print('The data string must be 8 bytes')
+        if len(arguments[1]) > 8:
+            print('The data string must less than 8 bytes')
             return
+        arguments[1] = arguments[1].rjust(8) # Pad the string to 8 bytes
+        writeBytes = arguments[1].encode('utf-8')
         writePageNumber = int(arguments[0])
         if writePageNumber < 0 or writePageNumber > 255:
             print('Page number must be between 0 and 255 inclusively')
