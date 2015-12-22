@@ -33,8 +33,19 @@ class StreamMenu(cmd.Cmd):
         # Read the config file to get the name
         with open(self.configFileName, 'r') as configFile:
                 comPortName = configFile.readline()
-
-        sc = serial.Serial(port=comPortName,baudrate=230400)
+        
+        # Try to open the serial COM port
+        sc = None
+        while sc is None:
+            try:
+                sc = serial.Serial(port=comPortName,baudrate=230400)
+            except serial.serialutil.SerialException as se:
+                if 'Device or resource busy:' in se.__str__():
+                    print('Opening COM port is taking a little while, please stand by...')
+                else:
+                    print('se: {0}'.format(se))
+                time.sleep(1)
+        
         self.comm = nebcomm.NeblinaComm(sc)
 
     ## Command definitions ##
