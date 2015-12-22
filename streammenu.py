@@ -77,6 +77,48 @@ class StreamMenu(cmd.Cmd):
         configFile.write(port)
         configFile.close()
 
+    def do_EEPROMWrite(self, args):
+        arguments = args.split(' ')
+
+        if len(arguments) < 2:
+            print('EEPROMWrite <pageNumber> <8-byte string>')
+            return
+        writeBytes = arguments[1].encode('utf-8')
+        if len(arguments[1]) != 8:
+            print('The data string must be 8 bytes')
+            return
+        writePageNumber = int(arguments[0])
+        if writePageNumber < 0 or writePageNumber > 255:
+            print('Page number must be between 0 and 255 inclusively')
+            return
+
+        self.comm.sendCommand(neb.Subsys_EEPROM, neb.EEPROMCmd_Write, False,\
+            pageNumber=writePageNumber, dataBytes=writeBytes)
+        packet = self.comm.waitForAck(neb.Subsys_EEPROM, neb.EEPROMCmd_Write)
+        print('Write to page #{0} of dataBytes {1} was successful.'\
+            .format(writePageNumber, writeBytes))
+
+    def do_EEPROMRead(self, args):
+        arguments = args.split(' ')
+        print(arguments)
+        print(len(arguments))
+        if (arguments[0]) == '' or len(arguments) != 1:
+            print('EEPROMRead <pageNumber>')
+            return
+
+        readPageNumber = int(arguments[0])
+        if readPageNumber < 0 or readPageNumber > 255:
+            print('Page number must be between 0 and 255 inclusively')
+            return
+
+        self.comm.sendCommand(neb.Subsys_EEPROM, neb.EEPROMCmd_Read, True, pageNumber=readPageNumber)
+        packet = self.comm.waitForAck(neb.Subsys_EEPROM, neb.EEPROMCmd_Read)
+        packet = self.comm.waitForPacket(neb.PacketType_RegularResponse, neb.Subsys_EEPROM, neb.EEPROMCmd_Read)
+        try:
+            print('Got \'{0}\' at page #{1}'.format(packet.data.dataBytes.decode('utf-8'), readPageNumber))
+        except UnicodeDecodeError as ude:
+            print('Got {0} at page #{1}'.format(packet.data.dataBytes, readPageNumber))
+
     def do_setCOMPort(self, args):
         self.setCOMPortName()
 

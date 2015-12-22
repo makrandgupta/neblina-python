@@ -67,6 +67,10 @@ StorageCmd_EraseAll         =   0x01 # Full-erase for the on-chip NOR flash memo
 StorageCmd_Record           =   0x02 # Either start a new recording session, or close the currently open one
 StorageCmd_Playback         =   0x03 # Either open a previously recorded session for playback or close the one that is currently open and being played
 
+# EEPROM Command
+EEPROMCmd_Read              =   0x01 # Read a page
+EEPROMCmd_Write             =   0x02 # Write to a page
+
 Neblina_CommandPacketData_fmt = "<I B 11s" # Timestamp (unused for now), enable/disable
 class NebCommandData(object):
     """docstring for NebCommandData"""
@@ -122,6 +126,31 @@ class NebDownsampleCommandData(NebCommandData):
         commandDataString = struct.pack(Neblina_DownsampleCommandPacketData_fmt,\
             self.timestamp, self.enable, garbage)
         return commandDataString
+
+Neblina_EEPROMCommandPacketData_fmt = "<H 8s 6s" # Page number, 8 bytes R/W Data
+class NebEEPROMCommandData(object):
+    """docstring for NebEEPROMCommandData"""
+    def __init__(self, readWrite, pageNumber, dataBytes=b'00'*8):
+        self.readWrite = readWrite # read = False, write = True
+        self.pageNumber = pageNumber
+        self.dataBytes = dataBytes
+
+    def encode(self):
+        garbage = b'00'*6
+        commandDataString = struct.pack(Neblina_EEPROMCommandPacketData_fmt,\
+            self.pageNumber, self.dataBytes, garbage)
+        return commandDataString
+
+Neblina_EEPROMRead_fmt = "<H 8s 6s" # Page number, 8 bytes Read Data
+class EEPROMReadData(object):
+    """docstring for EEPROMData"""
+    def __init__(self, dataString):
+        self.pageNumber, \
+        self.dataBytes,\
+        garbage = struct.unpack( Neblina_EEPROMRead_fmt, dataString )
+
+    def __str__(self):
+        return "Page# {0} Data Bytes:{1} ".format(self.pageNumber, self.dataBytes)
 
 Neblina_BatteryLevel_fmt = "<I H 10s" # Battery Level (%)
 class BatteryLevelData(object):
@@ -350,6 +379,15 @@ MotionStrings = {
     MotCmd_MotionState          : "MotionState",
 }
 
+EEPROMResponse = {
+    EEPROMCmd_Read              : EEPROMReadData,
+    EEPROMCmd_Write             : EEPROMReadData,
+}
+
+EEPROMStrings = {
+    EEPROMCmd_Read              : "Read",
+    EEPROMCmd_Write             : "Write",
+}
 
 # Header = 4 bytes
 Neblina_PacketHeader_fmt = "<4B"
@@ -388,6 +426,8 @@ class NebHeader(object):
             commandString = MotionStrings[self.command]
         elif self.subSystem == Subsys_Storage:
             commandString = StorageStrings[self.command]
+        elif self.subSystem == Subsys_EEPROM:
+            commandString = EEPROMStrings[self.command]
         else:
             commandString = ''
         stringDescriptor = stringFormat.format(PacketTypeStrings[self.packetType], \
@@ -403,6 +443,11 @@ class NebCommandPacket(object):
             self.data = NebDownsampleCommandData(enable)
         elif(subSystem == Subsys_Storage and commandType == StorageCmd_Playback ):
             self.data = NebFlashPlaybackCommandData(enable, kwargs['sessionID'])
+        elif(subSystem == Subsys_EEPROM):
+            if( commandType == EEPROMCmd_Read):
+                self.data = NebEEPROMCommandData(False, kwargs['pageNumber'])
+            elif( commandType == EEPROMCmd_Write ):
+                self.data = NebEEPROMCommandData(True, kwargs['pageNumber'], kwargs['dataBytes'])
         else:
             self.data = NebCommandData(enable)
         self.header = NebHeader(subSystem, PacketType_Command, commandType)
@@ -531,6 +576,8 @@ class NebResponsePacket(object):
                 self.data = MotionResponseData[self.header.command](dataString)
             elif subSystem == Subsys_Storage:
                 self.data = StorageResponse[self.header.command](dataString)
+            elif subSystem == Subsys_EEPROM:
+                self.data = EEPROMResponse[self.header.command](dataString)
             else:
                 raise InvalidPacketFormatError('Invalid subsystem.')
         elif(header != None and data != None):
