@@ -96,6 +96,18 @@ class NeblinaComm(object):
             except Exception as e:
                 print(e)
 
+    def EEPROMRead(self, readPageNumber):
+        self.sendCommand(neb.Subsys_EEPROM, neb.EEPROMCmd_Read, True, pageNumber=readPageNumber)
+        packet = self.waitForAck(neb.Subsys_EEPROM, neb.EEPROMCmd_Read)
+        packet = self.waitForPacket(neb.PacketType_RegularResponse, neb.Subsys_EEPROM, neb.EEPROMCmd_Read)
+        return packet.data.dataBytes
+
+    def EEPROMWrite(self, writePageNumber, dataString):
+        self.sendCommand(neb.Subsys_EEPROM, neb.EEPROMCmd_Write, False,\
+            pageNumber=writePageNumber, dataBytes=dataString)
+        packet = self.waitForAck(neb.Subsys_EEPROM, neb.EEPROMCmd_Write)
+
+
 
 
 

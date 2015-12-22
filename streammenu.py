@@ -91,10 +91,9 @@ class StreamMenu(cmd.Cmd):
         if writePageNumber < 0 or writePageNumber > 255:
             print('Page number must be between 0 and 255 inclusively')
             return
+        
+        self.comm.EEPROMWrite(writePageNumber, writeBytes)
 
-        self.comm.sendCommand(neb.Subsys_EEPROM, neb.EEPROMCmd_Write, False,\
-            pageNumber=writePageNumber, dataBytes=writeBytes)
-        packet = self.comm.waitForAck(neb.Subsys_EEPROM, neb.EEPROMCmd_Write)
         print('Write to page #{0} of dataBytes {1} was successful.'\
             .format(writePageNumber, writeBytes))
 
@@ -111,13 +110,12 @@ class StreamMenu(cmd.Cmd):
             print('Page number must be between 0 and 255 inclusively')
             return
 
-        self.comm.sendCommand(neb.Subsys_EEPROM, neb.EEPROMCmd_Read, True, pageNumber=readPageNumber)
-        packet = self.comm.waitForAck(neb.Subsys_EEPROM, neb.EEPROMCmd_Read)
-        packet = self.comm.waitForPacket(neb.PacketType_RegularResponse, neb.Subsys_EEPROM, neb.EEPROMCmd_Read)
+        dataBytes = self.comm.EEPROMRead(readPageNumber)
+
         try:
-            print('Got \'{0}\' at page #{1}'.format(packet.data.dataBytes.decode('utf-8'), readPageNumber))
+            print('Got \'{0}\' at page #{1}'.format(dataBytes.decode('utf-8'), readPageNumber))
         except UnicodeDecodeError as ude:
-            print('Got {0} at page #{1}'.format(packet.data.dataBytes, readPageNumber))
+            print('Got {0} at page #{1}'.format(dataBytes, readPageNumber))
 
     def do_setCOMPort(self, args):
         self.setCOMPortName()
