@@ -277,6 +277,28 @@ class ut_NeblinaPackets(unittest.TestCase):
         self.assertEqual(packetBytes[3], neb.StorageCmd_Playback)
         self.assertEqual(packetBytes[8], 0x00)
 
+        readCommandPacket = neb.NebCommandPacket(neb.Subsys_EEPROM, neb.EEPROMCmd_Read, True, pageNumber=5)
+        packetBytes = bytearray(readCommandPacket.stringEncode())
+        self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_EEPROM)
+        self.assertEqual(packetBytes[3], neb.EEPROMCmd_Read)
+        self.assertEqual(packetBytes[4], 0x05)
+        
+        writeCommandPacket = neb.NebCommandPacket(neb.Subsys_EEPROM, neb.EEPROMCmd_Write, False,\
+          pageNumber=11, dataBytes=b'\xde\xad\xbe\xef\xba\xbe\x92\x74')
+        packetBytes = bytearray(writeCommandPacket.stringEncode())
+        self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_EEPROM)
+        self.assertEqual(packetBytes[3], neb.EEPROMCmd_Write)
+        self.assertEqual(packetBytes[4], 0x0B)
+        self.assertEqual(packetBytes[5], 0x00)
+        self.assertEqual(packetBytes[6], 0xde)
+        self.assertEqual(packetBytes[7], 0xad)
+        self.assertEqual(packetBytes[8], 0xbe)
+        self.assertEqual(packetBytes[9], 0xef)
+        self.assertEqual(packetBytes[10], 0xba)
+        self.assertEqual(packetBytes[11], 0xbe)
+        self.assertEqual(packetBytes[12], 0x92)
+        self.assertEqual(packetBytes[13], 0x74)
+
 
     def testCreateEulerPackets(self):
         print("\n*** Testing Encoding and Decoding of Euler Angle Packets ***")

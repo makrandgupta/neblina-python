@@ -77,6 +77,47 @@ class StreamMenu(cmd.Cmd):
         configFile.write(port)
         configFile.close()
 
+    def do_EEPROMWrite(self, args):
+        arguments = args.split(' ')
+
+        if len(arguments) < 2:
+            print('EEPROMWrite <pageNumber> <8-byte string>')
+            return
+        if len(arguments[1]) > 8:
+            print('The data string must less than 8 bytes')
+            return
+        arguments[1] = arguments[1].rjust(8) # Pad the string to 8 bytes
+        writeBytes = arguments[1].encode('utf-8')
+        writePageNumber = int(arguments[0])
+        if writePageNumber < 0 or writePageNumber > 255:
+            print('Page number must be between 0 and 255 inclusively')
+            return
+        
+        self.comm.EEPROMWrite(writePageNumber, writeBytes)
+
+        print('Write to page #{0} of dataBytes {1} was successful.'\
+            .format(writePageNumber, writeBytes))
+
+    def do_EEPROMRead(self, args):
+        arguments = args.split(' ')
+        print(arguments)
+        print(len(arguments))
+        if (arguments[0]) == '' or len(arguments) != 1:
+            print('EEPROMRead <pageNumber>')
+            return
+
+        readPageNumber = int(arguments[0])
+        if readPageNumber < 0 or readPageNumber > 255:
+            print('Page number must be between 0 and 255 inclusively')
+            return
+
+        dataBytes = self.comm.EEPROMRead(readPageNumber)
+
+        try:
+            print('Got \'{0}\' at page #{1}'.format(dataBytes.decode('utf-8'), readPageNumber))
+        except UnicodeDecodeError as ude:
+            print('Got {0} at page #{1}'.format(dataBytes, readPageNumber))
+
     def do_setCOMPort(self, args):
         self.setCOMPortName()
 
