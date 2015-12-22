@@ -211,7 +211,6 @@ class StreamMenu(cmd.Cmd):
     def do_flashRecord(self, args):
 
         # Step 1 - Initialization
-        self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
         self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming, True)
         print('Sending the DisableAllStreaming command, and waiting for a response...')
 
@@ -270,11 +269,7 @@ class StreamMenu(cmd.Cmd):
         print('The acknowledge packet is received, and session %d is closed successfully' % sessionID)
 
     def do_flashPlayback(self, args):
-        # Step 1 - Initialization
-        self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
-        # Step 2 - wait for ack
-        #self.comm.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data)
-
+       
         #print(args[0])
         if(len(args) <= 0):
             mySessionID = 65535

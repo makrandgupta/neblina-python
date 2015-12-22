@@ -579,7 +579,7 @@ class NebResponsePacket(object):
             elif subSystem == Subsys_EEPROM:
                 self.data = EEPROMResponse[self.header.command](dataString)
             else:
-                raise InvalidPacketFormatError('Invalid subsystem.')
+                self.data = dataString
         elif(header != None and data != None):
             self.header = header
             self.data = data
