@@ -32,6 +32,7 @@ class NeblinaComm(object):
                 packet.header.command != command):
                 packetList.append(packet)
                 packet = self.receivePacket()
+                # if ( (packet.header.subSystem!=0x01) or (packet.header.packetType!=neb.PacketType_RegularResponse) or (packet.header.command!=0x03) ):
                 print('waiting and got: {0}'.format(packet.data))
         except NotImplementedError as nie:
             print('Dropped bad packet')
