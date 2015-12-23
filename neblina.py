@@ -329,7 +329,7 @@ class EulerAngleData(object):
         return "{0}us: yaw/pitch/roll:({1},{2},{3}))"\
         .format(self.timestamp,self.yaw, self.pitch, self.roll)
 
-StorageResponse = {
+StorageResponses = {
     StorageCmd_EraseAll         : BlankData,
     StorageCmd_Record           : FlashSessionData,
     StorageCmd_Playback         : FlashSessionData
@@ -349,7 +349,7 @@ PowerManagementStrings = {
     PowCmd_GetBatteryLevel      : "BatteryLevel",
 }
 
-MotionResponseData = {
+MotionResponses = {
     MotCmd_Downsample           : BlankData,              # Downsampling factor definition
     MotCmd_MotionState          : MotionStateData,        # streaming Motion State
     MotCmd_IMU_Data             : IMUData,                # streaming the 6-axis IMU data
@@ -379,7 +379,7 @@ MotionStrings = {
     MotCmd_MotionState          : "MotionState",
 }
 
-EEPROMResponse = {
+EEPROMResponses = {
     EEPROMCmd_Read              : EEPROMReadData,
     EEPROMCmd_Write             : EEPROMReadData,
 }
@@ -573,11 +573,11 @@ class NebResponsePacket(object):
             if subSystem == Subsys_PowerManagement:
                 self.data = PowerManagementResponses[self.header.command](dataString)
             elif subSystem == Subsys_MotionEngine:
-                self.data = MotionResponseData[self.header.command](dataString)
+                self.data = MotionResponses[self.header.command](dataString)
             elif subSystem == Subsys_Storage:
-                self.data = StorageResponse[self.header.command](dataString)
+                self.data = StorageResponses[self.header.command](dataString)
             elif subSystem == Subsys_EEPROM:
-                self.data = EEPROMResponse[self.header.command](dataString)
+                self.data = EEPROMResponses[self.header.command](dataString)
             else:
                 self.data = dataString
         elif(header != None and data != None):
