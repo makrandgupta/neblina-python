@@ -246,7 +246,10 @@ class StreamMenu(cmd.Cmd):
             n = int(args)
         # print ('Recording %d packets takes about %d seconds' % (n,n/50))
         for x in range(1, n+1):
-            self.comm.receivePacket()
+            packet = self.comm.receivePacket()
+            while ((packet.header.subSystem!=neb.Subsys_MotionEngine) or (packet.header.packetType!=neb.PacketType_RegularResponse) or (packet.header.command!=neb.MotCmd_IMU_Data)):
+                packet = self.comm.receivePacket()
+                continue
             print('Recording %d packets, current packet: %d\r' % (n, x), end="", flush=True)
 
         print('\n')

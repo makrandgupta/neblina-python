@@ -24,6 +24,7 @@ class NeblinaComm(object):
 
     def storePacketsUntil(self, packetType, subSystem, command):
         packetList = []
+        packetCounter = 0
         try:
             packet = self.receivePacket()
             #print('waiting and got: {0}'.format(packet))
@@ -31,6 +32,7 @@ class NeblinaComm(object):
                 packet.header.subSystem != subSystem or \
                 packet.header.command != command):
                 if (packet.header.subSystem!=neb.Subsys_Debug):
+                    packetCounter = packetCounter + 1
                     print('waiting and got: {0}'.format(packet.data))
                     packetList.append(packet)
                 packet = self.receivePacket()
@@ -43,6 +45,7 @@ class NeblinaComm(object):
             print(crce)
         except Exception as e:
             print(type(e))
+        print('Total IMU Packets Read: %d' %packetCounter)
         return packetList
 
     # Helper Functions
