@@ -129,15 +129,13 @@ class ut_NeblinaPackets(unittest.TestCase):
         print("\n*** Testing Pedometer Decoding ***")
         packets, errorList = self.buildPacketListFromSLIP("SampleData/PedometerStream.bin")
         # Make sure the beginning garbage packet was not recorded
-        self.assertEqual(len(packets), 6)
+        self.assertEqual(len(packets), 7)
         self.assertEqual(type(errorList[0]), NotImplementedError)
-        # Make sure the invalid subsystem error has been detected
-        self.assertEqual(type(errorList[1]), neb.InvalidPacketFormatError)
         # Check pedometer data decoding
-        self.assertEqual(packets[4].data.timestamp, 19057720)
-        self.assertEqual(packets[4].data.stepCount, 4)
-        self.assertEqual(packets[4].data.stepsPerMinute, 104)
-        self.assertEqual(packets[4].data.walkingDirection, -180.0)
+        self.assertEqual(packets[5].data.timestamp, 19057720)
+        self.assertEqual(packets[5].data.stepCount, 4)
+        self.assertEqual(packets[5].data.stepsPerMinute, 104)
+        self.assertEqual(packets[5].data.walkingDirection, -180.0)
 
     def testDecodeQuat(self):
         print("\n*** Testing Quaternion Stream Decoding ***")
@@ -222,8 +220,8 @@ class ut_NeblinaPackets(unittest.TestCase):
         self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_MotionEngine)
         self.assertEqual(packetBytes[1], 16)
         self.assertEqual(packetBytes[3], neb.MotCmd_Downsample)
-        self.assertEqual(packetBytes[8], struct.pack('>H', downSampleFactor)[0])
-        self.assertEqual(packetBytes[9], struct.pack('>H', downSampleFactor)[1])
+        self.assertEqual(packetBytes[8], struct.pack('<H', downSampleFactor)[0])
+        self.assertEqual(packetBytes[9], struct.pack('<H', downSampleFactor)[1])
 
         # Make sure these calls dont cause an exception
         commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine, neb.MotCmd_MotionState, True)
