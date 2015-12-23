@@ -325,6 +325,9 @@ class StreamMenu(cmd.Cmd):
             it has been interpreted. If you want to modify the input line
             before execution (for example, variable substitution) do it here.
         """
+        self.comm.sc.flushInput()
+        # This is added to ensure that the pending bytes in the COM buffer are discarded for each new command.
+        # This is crucial to avoid missing Acknowledge packets in the beginning, if Neblina is already streaming.
         self._hist += [ line.strip() ]
         return line
 

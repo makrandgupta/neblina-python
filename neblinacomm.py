@@ -83,7 +83,7 @@ class NeblinaComm(object):
                 if(packet.header.subSystem == neb.Subsys_MotionEngine and \
                     packet.header.command == streamingType):
                     print(packet.data)
-                else:
+                elif(packet.header.subSystem!=neb.Subsys_Debug):
                     print('Unexpected packet: {0}'.format(packet))
             except NotImplementedError as nie:
                 print(nie)
