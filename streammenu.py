@@ -314,6 +314,7 @@ class StreamMenu(cmd.Cmd):
             it has been interpreted. If you want to modify the input line
             before execution (for example, variable substitution) do it here.
         """
+        self.comm.sc.flushInput()
         self._hist += [ line.strip() ]
         return line
 
