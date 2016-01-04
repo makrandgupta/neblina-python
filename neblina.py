@@ -71,6 +71,66 @@ StorageCmd_Playback         =   0x03 # Either open a previously recorded session
 EEPROMCmd_Read              =   0x01 # Read a page
 EEPROMCmd_Write             =   0x02 # Write to a page
 
+# Digital IO Commands
+DigitalIOCmd_SetConfig      =   0x01
+DigitalIOCmd_GetConfig      =   0x02
+DigitalIOCmd_SetValue       =   0x03
+DigitalIOCmd_GetValue       =   0x04
+DigitalIOCmd_NotifySet      =   0x05
+DigitalIOCmd_NotifyEvent    =   0x06
+
+# Firmware Information Commands
+FirmwareManagementCmd_Main  =   0x01
+FirmwareManagementCmd_BLE   =   0x02
+
+# LED Information Commands
+LEDCmd_Write                =   0x01
+LEDCmd_Read                 =   0x02
+LEDCmd_Config               =   0x03
+
+# Dictionary containing the string descriptors of each command
+CommandStrings = {
+    (Subsys_Debug, 1)                                       :   'Error',
+    (Subsys_MotionEngine, MotCmd_Downsample)                :   'Downsample',
+    (Subsys_MotionEngine, MotCmd_MotionState)               :   'MotionState',
+    (Subsys_MotionEngine, MotCmd_IMU_Data)                  :   'IMU Data',
+    (Subsys_MotionEngine, MotCmd_Quaternion)                :   'Quaternion',
+    (Subsys_MotionEngine, MotCmd_EulerAngle)                :   'Euler Angle',
+    (Subsys_MotionEngine, MotCmd_ExtForce)                  :   'ExtForce',
+    (Subsys_MotionEngine, MotCmd_SetFusionType)             :   'SetFusionType',
+    (Subsys_MotionEngine, MotCmd_TrajectoryRecStart)        :   'Trajectory Record Start',
+    (Subsys_MotionEngine, MotCmd_TrajectoryRecStop)         :   'Trajectory Record Stop',
+    (Subsys_MotionEngine, MotCmd_TrajectoryDistance)        :   'Trajectory Distance',
+    (Subsys_MotionEngine, MotCmd_Pedometer)                 :   'Pedometer',
+    (Subsys_MotionEngine, MotCmd_MAG_Data)                  :   'MAG Data',
+    (Subsys_MotionEngine, MotCmd_SittingStanding)           :   'Sitting-Standing',
+    (Subsys_MotionEngine, MotCmd_AccRange)                  :   'AccRange',
+    (Subsys_MotionEngine, MotCmd_DisableStreaming)          :   'Disable Streaming',
+    (Subsys_MotionEngine, MotCmd_ResetTimeStamp)            :   'Reset Timestamp',
+    (Subsys_PowerManagement, PowCmd_GetBatteryLevel)        :   'Battery Level',
+    (Subsys_DigitalIO, DigitalIOCmd_SetConfig)              :   'Set Config',
+    (Subsys_DigitalIO, DigitalIOCmd_GetConfig)              :   'Get Config',
+    (Subsys_DigitalIO, DigitalIOCmd_SetValue)               :   'Set Value',
+    (Subsys_DigitalIO, DigitalIOCmd_GetValue)               :   'Get Value',
+    (Subsys_DigitalIO, DigitalIOCmd_NotifySet)              :   'Notify Set',
+    (Subsys_DigitalIO, DigitalIOCmd_NotifyEvent)            :   'Notify Event',
+    (Subsys_LED, LEDCmd_Write)                              :   'LED Write',
+    (Subsys_LED, LEDCmd_Read)                               :   'LED Read',
+    (Subsys_LED, LEDCmd_Config)                             :   'LED Config',
+    (Subsys_ADC, 0)                                         :   'ADC Command',
+    (Subsys_DAC, 0)                                         :   'DAC Command',
+    (Subsys_I2C, 0)                                         :   'I2C Command',
+    (Subsys_SPI, 0)                                         :   'SPI Command',
+    (Subsys_FirmwareManagement, FirmwareManagementCmd_Main) :   'Main Firmware',
+    (Subsys_FirmwareManagement, FirmwareManagementCmd_BLE)  :   'Nordic Firmware',
+    (Subsys_Crypto, 0)                                      :   'Crypto Command',
+    (Subsys_Storage, StorageCmd_EraseAll)                   :   'Erase All',
+    (Subsys_Storage, StorageCmd_Record)                     :   'Record',
+    (Subsys_Storage, StorageCmd_Playback)                   :   'Playback',
+    (Subsys_EEPROM, EEPROMCmd_Read)                         :   'Read',
+    (Subsys_EEPROM, EEPROMCmd_Write)                        :   'Write',
+}
+
 Neblina_CommandPacketData_fmt = "<I B 11s" # Timestamp (unused for now), enable/disable
 class NebCommandData(object):
     """docstring for NebCommandData"""
@@ -329,24 +389,31 @@ class EulerAngleData(object):
         return "{0}us: yaw/pitch/roll:({1},{2},{3}))"\
         .format(self.timestamp,self.yaw, self.pitch, self.roll)
 
+
+# Dictionaries containing the data constructors for response packets
+# -------------------------------------------------------------------
+PlaceholderDataConstructors = {
+    0   :   BlankData,
+    1   :   BlankData,
+    2   :   BlankData,
+    3   :   BlankData,
+    4   :   BlankData,
+    5   :   BlankData,
+    6   :   BlankData,
+    7   :   BlankData,
+    8   :   BlankData,
+    9   :   BlankData,
+    10   :   BlankData,
+}
+
 StorageResponses = {
     StorageCmd_EraseAll         : BlankData,
     StorageCmd_Record           : FlashSessionData,
     StorageCmd_Playback         : FlashSessionData
 }
 
-StorageStrings = {
-    StorageCmd_EraseAll         : "Erase",
-    StorageCmd_Record           : "Record",
-    StorageCmd_Playback         : "Playback"
-}
-
 PowerManagementResponses = {
     PowCmd_GetBatteryLevel      : BatteryLevelData,
-}
-
-PowerManagementStrings = {
-    PowCmd_GetBatteryLevel      : "BatteryLevel",
 }
 
 MotionResponses = {
@@ -367,27 +434,29 @@ MotionResponses = {
     MotCmd_DisableStreaming     : BlankData,              # disable everything that is currently being streamed
 }
 
-MotionStrings = {
-    MotCmd_Downsample           : "Downsample",
-    MotCmd_EulerAngle           : "EulerAngle",
-    MotCmd_IMU_Data             : "IMU",
-    MotCmd_Pedometer            : "Pedometer",
-    MotCmd_MAG_Data             : "MAG",
-    MotCmd_Quaternion           : "Quaternion",
-    MotCmd_TrajectoryDistance   : "TrajectoryDistance",
-    MotCmd_ExtForce             : "ExternalForce",
-    MotCmd_MotionState          : "MotionState",
-}
-
 EEPROMResponses = {
     EEPROMCmd_Read              : EEPROMReadData,
     EEPROMCmd_Write             : EEPROMReadData,
 }
 
-EEPROMStrings = {
-    EEPROMCmd_Read              : "Read",
-    EEPROMCmd_Write             : "Write",
+# Dictionary containing the dictionary of data object constructors
+ResponsePacketDataConstructors = {
+    Subsys_Debug                :   PlaceholderDataConstructors,
+    Subsys_MotionEngine         :   MotionResponses,
+    Subsys_PowerManagement      :   PowerManagementResponses,
+    Subsys_DigitalIO            :   PlaceholderDataConstructors,
+    Subsys_LED                  :   PlaceholderDataConstructors,
+    Subsys_ADC                  :   PlaceholderDataConstructors,
+    Subsys_DAC                  :   PlaceholderDataConstructors,
+    Subsys_I2C                  :   PlaceholderDataConstructors,
+    Subsys_SPI                  :   PlaceholderDataConstructors,
+    Subsys_FirmwareManagement   :   PlaceholderDataConstructors,
+    Subsys_Crypto               :   PlaceholderDataConstructors,
+    Subsys_Storage              :   StorageResponses,
+    Subsys_EEPROM               :   EEPROMResponses,
 }
+# -------------------------------------------------------------------
+
 
 # Header = 4 bytes
 Neblina_PacketHeader_fmt = "<4B"
@@ -420,16 +489,7 @@ class NebHeader(object):
 
     def __str__(self):
         stringFormat = "packetType = {0}, subSystem = {1}, packetLength = {2}, crc = {3}, command = {4}"
-        if self.subSystem == Subsys_PowerManagement:
-            commandString = PowerManagementStrings[self.command]
-        elif self.subSystem == Subsys_MotionEngine:
-            commandString = MotionStrings[self.command]
-        elif self.subSystem == Subsys_Storage:
-            commandString = StorageStrings[self.command]
-        elif self.subSystem == Subsys_EEPROM:
-            commandString = EEPROMStrings[self.command]
-        else:
-            commandString = ''
+        commandString = CommandStrings[(self.subSystem, self.command)]
         stringDescriptor = stringFormat.format(PacketTypeStrings[self.packetType], \
              self.subSystem, self.length,self.crc, commandString)
         return stringDescriptor
@@ -570,16 +630,8 @@ class NebResponsePacket(object):
                     raise CRCError(calculatedCRC, self.header.crc)
 
             # Build the data object based on the subsystem and command.
-            if subSystem == Subsys_PowerManagement:
-                self.data = PowerManagementResponses[self.header.command](dataString)
-            elif subSystem == Subsys_MotionEngine:
-                self.data = MotionResponses[self.header.command](dataString)
-            elif subSystem == Subsys_Storage:
-                self.data = StorageResponses[self.header.command](dataString)
-            elif subSystem == Subsys_EEPROM:
-                self.data = EEPROMResponses[self.header.command](dataString)
-            else:
-                self.data = dataString
+            self.data = ResponsePacketDataConstructors[subSystem][self.header.command](dataString)
+
         elif(header != None and data != None):
             self.header = header
             self.data = data
