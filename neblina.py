@@ -498,7 +498,8 @@ class NebHeader(object):
 NeblinaPacket_fmt = "<4s 16s"
 class NebCommandPacket(object):
     """docstring for NebCommandPacket"""
-    def __init__(self, subSystem, commandType, enable, **kwargs):
+    def __init__(self, subSystem, commandType, enable=True, **kwargs):
+        # Logic for determining which type of command packet it is based on the header
         if(subSystem == Subsys_MotionEngine and commandType == MotCmd_Downsample ):
             self.data = NebDownsampleCommandData(enable)
         elif(subSystem == Subsys_Storage and commandType == StorageCmd_Playback ):

@@ -242,16 +242,11 @@ class ut_NeblinaPackets(unittest.TestCase):
         commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine, neb.MotCmd_MAG_Data, False)
 
         # Test encoding of recording packets
-        recordCommandPacket = neb.NebCommandPacket(neb.Subsys_Storage, neb.StorageCmd_EraseAll, True)
+        recordCommandPacket = neb.NebCommandPacket(neb.Subsys_Storage, neb.StorageCmd_EraseAll)
         packetBytes = bytearray(recordCommandPacket.stringEncode())
         self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_Storage)
+        self.assertEqual(packetBytes[1], 16)
         self.assertEqual(packetBytes[3], neb.StorageCmd_EraseAll)
-        self.assertEqual(packetBytes[8], 0x01)
-        recordCommandPacket = neb.NebCommandPacket(neb.Subsys_Storage, neb.StorageCmd_EraseAll, False)
-        packetBytes = bytearray(recordCommandPacket.stringEncode())
-        self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_Storage)
-        self.assertEqual(packetBytes[3], neb.StorageCmd_EraseAll)
-        self.assertEqual(packetBytes[8], 0x00)
 
         recordCommandPacket = neb.NebCommandPacket(neb.Subsys_Storage, neb.StorageCmd_Record, True)
         packetBytes = bytearray(recordCommandPacket.stringEncode())
@@ -275,13 +270,14 @@ class ut_NeblinaPackets(unittest.TestCase):
         self.assertEqual(packetBytes[3], neb.StorageCmd_Playback)
         self.assertEqual(packetBytes[8], 0x00)
 
-        readCommandPacket = neb.NebCommandPacket(neb.Subsys_EEPROM, neb.EEPROMCmd_Read, True, pageNumber=5)
+        readCommandPacket = neb.NebCommandPacket(neb.Subsys_EEPROM, neb.EEPROMCmd_Read, pageNumber=5)
         packetBytes = bytearray(readCommandPacket.stringEncode())
         self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_EEPROM)
         self.assertEqual(packetBytes[3], neb.EEPROMCmd_Read)
         self.assertEqual(packetBytes[4], 0x05)
         
-        writeCommandPacket = neb.NebCommandPacket(neb.Subsys_EEPROM, neb.EEPROMCmd_Write, False,\
+        # EEPROM Command packet testing
+        writeCommandPacket = neb.NebCommandPacket(neb.Subsys_EEPROM, neb.EEPROMCmd_Write,\
           pageNumber=11, dataBytes=b'\xde\xad\xbe\xef\xba\xbe\x92\x74')
         packetBytes = bytearray(writeCommandPacket.stringEncode())
         self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_EEPROM)
@@ -296,7 +292,6 @@ class ut_NeblinaPackets(unittest.TestCase):
         self.assertEqual(packetBytes[11], 0xbe)
         self.assertEqual(packetBytes[12], 0x92)
         self.assertEqual(packetBytes[13], 0x74)
-
 
     def testCreateEulerPackets(self):
         print("\n*** Testing Encoding and Decoding of Euler Angle Packets ***")
