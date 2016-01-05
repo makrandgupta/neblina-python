@@ -116,6 +116,8 @@ class NeblinaComm(object):
         # True = UART
         # False = BLE
         self.sendCommand(neb.Subsys_Debug, neb.DebugCmd_SetInterface, interface)
+        print('Waiting for the module to switch its interface...')
+        self.waitForAck(neb.Subsys_Debug, neb.DebugCmd_SetInterface)
 
 
 
