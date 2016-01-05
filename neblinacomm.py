@@ -112,6 +112,12 @@ class NeblinaComm(object):
             pageNumber=writePageNumber, dataBytes=dataString)
         packet = self.waitForAck(neb.Subsys_EEPROM, neb.EEPROMCmd_Write)
 
+    def switchStreamingInterface(self, interface=True):
+        # True = UART
+        # False = BLE
+        self.sendCommand(neb.Subsys_Debug, neb.DebugCmd_SetInterface, interface)
+
+
 
 
 

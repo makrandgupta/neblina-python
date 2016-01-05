@@ -41,6 +41,9 @@ PacketTypeStrings = {
     PacketType_ErrorLogCmd          : "Error Command"
 }
 
+# Debug Commands
+DebugCmd_SetInterface       =   0x01
+
 # Power Management commands
 PowCmd_GetBatteryLevel      =   0x00
 
@@ -90,7 +93,7 @@ LEDCmd_Config               =   0x03
 
 # Dictionary containing the string descriptors of each command
 CommandStrings = {
-    (Subsys_Debug, 1)                                       :   'Error',
+    (Subsys_Debug, 1)                                       :   'Set Interface',
     (Subsys_MotionEngine, MotCmd_Downsample)                :   'Downsample',
     (Subsys_MotionEngine, MotCmd_MotionState)               :   'MotionState',
     (Subsys_MotionEngine, MotCmd_IMU_Data)                  :   'IMU Data',

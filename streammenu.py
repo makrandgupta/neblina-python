@@ -47,6 +47,8 @@ class StreamMenu(cmd.Cmd):
                 time.sleep(1)
         
         self.comm = nebcomm.NeblinaComm(sc)
+        # Make the module stream towards the UART instead of the default BLE
+        self.comm.switchStreamingInterface(True)
 
     ## Command definitions ##
     def do_hist(self, args):
@@ -55,6 +57,8 @@ class StreamMenu(cmd.Cmd):
 
     def do_exit(self, args):
         """Exits from the console"""
+        # Make the module stream back towards its default interface (BLE)
+        self.comm.switchStreamingInterface(False)
         return -1
 
     ## Command definitions to support Cmd object functionality ##
