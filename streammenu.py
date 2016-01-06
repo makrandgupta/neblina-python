@@ -38,7 +38,7 @@ class StreamMenu(cmd.Cmd):
         sc = None
         while sc is None:
             try:
-                sc = serial.Serial(port=comPortName,baudrate=1000000)
+                sc = serial.Serial(port=comPortName,baudrate=230400)
             except serial.serialutil.SerialException as se:
                 if 'Device or resource busy:' in se.__str__():
                     print('Opening COM port is taking a little while, please stand by...')
@@ -225,6 +225,9 @@ class StreamMenu(cmd.Cmd):
 
     def do_flashRecord(self, args):
 
+        # rdatatype = neb.MotCmd_IMU_Data
+        rdatatype = neb.MotCmd_Quaternion
+
         # Step 1 - Initialization
         self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming, True)
         print('Sending the DisableAllStreaming command, and waiting for a response...')
@@ -247,11 +250,13 @@ class StreamMenu(cmd.Cmd):
         #print('sessionID = {0}'.format(sessionID))
 
         # Step 5 - enable IMU streaming
-        self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
+        # self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
+        self.comm.sendCommand(neb.Subsys_MotionEngine,rdatatype, True)
         print('Sending the enable IMU streaming command, and waiting for a response...')
 
         # Step 6 - wait for ack
-        self.comm.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data)
+        # self.comm.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data)
+        self.comm.waitForAck(neb.Subsys_MotionEngine,rdatatype)
         print('Acknowledge packet was received!')
         
         # Step 7 - continue recording for n samples
@@ -262,18 +267,21 @@ class StreamMenu(cmd.Cmd):
         # print ('Recording %d packets takes about %d seconds' % (n,n/50))
         for x in range(1, n+1):
             packet = self.comm.receivePacket()
-            while ((packet.header.subSystem!=neb.Subsys_MotionEngine) or (packet.header.packetType!=neb.PacketType_RegularResponse) or (packet.header.command!=neb.MotCmd_IMU_Data)):
+            # while ((packet.header.subSystem!=neb.Subsys_MotionEngine) or (packet.header.packetType!=neb.PacketType_RegularResponse) or (packet.header.command!=neb.MotCmd_IMU_Data)):
+            while ((packet.header.subSystem!=neb.Subsys_MotionEngine) or (packet.header.packetType!=neb.PacketType_RegularResponse) or (packet.header.command!=rdatatype)):
                 packet = self.comm.receivePacket()
                 continue
             print('Recording %d packets, current packet: %d\r' % (n, x), end="", flush=True)
 
         print('\n')
         # Step 8 - Stop the streaming
-        self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, False)
+        # self.comm.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, False)
+        self.comm.sendCommand(neb.Subsys_MotionEngine,rdatatype, False)
         print('Sending the stop streaming command, and waiting for a response...')
 
         # Step 9 - wait for ack
-        self.comm.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data)
+        # self.comm.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data)
+        self.comm.waitForAck(neb.Subsys_MotionEngine,rdatatype)
         print('Acknowledge packet was received!')
 
         # Step 10 - Stop the recording
@@ -287,7 +295,10 @@ class StreamMenu(cmd.Cmd):
         print('The acknowledge packet is received, and session %d is closed successfully' % sessionID)
 
     def do_flashPlayback(self, args):
-       
+
+       # rdatatype = neb.MotCmd_IMU_Data
+        rdatatype = neb.MotCmd_Quaternion
+
         #print(args[0])
         if(len(args) <= 0):
             mySessionID = 65535
@@ -306,6 +317,9 @@ class StreamMenu(cmd.Cmd):
             print('Playback routine started from session number %d' % mySessionID);
             packetList = self.comm.storePacketsUntil(neb.PacketType_RegularResponse, neb.Subsys_Storage, neb.StorageCmd_Playback)
             print('Finished playback from session number %d!' % mySessionID)
+            thefile = open('QData', 'w')
+            for item in packetList:
+                thefile.write("%s\n" % item.stringEncode())
             #for packet in packetList:
                 #print(packet.data)
 
