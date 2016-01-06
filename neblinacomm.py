@@ -11,7 +11,7 @@ class NeblinaComm(object):
         self.comslip = slip.slip()
         self.sc = serialcom
 
-    def sendCommand(self, subsystem, command, enable, **kwargs):
+    def sendCommand(self, subsystem, command, enable=True, **kwargs):
         commandPacket = neb.NebCommandPacket(subsystem, command, enable, **kwargs)
         self.comslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
 
