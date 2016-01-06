@@ -316,7 +316,14 @@ class QuaternionData(object):
         self.quaternions[2],\
         self.quaternions[3],\
         garbage = struct.unpack( Neblina_Quat_t_fmt, dataString )
-        
+
+    def encode(self):
+        garbage = ('\000'*7).encode('utf-8')
+        packetString = struct.pack(Neblina_Quat_t_fmt, self.timestamp,\
+        self.quaternions[0], self.quaternions[1],\
+        self.quaternions[2], self.quaternions[3])
+        return packetString
+    
     def __str__(self):
         return "{0}us: quat0:{1} quat1:{2} quat2:{3} quat3:{4}".format(\
             self.timestamp, self.quaternions[0], self.quaternions[1],\
