@@ -38,7 +38,7 @@ class StreamMenu(cmd.Cmd):
         sc = None
         while sc is None:
             try:
-                sc = serial.Serial(port=comPortName,baudrate=1000000)
+                sc = serial.Serial(port=comPortName,baudrate=230400)
             except serial.serialutil.SerialException as se:
                 if 'Device or resource busy:' in se.__str__():
                     print('Opening COM port is taking a little while, please stand by...')
@@ -315,7 +315,7 @@ class StreamMenu(cmd.Cmd):
             print('Finished playback from session number %d!' % mySessionID)
             thefile = open('QData', 'w')
             for item in packetList:
-                thefile.write("%s\n" % item)
+                thefile.write("%s\n" % item.stringEncode())
             #for packet in packetList:
                 #print(packet.data)
 
