@@ -80,7 +80,7 @@ class NeblinaComm(object):
         self.waitForAck(neb.Subsys_Debug, neb.DebugCmd_SetInterface)
 
     # Motine Engine commands
-    def motionStream(self, streamingType):
+    def motionStream(self, streamingType, numPackets=None):
         errorList = []
         # Send command to start streaming
         self.sendCommand(neb.Subsys_MotionEngine, streamingType, True)
@@ -88,7 +88,9 @@ class NeblinaComm(object):
         packet = self.waitForAck(neb.Subsys_MotionEngine, streamingType)
         print('Got Ack: {0}'.format(packet))
 
-        while(True):
+        # Stream forever if the number of packets is unspecified (None)
+        keepStreaming = (numPackets == None or numPackets > 0)
+        while(keepStreaming):
             try:
                 packet = self.receivePacket()
                 if(packet.header.subSystem == neb.Subsys_MotionEngine and \
@@ -96,18 +98,23 @@ class NeblinaComm(object):
                     print(packet.data)
                 elif(packet.header.subSystem!=neb.Subsys_Debug):
                     print('Unexpected packet: {0}'.format(packet))
+                if(numPackets != None):
+                    numPackets -= 1
+                keepStreaming = (numPackets == None or numPackets > 0)
             except NotImplementedError as nie:
                 print(nie)
             # In the event of Ctrl-C
             except KeyboardInterrupt as ki:
-                # Stop whatever streaming
-                self.sendCommand(neb.Subsys_MotionEngine, streamingType, False)
-                return
+                # self.sendCommand(neb.Subsys_MotionEngine, streamingType, False)
+                break
+                # return
             except neb.CRCError as crce:
                 print('CRCError')
                 print(crce)
             except Exception as e:
                 print(e)
+        # Stop whatever it was streaming
+        self.sendCommand(neb.Subsys_MotionEngine, streamingType, False)      
 
     def motionSetDownsample(self, factor):
         self.sendCommand(neb.Subsys_MotionEngine,\
