@@ -293,6 +293,22 @@ class ut_NeblinaPackets(unittest.TestCase):
         self.assertEqual(packetBytes[12], 0x92)
         self.assertEqual(packetBytes[13], 0x74)
 
+        # Debug packet
+        switchInterfaceCommandPacket = neb.NebCommandPacket(neb.Subsys_Debug,\
+            neb.DebugCmd_SetInterface,\
+            True)
+        packetBytes = bytearray(switchInterfaceCommandPacket.stringEncode())
+        self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_Debug)
+        self.assertEqual(packetBytes[3], neb.DebugCmd_SetInterface)
+        self.assertEqual(packetBytes[8], 0x01)
+        switchInterfaceCommandPacket = neb.NebCommandPacket(neb.Subsys_Debug,\
+            neb.DebugCmd_SetInterface,\
+            False)
+        packetBytes = bytearray(switchInterfaceCommandPacket.stringEncode())
+        self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_Debug)
+        self.assertEqual(packetBytes[3], neb.DebugCmd_SetInterface)
+        self.assertEqual(packetBytes[8], 0x00)
+
     def testCreateEulerPackets(self):
         print("\n*** Testing Encoding and Decoding of Euler Angle Packets ***")
         responsePackets = []
