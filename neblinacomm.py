@@ -139,7 +139,104 @@ class NeblinaComm(object):
         packet = self.receivePacket()
         return packet.data.batteryLevel
 
+    def flashErase(self):
+        # Step 1 - Initialization
+        self.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
+        self.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming, True)
+        print('Sending the DisableAllStreaming command, and waiting for a response...')
 
+        # Step 2 - wait for ack
+        self.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming)
+        print('Acknowledge packet was received!')
 
+        # Step 3 - erase the flash command
+        self.sendCommand(neb.Subsys_Storage, neb.StorageCmd_EraseAll, True)
+        print('Sent the EraseAll command, and waiting for a response...')
 
+        # Step 4 - wait for ack
+        self.waitForAck(neb.Subsys_Storage,neb.StorageCmd_EraseAll)
+        print('Acknowledge packet was received! Started erasing... This takes about 3 minutes...')
 
+        # Step 5 - wait for the completion notice
+        self.waitForPacket(neb.PacketType_RegularResponse,\
+            neb.Subsys_Storage, neb.StorageCmd_EraseAll)
+
+    def flashRecord(self, numSamples):
+        rdatatype = neb.MotCmd_Quaternion
+
+        # Step 1 - Initialization
+        self.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming, True)
+        print('Sending the DisableAllStreaming command, and waiting for a response...')
+
+        # Step 2 - wait for ack
+        self.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming)
+        print('Acknowledge packet was received!')
+
+        # Step 3 - Start recording
+        self.sendCommand(neb.Subsys_Storage, neb.StorageCmd_Record, True)
+        print('Sending the command to start the flash recorder, and waiting for a response...')
+        # Step 4 - wait for ack and the session number
+        self.waitForAck(neb.Subsys_Storage, neb.StorageCmd_Record)
+        packet = self.waitForPacket(neb.PacketType_RegularResponse,\
+            neb.Subsys_Storage, neb.StorageCmd_Record)
+        print('Acknowledge packet was received with the session number %d!' % packet.data.sessionID)
+        sessionID = packet.data.sessionID
+
+        # Step 5 - enable IMU streaming
+        # self.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
+        self.sendCommand(neb.Subsys_MotionEngine,rdatatype, True)
+        print('Sending the enable IMU streaming command, and waiting for a response...')
+
+        # Step 6 - wait for ack
+        # self.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data)
+        self.waitForAck(neb.Subsys_MotionEngine,rdatatype)
+        print('Acknowledge packet was received!')
+        
+        # print ('Recording %d packets takes about %d seconds' % (n,n/50))
+        for x in range(1, numSamples+1):
+            packet = self.receivePacket()
+            # while ((packet.header.subSystem!=neb.Subsys_MotionEngine) or (packet.header.packetType!=neb.PacketType_RegularResponse) or (packet.header.command!=neb.MotCmd_IMU_Data)):
+            while ((packet.header.subSystem!=neb.Subsys_MotionEngine) or (packet.header.packetType!=neb.PacketType_RegularResponse) or (packet.header.command!=rdatatype)):
+                packet = self.receivePacket()
+                continue
+            print('Recording %d packets, current packet: %d\r' % (numSamples, x), end="", flush=True)
+
+        print('\n')
+        # Step 8 - Stop the streaming
+        # self.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, False)
+        self.sendCommand(neb.Subsys_MotionEngine,rdatatype, False)
+        print('Sending the stop streaming command, and waiting for a response...')
+
+        # Step 9 - wait for ack
+        # self.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data)
+        self.waitForAck(neb.Subsys_MotionEngine,rdatatype)
+        print('Acknowledge packet was received!')
+
+        # Step 10 - Stop the recording
+        self.sendCommand(neb.Subsys_Storage,neb.StorageCmd_Record, False)
+        print('Sending the command to stop the flash recorder, and waiting for a response...')
+
+        # Step 11 - wait for ack and the closed session confirmation
+        self.waitForAck(neb.Subsys_Storage,neb.StorageCmd_Record)
+        packet = self.waitForPacket(neb.PacketType_RegularResponse,\
+            neb.Subsys_Storage, neb.StorageCmd_Record)
+        print('The acknowledge packet is received, and session %d is closed successfully' % sessionID)
+
+    def flashPlayback(self, pbSessionID):
+
+        self.sendCommand(neb.Subsys_Storage, neb.StorageCmd_Playback, True, sessionID=pbSessionID)
+        print('Sent the start playback command, waiting for response...')
+        #wait for confirmation
+        packet = self.waitForPacket(neb.PacketType_RegularResponse,\
+            neb.Subsys_Storage, neb.StorageCmd_Playback)
+        if(packet.header.packetType==neb.PacketType_ErrorLogResp):
+            print('Playback failed due to an invalid session number request!')
+            return
+        else:
+            pbSessionID = packet.data.sessionID
+            print('Playback routine started from session number %d' % pbSessionID);
+            packetList = self.storePacketsUntil(neb.PacketType_RegularResponse, neb.Subsys_Storage, neb.StorageCmd_Playback)
+            print('Finished playback from session number %d!' % pbSessionID)
+            thefile = open('QData', 'w')
+            for item in packetList:
+                thefile.write("%s\n" % item.stringEncode())
