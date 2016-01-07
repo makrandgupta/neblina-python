@@ -180,6 +180,18 @@ class NebFlashPlaybackCommandData(object):
         return "Flash Command Session {0}: {1}"\
         .format(self.sessionID, openCloseString)
 
+Neblina_AccRangeCommandPacketData_fmt = "<I H 10s" # Timestamp (unused for now), downsample factor
+class NebAccRangeCommandData(NebCommandData):
+    """docstring for NebAccRangeCommandData"""
+    rangeCodes = {2:0x00, 4:0x01, 8:0x02, 16:0x03}
+
+    def encode(self):
+        garbage = ('\000'*10).encode('utf-8')
+        rangeCode = NebAccRangeCommandData.rangeCodes[self.enable]
+        commandDataString = struct.pack(Neblina_AccRangeCommandPacketData_fmt,\
+            self.timestamp, rangeCode, garbage)
+        return commandDataString
+
 Neblina_DownsampleCommandPacketData_fmt = "<I H 10s" # Timestamp (unused for now), downsample factor
 class NebDownsampleCommandData(NebCommandData):
     """docstring for NebDownsampleCommandData"""
@@ -510,8 +522,10 @@ class NebCommandPacket(object):
     """docstring for NebCommandPacket"""
     def __init__(self, subSystem, commandType, enable=True, **kwargs):
         # Logic for determining which type of command packet it is based on the header
-        if(subSystem == Subsys_MotionEngine and commandType == MotCmd_Downsample ):
+        if(subSystem == Subsys_MotionEngine and commandType == MotCmd_Downsample):
             self.data = NebDownsampleCommandData(enable)
+        elif(subSystem == Subsys_MotionEngine and commandType == MotCmd_AccRange):
+            self.data = NebAccRangeCommandData(enable)
         elif(subSystem == Subsys_Storage and commandType == StorageCmd_Playback ):
             self.data = NebFlashPlaybackCommandData(enable, kwargs['sessionID'])
         elif(subSystem == Subsys_EEPROM):

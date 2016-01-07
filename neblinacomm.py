@@ -72,6 +72,14 @@ class NeblinaComm(object):
             print(type(e))
         return packet
 
+    def switchStreamingInterface(self, interface=True):
+        # True = UART
+        # False = BLE
+        self.sendCommand(neb.Subsys_Debug, neb.DebugCmd_SetInterface, interface)
+        print('Waiting for the module to switch its interface...')
+        self.waitForAck(neb.Subsys_Debug, neb.DebugCmd_SetInterface)
+
+    # Motine Engine commands
     def motionStream(self, streamingType):
         errorList = []
         # Send command to start streaming
@@ -101,6 +109,14 @@ class NeblinaComm(object):
             except Exception as e:
                 print(e)
 
+    def motionSetDownsample(self, factor):
+        self.sendCommand(neb.Subsys_MotionEngine,\
+            neb.MotCmd_Downsample, factor)
+
+    def motionSetAccFullScale(self, factor):
+        self.sendCommand(neb.Subsys_MotionEngine,\
+        neb.MotCmd_AccRange, factor)
+
     def EEPROMRead(self, readPageNumber):
         self.sendCommand(neb.Subsys_EEPROM, neb.EEPROMCmd_Read, pageNumber=readPageNumber)
         packet = self.waitForAck(neb.Subsys_EEPROM, neb.EEPROMCmd_Read)
@@ -122,14 +138,6 @@ class NeblinaComm(object):
         print('ack: {0}'.format(packet))
         packet = self.receivePacket()
         return packet.data.batteryLevel
-
-    def switchStreamingInterface(self, interface=True):
-        # True = UART
-        # False = BLE
-        self.sendCommand(neb.Subsys_Debug, neb.DebugCmd_SetInterface, interface)
-        print('Waiting for the module to switch its interface...')
-        self.waitForAck(neb.Subsys_Debug, neb.DebugCmd_SetInterface)
-
 
 
 

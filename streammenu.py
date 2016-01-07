@@ -162,34 +162,18 @@ class StreamMenu(cmd.Cmd):
         if ((n % 20)!=0):
             print('The argument should be a multiplicand of 20, i.e., 20, 40, 60, etc!')
             return
-        self.comm.sendCommand(neb.Subsys_MotionEngine,\
-            neb.MotCmd_Downsample, n)
-
+        self.comm.motionSetDownsample(n)
 
     def do_setAccFullScale(self, args):
+        possibleFactors = [2,4,8,16]
         if(len(args) <= 0):
             print('The argument should be 2, 4, 8, or 16, representing the accelerometer range in g')
             return
-        n = int(args)
-        if (n==2):
-            # send the command with the mode byte equal to "0x00"
-            self.comm.sendCommand(neb.Subsys_MotionEngine,\
-            neb.MotCmd_AccRange, 0)
-        elif (n==4):
-            # send the command with the mode byte equal to "0x01"
-            self.comm.sendCommand(neb.Subsys_MotionEngine,\
-            neb.MotCmd_AccRange, 1)
-        elif (n==8):
-            #send the command with the mode byte equal to "0x02"
-            self.comm.sendCommand(neb.Subsys_MotionEngine,\
-            neb.MotCmd_AccRange, 2)
-        elif (n==16):
-            #send the command with the mode byte equal to "0x03
-            self.comm.sendCommand(neb.Subsys_MotionEngine,\
-            neb.MotCmd_AccRange, 3)
-        else:
+        factor = int(args)
+        if(factor not in possibleFactors):
             print('The argument should be 2, 4, 8, or 16, representing the accelerometer range in g')
             return
+        self.comm.motionSetAccFullScale(factor)
 
     def do_flashErase(self, args):
         # Step 1 - Initialization
