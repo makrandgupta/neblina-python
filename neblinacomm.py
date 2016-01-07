@@ -119,10 +119,26 @@ class NeblinaComm(object):
     def motionSetDownsample(self, factor):
         self.sendCommand(neb.Subsys_MotionEngine,\
             neb.MotCmd_Downsample, factor)
+        self.waitForAck(neb.Subsys_MotionEngine,\
+            neb.MotCmd_Downsample)
 
     def motionSetAccFullScale(self, factor):
         self.sendCommand(neb.Subsys_MotionEngine,\
         neb.MotCmd_AccRange, factor)
+        self.waitForAck(neb.Subsys_MotionEngine,\
+            neb.MotCmd_AccRange)
+
+    def motionStopStreams(self):
+        self.sendCommand(neb.Subsys_MotionEngine,\
+            neb.MotCmd_DisableStreaming, True)
+        self.waitForAck(neb.Subsys_MotionEngine,\
+            neb.MotCmd_DisableStreaming)
+
+    def motionResetTimestamp(self):
+        self.sendCommand(neb.Subsys_MotionEngine,\
+            neb.MotCmd_ResetTimeStamp, True)
+        self.waitForAck(neb.Subsys_MotionEngine,\
+            neb.MotCmd_ResetTimeStamp)
 
     def EEPROMRead(self, readPageNumber):
         self.sendCommand(neb.Subsys_EEPROM, neb.EEPROMCmd_Read, pageNumber=readPageNumber)

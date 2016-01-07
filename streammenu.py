@@ -147,12 +147,10 @@ class StreamMenu(cmd.Cmd):
         self.comm.motionStream(neb.MotCmd_IMU_Data)
 
     def do_stopStreams(self, args):
-        self.comm.sendCommand(neb.Subsys_MotionEngine,\
-            neb.MotCmd_DisableStreaming, True)
+        self.comm.motionStopStreams()
 
     def do_resetTimestamp(self, args):
-        self.comm.sendCommand(neb.Subsys_MotionEngine,\
-            neb.MotCmd_ResetTimeStamp, True)
+        self.comm.motionResetTimestamp()
 
     def do_downsample(self, args):
         if(len(args) <= 0):

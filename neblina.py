@@ -454,6 +454,7 @@ MotionResponses = {
     MotCmd_SittingStanding      : BlankData,              # streaming sitting standing
     MotCmd_AccRange             : BlankData,              # set accelerometer range
     MotCmd_DisableStreaming     : BlankData,              # disable everything that is currently being streamed
+    MotCmd_ResetTimeStamp       : BlankData
 }
 
 EEPROMResponses = {
