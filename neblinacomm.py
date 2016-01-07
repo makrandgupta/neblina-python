@@ -158,7 +158,6 @@ class NeblinaComm(object):
         # Drop all packets until you get an ack
         packet = self.waitForAck(neb.Subsys_PowerManagement,\
             neb.PowCmd_GetBatteryLevel)
-        print('ack: {0}'.format(packet))
         packet = self.receivePacket()
         return packet.data.batteryLevel
 
