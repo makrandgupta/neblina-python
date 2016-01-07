@@ -112,6 +112,17 @@ class NeblinaComm(object):
             pageNumber=writePageNumber, dataBytes=dataString)
         packet = self.waitForAck(neb.Subsys_EEPROM, neb.EEPROMCmd_Write)
 
+    def getBatteryLevel(self):
+        self.sendCommand(neb.Subsys_PowerManagement,\
+            neb.PowCmd_GetBatteryLevel, True)
+        
+        # Drop all packets until you get an ack
+        packet = self.waitForAck(neb.Subsys_PowerManagement,\
+            neb.PowCmd_GetBatteryLevel)
+        print('ack: {0}'.format(packet))
+        packet = self.receivePacket()
+        return packet.data.batteryLevel
+
     def switchStreamingInterface(self, interface=True):
         # True = UART
         # False = BLE

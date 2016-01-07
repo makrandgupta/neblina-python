@@ -137,16 +137,8 @@ class StreamMenu(cmd.Cmd):
         self.setCOMPortName()
 
     def do_getBatteryLevel(self, args):
-        errorList = []
-        self.comm.sendCommand(neb.Subsys_PowerManagement,\
-            neb.PowCmd_GetBatteryLevel, True)
-        
-        # Drop all packets until you get an ack
-        packet = self.comm.waitForAck(neb.Subsys_PowerManagement,\
-            neb.PowCmd_GetBatteryLevel)
-        print('ack: {0}'.format(packet))
-        packet = self.comm.receivePacket()
-        print('Battery Level: {0}%'.format(packet.data.batteryLevel))
+        batteryLevel = self.comm.getBatteryLevel()
+        print('Battery Level: {0}%'.format(batteryLevel))
 
     def do_streamEuler(self, args):
         self.comm.motionStream(neb.MotCmd_EulerAngle)
