@@ -177,12 +177,26 @@ class StreamMenu(cmd.Cmd):
         self.comm.flashErase()
         print('Flash erase has completed successfully!')
 
-    def do_flashRecord(self, args):        
+    def do_flashRecordIMU(self, args):
         if(len(args) <= 0):
             numSamples = 1000
         else:
             numSamples = int(args)
-        self.comm.flashRecord(numSamples)
+        self.comm.flashRecord(numSamples, neb.MotCmd_IMU_Data)
+
+    def do_flashRecordEuler(self, args):
+        if(len(args) <= 0):
+            numSamples = 1000
+        else:
+            numSamples = int(args)
+        self.comm.flashRecord(numSamples, neb.MotCmd_EulerAngle)
+
+    def do_flashRecordQuaternion(self, args):
+        if(len(args) <= 0):
+            numSamples = 1000
+        else:
+            numSamples = int(args)
+        self.comm.flashRecord(numSamples, neb.MotCmd_Quaternion)
 
     def do_flashPlayback(self, args):
         if(len(args) <= 0):
