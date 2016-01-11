@@ -9,8 +9,26 @@ import serial
 import serial.tools.list_ports
 import time
 
+
 class ut_IntegrationTests(unittest.TestCase):
     setupHasAlreadyRun = False
+
+    def setCOMPortName(self):
+        self.bigLine = '-------------------------------------------------------------------\n'
+        self.prompt = '>>'
+        portList = [port[0] for port in serial.tools.list_ports.comports()]
+        port = input('Select the COM port to use:' + '\n'.join(portList) + '\n' +  \
+            self.bigLine + self.prompt)
+        while(port not in portList):
+            print('{0} not in the available COM ports'.format(port))
+            port = input('Select the COM port to use:' + '\n'.join(portList[0]) + '\n' + \
+                self.bigLine + self.prompt)
+        
+        # Write it to the config file
+        configFile = open(self.configFileName, 'w')
+        configFile.write(port)
+        configFile.close()
+    
     def setUp(self):
         # Give it a break between each test
         time.sleep(0.5)
@@ -45,6 +63,7 @@ class ut_IntegrationTests(unittest.TestCase):
 
     def tearDown(self):
         self.comm.switchStreamingInterface(False)
+        self.comm.sc.close()
         print('Bye')
 
     def testStreamEuler(self):

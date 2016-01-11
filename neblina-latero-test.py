@@ -4,6 +4,7 @@ import array
 import struct
 import time
 import serial
+import neblinacomm as nebCom
 #this code works with python 3.4
 
 LATERO_ADR = ('192.168.87.98', 8900)
@@ -16,7 +17,7 @@ SEQ_HEAD = '0000'
 tolerance = 3 # percent, voltage tolerance
 zeroThresh = 0.1 # threshold for 0 volt
 
-class LateroOverInternet:
+class LateroOverEthernet:
     def __init__(self):
 
         print('\n\ninitializing...')
@@ -56,75 +57,77 @@ class LateroOverInternet:
         self.Adc_In = [round(x/32768.0*10.0,3) for x in self.Adc_In_Raw]
         
         
-latero = LateroOverInternet()
+latero = LateroOverEthernet()
 print('starting unit test')
-#latero.DAC_Out = [0x2B89,0x0000,0x0000,0x0000] #DAC 1 set to 3.3V
-latero.DAC_Out = [0x0300,0x547B,0x28F6,0x35C3] #simulate neblina voltage, remove this
-latero.ExchangePacket()
-print('\npacket sent and got a response from latero at',latero.server)
 
 class JigTest(unittest.TestCase):
-    def test1_CurrentDraw(self):
-        print('Voltage read test')
+    def test0_voltageTestInit(self):
+        latero.DAC_Out = [0x2B89,0x0000,0x0000,0x0000] #DAC 1 set to 3.3V for batt simulation on test jig
+        #latero.DAC_Out = [0x0300,0x547B,0x28F6,0x35C3] #simulate neblina voltage with latero test cable
+        latero.IO_Out = 0x0000 #relay turned off
+        latero.ExchangePacket()
         time.sleep(0.828)
+        print('\npacket sent and got a response from latero at',latero.server)  
+        print('\n\n Starting voltage read test')
         latero.ExchangePacket()
 
-        print('\n-->ADC 1=',latero.Adc_In[0],'V (current draw test)')
-        print('-->Neblina is drawing', latero.Adc_In[0]*100.0,'mA')
+    def test1_CurrentDraw(self):#---------current draw test-----------#
+        print('\n-->current draw test =',latero.Adc_In[0],'V (normally > 10mA)')
+        print('\tNeblina is drawing', latero.Adc_In[0]*100.0,'mA')
         self.assertLess(zeroThresh,latero.Adc_In[0],"\n\nno voltage detected")
 
 
-    def test2_6V6(self): 
-        print('-->ADC 2=',latero.Adc_In[1],'V (6V6 test)')
+    def test2_6V6(self):#---------6.6V voltage test-----------#
+        print('-->6.6V voltage test =',latero.Adc_In[1],'V')
         self.assertLess(zeroThresh,latero.Adc_In[1],"\n\nno voltage detected")
-        self.assertAlmostEqual(6.6,latero.Adc_In[1],delta=6.6/100*tolerance,
-            msg='\n\n6.6V is not in the '+str(tolerance)+"% tolerance zone")        
+        #self.assertAlmostEqual(6.6,latero.Adc_In[1],delta=6.6/100*tolerance,
+            #msg='\n\n6.6V is not in the '+str(tolerance)+"% tolerance zone")        
 
-    def test3_3V2(self):        
-        print('-->ADC 3=',latero.Adc_In[2],'V (3V2 test)')
+    def test3_3V2(self):#---------3.2V voltage test-----------#    
+        print('-->3.2V voltage test =',latero.Adc_In[2],'V')
         self.assertLess(zeroThresh,latero.Adc_In[2],"\n\nno voltage detected")
         self.assertAlmostEqual(3.2,latero.Adc_In[2],delta=3.2/100*tolerance,
             msg='\n\n3.2V is not in the '+str(tolerance)+"% tolerance zone")        
         
-    def test4_VBATT(self):        
-        print('-->ADC 4=',latero.Adc_In[3],'V (Battery voltage test)')
+    def test4_VBATT(self):#---------VBAT voltage test-----------#      
+        print('-->VBAT voltage test =',latero.Adc_In[3],'V')
         latero.VBatt = latero.Adc_In[3]
         self.assertLess(zeroThresh,latero.Adc_In[3],"\n\nno voltage/battery detected")
         self.assertGreater(4.2,latero.Adc_In[3],
                            "\n\nNeblina is over charging battery or no battery is connected")
-        self.assertLess(3.4,latero.Adc_In[3],"\n\nNeblina is not charging battery")
+        self.assertLess(3.4,latero.Adc_In[3],"\n\nBatterie is broken or not connected")
 
 
-        
-    def test5_CurrentChg(self):    
+    def test5_CurrentChg(self):
+        #---------test jig relay change-----------#    
         print('\nswitched relay, reading new voltage')   
         latero.IO_Out = 0x0001 #relay turned on
-        latero.DAC_Out = [0x0DD3,0x4000,0x170A,0x3503] #simulate neblina voltage
-
+        #latero.DAC_Out = [0x0DD3,0x4000,0x170A,0x3503] ##simulate neblina voltage with latero test cable
         latero.ExchangePacket()
         time.sleep(0.828)
         latero.ExchangePacket()
 
-        print('\n-->ADC 1 =',latero.Adc_In[0],'V (charging current test)')
-        print('-->Neblina is charging the battery at',round(latero.Adc_In[0]/0.0027,2),'mA')
+        #---------charge current test-----------#  
+        print('\n-->charge current test =',latero.Adc_In[0],'V')
+        print('\tNeblina is charging the battery at',round(latero.Adc_In[0]/0.0027,2),'mA')
         self.assertLess(-0.02,latero.Adc_In[0],"\n\nNeblina is powered by VBatt (it shouldn't)")
         self.assertNotAlmostEqual(latero.Adc_In[0],0,delta=zeroThresh,
             msg="\n\nNeblina is NOT charging the battery")
 
-    def test6_5V(self):
-        print('-->ADC 2 =',latero.Adc_In[1],'V (5V test)')
+    def test6_5V(self):#---------5V voltage test-----------# 
+        print('-->5V voltage test =',latero.Adc_In[1],'V')
         self.assertLess(zeroThresh,latero.Adc_In[1],"\n\nno voltage detected")
         self.assertAlmostEqual(5,latero.Adc_In[1],delta=5/100*tolerance,
             msg='\n\n5V is not in the '+str(tolerance)+"% tolerance zone")        
 
-    def test7_1V8(self):        
-        print('-->ADC 3 =',latero.Adc_In[2],'V (1V8 test)')
+    def test7_1V8(self):#---------1.8V voltage test-----------#       
+        print('-->1.8V voltage test =',latero.Adc_In[2],'V')
         self.assertLess(zeroThresh,latero.Adc_In[2],"\n\nno voltage detected")
         self.assertAlmostEqual(1.8,latero.Adc_In[2],delta=1.8/100*tolerance,
             msg='\n\n1.8V is not in the '+str(tolerance)+"% tolerance zone")        
         
-    def test8_VSYS(self):        
-        print('-->ADC 4 =',latero.Adc_In[3],'V (PMIC VSYS voltage test)')
+    def test8_VSYS(self):#---------VSYS voltage test-----------#        
+        print('-->VSYS voltage test =',latero.Adc_In[3],'V')
         self.assertLess(zeroThresh,latero.Adc_In[3],"\n\nno voltage detected")
         self.assertGreater(latero.Adc_In[3],latero.VBatt-0.1,
             '\n\nVSYS is too low, it should >= to VBatt)')
