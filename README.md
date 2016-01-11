@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/Motsai/neblina-python.svg)](https://travis-ci.org/Motsai/neblina-python)
 # neblina-python
 Python scripts that interact with and simulate the behaviour of the Neblina Motion Capture module.
 
