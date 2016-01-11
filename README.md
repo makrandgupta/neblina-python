@@ -6,6 +6,9 @@ Start by cloning the git repository onto your computer:
 ```
 git clone https://github.com/Motsai/neblina-python.git
 ```
+Install the dependencies:
+pip3 install pyserial
+
 To be able to run interaction scripts, you must first instantiate the pyslip submodule:
 ```
 cd pyslip
@@ -13,7 +16,7 @@ git submodule init
 git submodule update
 ```
 
-Execute the interaction shell:
+Execute the interaction shell (Linux):
 ```
 PYTHONPATH=./pyslip/ python3 streammenu.py
 ```
