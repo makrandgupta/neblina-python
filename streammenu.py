@@ -50,6 +50,13 @@ class StreamMenu(cmd.Cmd):
         # Make the module stream towards the UART instead of the default BLE
         self.comm.switchStreamingInterface(True)
 
+    # If the user exits with Ctrl-C, try switching the interface back to BLE
+    def cmdloop(self):
+        try:
+            cmd.Cmd.cmdloop(self)
+        except KeyboardInterrupt as e:
+            self.comm.switchStreamingInterface(False)
+
     ## Command definitions ##
     def do_hist(self, args):
         """Print a list of commands that have been entered"""
@@ -177,12 +184,26 @@ class StreamMenu(cmd.Cmd):
         self.comm.flashErase()
         print('Flash erase has completed successfully!')
 
-    def do_flashRecord(self, args):        
+    def do_flashRecordIMU(self, args):
         if(len(args) <= 0):
             numSamples = 1000
         else:
             numSamples = int(args)
-        self.comm.flashRecord(numSamples)
+        self.comm.flashRecord(numSamples, neb.MotCmd_IMU_Data)
+
+    def do_flashRecordEuler(self, args):
+        if(len(args) <= 0):
+            numSamples = 1000
+        else:
+            numSamples = int(args)
+        self.comm.flashRecord(numSamples, neb.MotCmd_EulerAngle)
+
+    def do_flashRecordQuaternion(self, args):
+        if(len(args) <= 0):
+            numSamples = 1000
+        else:
+            numSamples = int(args)
+        self.comm.flashRecord(numSamples, neb.MotCmd_Quaternion)
 
     def do_flashPlayback(self, args):
         if(len(args) <= 0):

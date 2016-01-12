@@ -158,7 +158,6 @@ class NeblinaComm(object):
         # Drop all packets until you get an ack
         packet = self.waitForAck(neb.Subsys_PowerManagement,\
             neb.PowCmd_GetBatteryLevel)
-        print('ack: {0}'.format(packet))
         packet = self.receivePacket()
         return packet.data.batteryLevel
 
@@ -184,8 +183,7 @@ class NeblinaComm(object):
         self.waitForPacket(neb.PacketType_RegularResponse,\
             neb.Subsys_Storage, neb.StorageCmd_EraseAll)
 
-    def flashRecord(self, numSamples):
-        rdatatype = neb.MotCmd_Quaternion
+    def flashRecord(self, numSamples, dataType):
 
         # Step 1 - Initialization
         self.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_DisableStreaming, True)
@@ -207,19 +205,21 @@ class NeblinaComm(object):
 
         # Step 5 - enable IMU streaming
         # self.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
-        self.sendCommand(neb.Subsys_MotionEngine,rdatatype, True)
+        self.sendCommand(neb.Subsys_MotionEngine,dataType, True)
         print('Sending the enable IMU streaming command, and waiting for a response...')
 
         # Step 6 - wait for ack
         # self.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data)
-        self.waitForAck(neb.Subsys_MotionEngine,rdatatype)
+        self.waitForAck(neb.Subsys_MotionEngine,dataType)
         print('Acknowledge packet was received!')
         
         # print ('Recording %d packets takes about %d seconds' % (n,n/50))
         for x in range(1, numSamples+1):
             packet = self.receivePacket()
             # while ((packet.header.subSystem!=neb.Subsys_MotionEngine) or (packet.header.packetType!=neb.PacketType_RegularResponse) or (packet.header.command!=neb.MotCmd_IMU_Data)):
-            while ((packet.header.subSystem!=neb.Subsys_MotionEngine) or (packet.header.packetType!=neb.PacketType_RegularResponse) or (packet.header.command!=rdatatype)):
+            while ((packet.header.subSystem!=neb.Subsys_MotionEngine) or \
+                (packet.header.packetType!=neb.PacketType_RegularResponse) or \
+                (packet.header.command!= dataType)):
                 packet = self.receivePacket()
                 continue
             print('Recording %d packets, current packet: %d\r' % (numSamples, x), end="", flush=True)
@@ -227,12 +227,12 @@ class NeblinaComm(object):
         print('\n')
         # Step 8 - Stop the streaming
         # self.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, False)
-        self.sendCommand(neb.Subsys_MotionEngine,rdatatype, False)
+        self.sendCommand(neb.Subsys_MotionEngine, dataType, False)
         print('Sending the stop streaming command, and waiting for a response...')
 
         # Step 9 - wait for ack
         # self.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data)
-        self.waitForAck(neb.Subsys_MotionEngine,rdatatype)
+        self.waitForAck(neb.Subsys_MotionEngine, dataType)
         print('Acknowledge packet was received!')
 
         # Step 10 - Stop the recording

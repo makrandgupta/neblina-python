@@ -35,8 +35,5 @@ def main():
         comm.switchStreamingInterface(False)
         comm.sc.close()
 
-
-
-
 if __name__ == '__main__':
     main()
