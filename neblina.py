@@ -42,7 +42,8 @@ PacketTypeStrings = {
 }
 
 # Debug Commands
-DebugCmd_SetInterface       =   0x01
+DebugCmd_SetInterface        =   0x01
+DebugCmd_MotAndFlashRecState =   0x02
 
 # Power Management commands
 PowCmd_GetBatteryLevel      =   0x00
@@ -93,7 +94,8 @@ LEDCmd_Config               =   0x03
 
 # Dictionary containing the string descriptors of each command
 CommandStrings = {
-    (Subsys_Debug, 1)                                       :   'Set Interface',
+    (Subsys_Debug, DebugCmd_SetInterface)                   :   'Set Interface',
+    (Subsys_Debug, DebugCmd_MotAndFlashRecState)            :   'Check Motion and Flash Recorder States',
     (Subsys_MotionEngine, MotCmd_Downsample)                :   'Downsample',
     (Subsys_MotionEngine, MotCmd_MotionState)               :   'MotionState',
     (Subsys_MotionEngine, MotCmd_IMU_Data)                  :   'IMU Data',
@@ -215,6 +217,40 @@ class NebEEPROMCommandData(object):
         commandDataString = struct.pack(Neblina_EEPROMCommandPacketData_fmt,\
             self.pageNumber, self.dataBytes, garbage)
         return commandDataString
+
+Neblina_MotionAndFlash_fmt = "<I 4s B 7s" # Timestamp (unused for now), downsample factor
+class MotAndFlashRecStateData(object):
+    """docstring for NebMotAndFlashRecStateData"""
+    
+    recorderStatusStrings = {
+        0:"Off",
+        1:"Recording",
+        2:"Playback",
+    }
+
+    def __init__(self, dataString):
+        self.timestamp, \
+        motionEngineStatusBytes,\
+        self.recorderStatus,\
+        garbage = struct.unpack( Neblina_MotionAndFlash_fmt, dataString )
+
+        # Extract motion engine state
+        self.distance = ((motionEngineStatusBytes[0]  & 0x01) == 1)
+        self.force = (((motionEngineStatusBytes[0] & 0x02 ) >> 1) == 1)
+        self.euler = (((motionEngineStatusBytes[0] & 0x04 ) >> 2) == 1)
+        self.quaternion = (((motionEngineStatusBytes[0] & 0x08 ) >> 3) == 1)
+        self.imuData = (((motionEngineStatusBytes[0] & 0x10 ) >> 4) == 1)
+        self.motion = (((motionEngineStatusBytes[0] & 0x20 ) >> 5) == 1)
+        self.steps = (((motionEngineStatusBytes[0] & 0x40 ) >> 6) == 1)
+        self.magData = (((motionEngineStatusBytes[0] & 0x80 ) >> 7) == 1)
+        self.sitStand = ((motionEngineStatusBytes[1] & 0x01) == 1)
+
+    def __str__(self):
+        return "Distance: {0}, Force:{1}, Euler:{2}, Quaternion:{3}, IMUData:{4}, Motion:{5}, Steps:{6}, MAGData:{7}, SitStand:{8}, RecorderStatus:{9}"\
+        .format(self.distance, self.force, self.euler, self.quaternion,\
+                            self.imuData, self.motion, self.steps, self.magData,\
+                            self.sitStand,\
+                            MotAndFlashRecStateData.recorderStatusStrings[self.recorderStatus])
 
 Neblina_EEPROMRead_fmt = "<H 8s 6s" # Page number, 8 bytes Read Data
 class EEPROMReadData(object):
@@ -428,6 +464,11 @@ PlaceholderDataConstructors = {
     10   :   BlankData,
 }
 
+DebugResponses = {
+    DebugCmd_SetInterface           : BlankData,
+    DebugCmd_MotAndFlashRecState    : MotAndFlashRecStateData
+}
+
 StorageResponses = {
     StorageCmd_EraseAll         : BlankData,
     StorageCmd_Record           : FlashSessionData,
@@ -464,7 +505,7 @@ EEPROMResponses = {
 
 # Dictionary containing the dictionary of data object constructors
 ResponsePacketDataConstructors = {
-    Subsys_Debug                :   PlaceholderDataConstructors,
+    Subsys_Debug                :   DebugResponses,
     Subsys_MotionEngine         :   MotionResponses,
     Subsys_PowerManagement      :   PowerManagementResponses,
     Subsys_DigitalIO            :   PlaceholderDataConstructors,

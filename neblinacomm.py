@@ -33,7 +33,7 @@ class NeblinaComm(object):
                 packet.header.command != command):
                 if (packet.header.subSystem!=neb.Subsys_Debug):
                     packetCounter = packetCounter + 1
-                    print('waiting and got: {0}'.format(packet.data))
+                    # print('waiting and got: {0}'.format(packet.data))
                     packetList.append(packet)
                 packet = self.receivePacket()
         except NotImplementedError as nie:
@@ -55,20 +55,22 @@ class NeblinaComm(object):
     def waitForPacket(self, packetType, subSystem, command):
         try:
             packet = self.receivePacket()
-            #print('waiting and got: {0}'.format(packet))
+            # print('waiting and got: {0}'.format(packet))
             while( ( (packet.header.packetType != packetType) and (packet.header.packetType != neb.PacketType_ErrorLogResp) ) or \
                 packet.header.subSystem != subSystem or \
                 packet.header.command != command):
                 packet = self.receivePacket()
-                #print('waiting and got: {0}'.format(packet))
+                # print('waiting and got: {0}'.format(packet))
         except NotImplementedError as nie:
             print('Dropped bad packet')
             print(nie)
         except neb.CRCError as crce:
             print('CRCError')
             print(crce)
-        except Exception as e:
-            print(type(e))
+        except KeyError as ke:
+            print("Key Error")
+            print(ke)
+            print("Unrecognized packet command or subsystem code")
         return packet
 
     def switchStreamingInterface(self, interface=True):
@@ -77,6 +79,22 @@ class NeblinaComm(object):
         self.sendCommand(neb.Subsys_Debug, neb.DebugCmd_SetInterface, interface)
         print('Waiting for the module to switch its interface...')
         self.waitForAck(neb.Subsys_Debug, neb.DebugCmd_SetInterface)
+
+    # Debug Commands
+    def motionGetStates(self):
+        self.sendCommand(neb.Subsys_Debug, neb.DebugCmd_MotAndFlashRecState)
+        self.waitForAck(neb.Subsys_Debug, neb.DebugCmd_MotAndFlashRecState)
+        packet = self.waitForPacket(neb.PacketType_RegularResponse,\
+            neb.Subsys_Debug, neb.DebugCmd_MotAndFlashRecState)
+        return (packet.data.distance, packet.data.force, packet.data.euler, packet.data.quaternion,\
+            packet.data.imuData, packet.data.motion, packet.data.steps,packet.data.magData, packet.data.sitStand)
+
+    def flashGetState(self):
+        self.sendCommand(neb.Subsys_Debug, neb.DebugCmd_MotAndFlashRecState)
+        self.waitForAck(neb.Subsys_Debug, neb.DebugCmd_MotAndFlashRecState)
+        packet = self.waitForPacket(neb.PacketType_RegularResponse,\
+            neb.Subsys_Debug, neb.DebugCmd_MotAndFlashRecState)
+        return neb.MotAndFlashRecStateData.recorderStatusStrings[packet.data.recorderStatus]
 
     # Motine Engine commands
     def motionStream(self, streamingType, numPackets=None):

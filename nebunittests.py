@@ -89,6 +89,23 @@ class ut_NeblinaPackets(unittest.TestCase):
         print('roll = {0}'.format( roll ))
         print('garbage = {0}'.format( garbage ))
 
+    def testDecodeDebug(self):
+        print("\n*** Testing Debug Commands ***")
+        commandHeaderBytes = b'\x00\x10\xbc\x02'
+        commandDataBytes= b'\xde\xea\xbe\xef\xa5\x01\x11\x01\x02\xba\xbe\x00\x01\x02\x03\x04'
+        commandBytes = commandHeaderBytes+commandDataBytes
+        packet = neb.NebResponsePacket(commandBytes)
+        self.assertEqual(packet.data.distance,   True )
+        self.assertEqual(packet.data.force,      False)
+        self.assertEqual(packet.data.euler,      True )
+        self.assertEqual(packet.data.quaternion, False)
+        self.assertEqual(packet.data.imuData,    False)
+        self.assertEqual(packet.data.motion,     True )
+        self.assertEqual(packet.data.steps,      False)
+        self.assertEqual(packet.data.magData,    True )
+        self.assertEqual(packet.data.sitStand,   True )
+        self.assertEqual(packet.data.recorderStatus,   2)
+
     def testDecodeStorage(self):
         print("\n*** Testing Flash Storage Decoding ***")
         packets, errorList = self.buildPacketListFromSLIP("SampleData/FlashRecordPlayback.bin")
@@ -293,7 +310,7 @@ class ut_NeblinaPackets(unittest.TestCase):
         self.assertEqual(packetBytes[12], 0x92)
         self.assertEqual(packetBytes[13], 0x74)
 
-        # Debug packet
+        # Debug packet set interface
         switchInterfaceCommandPacket = neb.NebCommandPacket(neb.Subsys_Debug,\
             neb.DebugCmd_SetInterface,\
             True)
@@ -308,6 +325,13 @@ class ut_NeblinaPackets(unittest.TestCase):
         self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_Debug)
         self.assertEqual(packetBytes[3], neb.DebugCmd_SetInterface)
         self.assertEqual(packetBytes[8], 0x00)
+
+        flashAndRecorderStateCommandPacket = neb.NebCommandPacket(neb.Subsys_Debug,\
+            neb.DebugCmd_MotAndFlashRecState)
+        packetBytes = bytearray(flashAndRecorderStateCommandPacket.stringEncode())
+        self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_Debug)
+        self.assertEqual(packetBytes[3], neb.DebugCmd_MotAndFlashRecState)
+
 
     def testCreateEulerPackets(self):
         print("\n*** Testing Encoding and Decoding of Euler Angle Packets ***")

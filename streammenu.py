@@ -143,6 +143,13 @@ class StreamMenu(cmd.Cmd):
     def do_setCOMPort(self, args):
         self.setCOMPortName()
 
+    def do_motionState(self, args):
+        states = self.comm.motionGetStates()
+        print("Distance: {0}\nForce:{1}\nEuler:{2}\nQuaternion:{3}\nIMUData:{4}\nMotion:{5}\nSteps:{6}\nMAGData:{7}\nSitStand:{8}"\
+        .format(states[0], states[1], states[2], states[3],\
+                states[4], states[5], states[6], states[7], states[8])\
+        )
+
     def do_getBatteryLevel(self, args):
         batteryLevel = self.comm.getBatteryLevel()
         print('Battery Level: {0}%'.format(batteryLevel))
@@ -179,6 +186,10 @@ class StreamMenu(cmd.Cmd):
             print('The argument should be 2, 4, 8, or 16, representing the accelerometer range in g')
             return
         self.comm.motionSetAccFullScale(factor)
+
+    def do_flashState(self, args):
+        state = self.comm.flashGetState()
+        print(state)
 
     def do_flashErase(self, args):
         self.comm.flashErase()
