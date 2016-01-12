@@ -36,7 +36,6 @@ class NeblinaComm(object):
                     print('waiting and got: {0}'.format(packet.data))
                     packetList.append(packet)
                 packet = self.receivePacket()
-                # if ( (packet.header.subSystem!=0x01) or (packet.header.packetType!=neb.PacketType_RegularResponse) or (packet.header.command!=0x03) ):
         except NotImplementedError as nie:
             print('Dropped bad packet')
             print(nie)
@@ -204,19 +203,15 @@ class NeblinaComm(object):
         sessionID = packet.data.sessionID
 
         # Step 5 - enable IMU streaming
-        # self.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, True)
         self.sendCommand(neb.Subsys_MotionEngine,dataType, True)
         print('Sending the enable IMU streaming command, and waiting for a response...')
 
         # Step 6 - wait for ack
-        # self.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data)
         self.waitForAck(neb.Subsys_MotionEngine,dataType)
         print('Acknowledge packet was received!')
         
-        # print ('Recording %d packets takes about %d seconds' % (n,n/50))
         for x in range(1, numSamples+1):
             packet = self.receivePacket()
-            # while ((packet.header.subSystem!=neb.Subsys_MotionEngine) or (packet.header.packetType!=neb.PacketType_RegularResponse) or (packet.header.command!=neb.MotCmd_IMU_Data)):
             while ((packet.header.subSystem!=neb.Subsys_MotionEngine) or \
                 (packet.header.packetType!=neb.PacketType_RegularResponse) or \
                 (packet.header.command!= dataType)):
@@ -226,12 +221,10 @@ class NeblinaComm(object):
 
         print('\n')
         # Step 8 - Stop the streaming
-        # self.sendCommand(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data, False)
         self.sendCommand(neb.Subsys_MotionEngine, dataType, False)
         print('Sending the stop streaming command, and waiting for a response...')
 
         # Step 9 - wait for ack
-        # self.waitForAck(neb.Subsys_MotionEngine,neb.MotCmd_IMU_Data)
         self.waitForAck(neb.Subsys_MotionEngine, dataType)
         print('Acknowledge packet was received!')
 
