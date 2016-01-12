@@ -221,7 +221,7 @@ class NebEEPROMCommandData(object):
 Neblina_MotionAndFlash_fmt = "<I 4s B 7s" # Timestamp (unused for now), downsample factor
 class MotAndFlashRecStateData(object):
     """docstring for NebMotAndFlashRecStateData"""
-    
+
     recorderStatusStrings = {
         0:"Off",
         1:"Recording",
@@ -465,6 +465,7 @@ PlaceholderDataConstructors = {
 }
 
 DebugResponses = {
+    0                               : BlankData,
     DebugCmd_SetInterface           : BlankData,
     DebugCmd_MotAndFlashRecState    : MotAndFlashRecStateData
 }
