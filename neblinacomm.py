@@ -175,7 +175,9 @@ class NeblinaComm(object):
         # Drop all packets until you get an ack
         packet = self.waitForAck(neb.Subsys_PowerManagement,\
             neb.PowCmd_GetBatteryLevel)
-        packet = self.receivePacket()
+        packet = self.waitForPacket(neb.PacketType_RegularResponse,\
+            neb.Subsys_PowerManagement,\
+            neb.PowCmd_GetBatteryLevel)
         return packet.data.batteryLevel
 
     def flashErase(self):
