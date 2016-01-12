@@ -115,8 +115,8 @@ class StreamMenu(cmd.Cmd):
 
     def do_EEPROMRead(self, args):
         arguments = args.split(' ')
-        print(arguments)
-        print(len(arguments))
+        #print(arguments)
+        #print(len(arguments))
         if (arguments[0]) == '' or len(arguments) != 1:
             print('EEPROMRead <pageNumber>')
             return
