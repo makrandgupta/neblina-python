@@ -42,8 +42,10 @@ PacketTypeStrings = {
 }
 
 # Debug Commands
-DebugCmd_SetInterface        =   0x01
-DebugCmd_MotAndFlashRecState =   0x02
+DebugCmd_SetInterface           =   0x01
+DebugCmd_MotAndFlashRecState    =   0x02
+DebugCmd_StartUnitTestMotion    =   0x03
+DebugCmd_UnitTestMotionData     =   0x04
 
 # Power Management commands
 PowCmd_GetBatteryLevel      =   0x00
@@ -96,6 +98,8 @@ LEDCmd_Config               =   0x03
 CommandStrings = {
     (Subsys_Debug, DebugCmd_SetInterface)                   :   'Set Interface',
     (Subsys_Debug, DebugCmd_MotAndFlashRecState)            :   'Check Motion and Flash Recorder States',
+    (Subsys_Debug, DebugCmd_StartUnitTestMotion)            :   'Enable/Disable Unit Test Motion',
+    (Subsys_Debug, DebugCmd_UnitTestMotionData)             :   'Unit Test Data',
     (Subsys_MotionEngine, MotCmd_Downsample)                :   'Downsample',
     (Subsys_MotionEngine, MotCmd_MotionState)               :   'MotionState',
     (Subsys_MotionEngine, MotCmd_IMU_Data)                  :   'IMU Data',
@@ -181,6 +185,22 @@ class NebFlashPlaybackCommandData(object):
         openCloseString = 'open' if self.openClose else 'close'
         return "Flash Command Session {0}: {1}"\
         .format(self.sessionID, openCloseString)
+
+# Special 26 byte packet
+Neblina_UnitTestMotionCommandData_fmt = "<I 3h 3h 3h" # Timestamp, accel, gyro, mag
+class NebUnitTestMotionDataCommandData(object):
+    """docstring for NebUnitTestMotionDataCommandData"""
+    def __init__(self, timestamp, accel, gyro, mag):
+        self.timestamp = timestamp
+        self.accel = accel
+        self.gyro = gyro
+        self.mag = mag
+    def encode(self):
+        commandDataString = struct.pack(Neblina_UnitTestMotionCommandData_fmt,\
+            self.timestamp, self.accel[0], self.accel[1], self.accel[2],\
+            self.gyro[0], self.gyro[1], self.gyro[2],\
+            self.mag[0], self.mag[1], self.mag[2])
+        return commandDataString
 
 Neblina_AccRangeCommandPacketData_fmt = "<I H 10s" # Timestamp (unused for now), downsample factor
 class NebAccRangeCommandData(NebCommandData):
@@ -290,6 +310,77 @@ class FlashSessionData(object):
         openCloseString = 'open' if self.openClose else 'close'
         return "Session {0}: {1}"\
         .format(self.sessionID, openCloseString)
+
+# Special 70 byte packet
+Neblina_UnitTestMotionData_fmt = "<B 3h 3h 3h 4h 3h 3h 3h H B I I h B I I"
+# motion, imu+mag, quaternion, euler, force, error, motion track, motion track progress, timestamp, stepCount, walkingDirection, sitStand
+class UnitTestMotionData(object):
+    motionStrings = {
+        0: "No Change",
+        1: "Stops Moving",
+        2: "Starts Moving",
+    }
+    """docstring for NebUnitTestMotionDataCommandData"""
+    def __init__(self, dataString):
+        self.accel = [0]*3
+        self.gyro = [0]*3
+        self.mag = [0]*3
+        self.quaternions = [0]*4
+        self.eulerAngleErrors = [0]*3
+        self.externalForces = [0]*3
+        self.startStop,\
+        self.accel[0], self.accel[1], self.accel[2],\
+        self.gyro[0], self.gyro[1], self.gyro[2],\
+        self.mag[0], self.mag[1], self.mag[2],\
+        self.quaternions[0], self.quaternions[1],\
+        self.quaternions[2], self.quaternions[3],\
+        self.yaw, self.pitch, self.roll,\
+        self.externalForces[0],\
+        self.externalForces[1],\
+        self.externalForces[2],\
+        self.eulerAngleErrors[0],\
+        self.eulerAngleErrors[1],\
+        self.eulerAngleErrors[2],\
+        self.motionTrack, self.motionTrackProgress,\
+        self.timestamp, self.stepCount,\
+        self.walkingDirection,\
+        self.sitStand, self.sitTime, self.standTime,\
+        = struct.unpack(Neblina_UnitTestMotionData_fmt, dataString)
+        
+
+    def __str__(self):
+        return "Motion: {0} \n\
+        accelxyz:({1},{2},{3}) gyroxyz:({4},{5},{6}) \
+        magxyz: ({7}, {8}, {9}),\n\
+        quat0:{10} quat1:{11} quat2:{12} quat3:{13} \n\
+        yaw/pitch/roll:({14},{15},{16})) \n\
+        externalForces(x,y,z):({17},{18},{19}) \n\
+        eulerAngleErrors(x,y,z):({20},{21},{22}) \n\
+        motionTrackCounter: {24} \
+        motionTrackProgress: {25} \n\
+        timestamp: {26} \n\
+        steps: {27} \
+        direction: {28} \n\
+        sitStand: {29}, sitTime:{30}, standTime:{31}"\
+        .format(Neblina_UnitTestMotionData_fmt,\
+        UnitTestMotionData.motionStrings[self.startStop],\
+        self.startStop,\
+        self.accel[0], self.accel[1], self.accel[2],\
+        self.gyro[0], self.gyro[1], self.gyro[2],\
+        self.mag[0], self.mag[1], self.mag[2],\
+        self.quaternions[0], self.quaternions[1],\
+        self.quaternions[2], self.quaternions[3],\
+        self.yaw, self.pitch, self.roll,\
+        self.externalForces[0],\
+        self.externalForces[1],\
+        self.externalForces[2],\
+        self.eulerAngleErrors[0],\
+        self.eulerAngleErrors[1],\
+        self.eulerAngleErrors[2],\
+        self.motionTrack, self.motionTrackProgress,\
+        self.timestamp, self.stepCount,\
+        self.walkingDirection,\
+        self.sitStand, self.sitTime, self.standTime)
 
 Neblina_MotionState_fmt = "<I B 11s" # Timestamp, start/stop
 class MotionStateData(object):
@@ -449,6 +540,7 @@ class EulerAngleData(object):
 
 
 # Dictionaries containing the data constructors for response packets
+# BlankData means a response data object does not need to be implemented
 # -------------------------------------------------------------------
 PlaceholderDataConstructors = {
     0   :   BlankData,
@@ -467,7 +559,10 @@ PlaceholderDataConstructors = {
 DebugResponses = {
     0                               : BlankData,
     DebugCmd_SetInterface           : BlankData,
-    DebugCmd_MotAndFlashRecState    : MotAndFlashRecStateData
+    DebugCmd_MotAndFlashRecState    : MotAndFlashRecStateData,
+    DebugCmd_StartUnitTestMotion    : BlankData,
+    DebugCmd_UnitTestMotionData     : UnitTestMotionData
+
 }
 
 StorageResponses = {
@@ -565,7 +660,10 @@ class NebCommandPacket(object):
     """docstring for NebCommandPacket"""
     def __init__(self, subSystem, commandType, enable=True, **kwargs):
         # Logic for determining which type of command packet it is based on the header
-        if(subSystem == Subsys_MotionEngine and commandType == MotCmd_Downsample):
+        if(subSystem == Subsys_Debug and commandType == DebugCmd_UnitTestMotionData):
+            self.data = NebUnitTestMotionDataCommandData(kwargs['timestamp'],\
+             kwargs['accel'], kwargs['gyro'], kwargs['mag'])
+        elif(subSystem == Subsys_MotionEngine and commandType == MotCmd_Downsample):
             self.data = NebDownsampleCommandData(enable)
         elif(subSystem == Subsys_MotionEngine and commandType == MotCmd_AccRange):
             self.data = NebAccRangeCommandData(enable)
@@ -578,7 +676,7 @@ class NebCommandPacket(object):
                 self.data = NebEEPROMCommandData(True, kwargs['pageNumber'], kwargs['dataBytes'])
         else:
             self.data = NebCommandData(enable)
-        self.header = NebHeader(subSystem, PacketType_Command, commandType)
+        self.header = NebHeader(subSystem, PacketType_Command, commandType, length=len(self.data.encode()))
         # Perform CRC calculation
         self.header.crc = crc8(bytearray(self.header.encode() + self.data.encode()))
 
@@ -659,10 +757,6 @@ class NebResponsePacket(object):
                 raise InvalidPacketFormatError(\
                     'Impossible packet, must have a data payload of at least 1 byte but got {0}')\
                     .format(packetStringLength)
-            elif(packetStringLength != 20):
-                raise NotImplementedError(\
-                    'Packets are not supposed to be anything other than 20 bytes for now but got {0}'\
-                    .format(packetStringLength))
 
             # The string can either be bytes or an actual string
             # Force it to a string if that is the case.
