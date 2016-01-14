@@ -23,26 +23,34 @@ class NeblinaComm(object):
     def storePacketsUntil(self, packetType, subSystem, command):
         packetList = []
         packetCounter = 0
-        try:
-            packet = self.receivePacket()
-            #print('waiting and got: {0}'.format(packet))
-            while(packet.header.packetType != packetType or \
+        packet = None
+        #print('waiting and got: {0}'.format(packet))
+        while( packet == None or \
+                packet.header.packetType != packetType or \
                 packet.header.subSystem != subSystem or \
                 packet.header.command != command):
-                if (packet.header.subSystem!=neb.Subsys_Debug):
-                    packetCounter = packetCounter + 1
-                    # print('waiting and got: {0}'.format(packet.data))
+            try:
+                if (packet != None and \
+                    packet.header.subSystem != neb.Subsys_Debug):
                     packetList.append(packet)
+                    print('Received {0} packets \r'.format(len(packetList)) , end="", flush=True)
                 packet = self.receivePacket()
-        except NotImplementedError as nie:
-            print('Dropped bad packet')
-            print(nie)
-        except neb.CRCError as crce:
-            print('CRCError')
-            print(crce)
-        except Exception as e:
-            print(type(e))
-        print('Total IMU Packets Read: %d' %packetCounter)
+                # print('waiting and got: {0}'.format(packet.data))
+            except NotImplementedError as nie:
+                packet = None
+                print('Dropped bad packet')
+                print(nie)
+                continue
+            except neb.CRCError as crce:
+                packet = None
+                print('CRCError')
+                print(crce)
+                continue
+            except Exception as e:
+                packet = None
+                print(type(e))
+                continue
+        print('\nTotal IMU Packets Read: {0}'.format(len(packetList)))
         return packetList
 
     # Helper Functions
