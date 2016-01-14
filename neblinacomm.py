@@ -31,7 +31,7 @@ class NeblinaComm(object):
                 packet.header.command != command):
                 if (packet.header.subSystem!=neb.Subsys_Debug):
                     packetCounter = packetCounter + 1
-                    print('waiting and got: {0}'.format(packet.data))
+                    # print('waiting and got: {0}'.format(packet.data))
                     packetList.append(packet)
                 packet = self.receivePacket()
         except NotImplementedError as nie:
@@ -111,7 +111,7 @@ class NeblinaComm(object):
         self.sendCommand(neb.Subsys_MotionEngine, streamingType, True)
 
         packet = self.waitForAck(neb.Subsys_MotionEngine, streamingType)
-        print('Got Ack: {0}'.format(packet))
+        # print('Got Ack: {0}'.format(packet))
 
         # Stream forever if the number of packets is unspecified (None)
         keepStreaming = (numPackets == None or numPackets > 0)
@@ -238,16 +238,12 @@ class NeblinaComm(object):
         self.waitForAck(neb.Subsys_MotionEngine,dataType)
         print('Acknowledge packet was received!')
         
+        # Step 7 Receive Packets        
         for x in range(1, numSamples+1):
-            packet = self.receivePacket()
-            while ((packet.header.subSystem!=neb.Subsys_MotionEngine) or \
-                (packet.header.packetType!=neb.PacketType_RegularResponse) or \
-                (packet.header.command!= dataType)):
-                packet = self.receivePacket()
-                continue
+            packet = self.waitForPacket(neb.PacketType_RegularResponse, neb.Subsys_MotionEngine, dataType)
             print('Recording %d packets, current packet: %d\r' % (numSamples, x), end="", flush=True)
-
         print('\n')
+
         # Step 8 - Stop the streaming
         self.sendCommand(neb.Subsys_MotionEngine, dataType, False)
         print('Sending the stop streaming command, and waiting for a response...')
@@ -289,7 +285,6 @@ class NeblinaComm(object):
         self.sendCommand(neb.Subsys_Debug, neb.DebugCmd_FWVersions)
         packet = self.waitForPacket(neb.PacketType_RegularResponse, neb.Subsys_Debug, neb.DebugCmd_FWVersions)
         return packet
-
 
     def debugUnitTestEnable(self, enable=True):
         self.sendCommand(neb.Subsys_Debug, neb.DebugCmd_StartUnitTestMotion, enable)
