@@ -13,7 +13,6 @@ class NeblinaComm(object):
 
     def sendCommand(self, subsystem, command, enable=True, **kwargs):
         commandPacket = neb.NebCommandPacket(subsystem, command, enable, **kwargs)
-        print('commandPacket = {0} len = {1}'.format(binascii.hexlify(commandPacket.stringEncode()), len(commandPacket.stringEncode())))
         self.comslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
 
     def receivePacket(self):
@@ -32,7 +31,7 @@ class NeblinaComm(object):
                 packet.header.command != command):
                 if (packet.header.subSystem!=neb.Subsys_Debug):
                     packetCounter = packetCounter + 1
-                    print('waiting and got: {0}'.format(packet.data))
+                    # print('waiting and got: {0}'.format(packet.data))
                     packetList.append(packet)
                 packet = self.receivePacket()
         except NotImplementedError as nie:
@@ -54,22 +53,22 @@ class NeblinaComm(object):
     def waitForPacket(self, packetType, subSystem, command):
         try:
             packet = self.receivePacket()
-            print('waiting and got: {0}'.format(packet))
+            # print('waiting and got: {0}'.format(packet))
             while( ( (packet.header.packetType != packetType) and (packet.header.packetType != neb.PacketType_ErrorLogResp) ) or \
                 packet.header.subSystem != subSystem or \
                 packet.header.command != command):
                 packet = self.receivePacket()
-                print('waiting and got: {0}'.format(packet))
+                # print('waiting and got: {0}'.format(packet))
         except NotImplementedError as nie:
             print('Dropped bad packet')
             print(nie)
         except neb.CRCError as crce:
             print('CRCError')
             print(crce)
-        # except KeyError as ke:
-        #     print("Key Error")
-        #     print(ke)
-        #     print("Unrecognized packet command or subsystem code")
+        except KeyError as ke:
+            print("Key Error")
+            print(ke)
+            print("Unrecognized packet command or subsystem code")
         return packet
 
     def switchStreamingInterface(self, interface=True):
@@ -275,6 +274,12 @@ class NeblinaComm(object):
             thefile = open('QData', 'w')
             for item in packetList:
                 thefile.write("%s\n" % item.stringEncode())
+
+    def debugFWVersions(self):
+        self.sendCommand(neb.Subsys_Debug, neb.DebugCmd_FWVersions)
+        packet = self.waitForPacket(neb.PacketType_RegularResponse, neb.Subsys_Debug, neb.DebugCmd_FWVersions)
+        return packet
+
 
     def debugUnitTestEnable(self, enable=True):
         self.sendCommand(neb.Subsys_Debug, neb.DebugCmd_StartUnitTestMotion, enable)

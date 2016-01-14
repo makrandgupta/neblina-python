@@ -46,6 +46,7 @@ DebugCmd_SetInterface           =   0x01
 DebugCmd_MotAndFlashRecState    =   0x02
 DebugCmd_StartUnitTestMotion    =   0x03
 DebugCmd_UnitTestMotionData     =   0x04
+DebugCmd_FWVersions             =   0x05
 
 # Power Management commands
 PowCmd_GetBatteryLevel      =   0x00
@@ -100,6 +101,7 @@ CommandStrings = {
     (Subsys_Debug, DebugCmd_MotAndFlashRecState)            :   'Check Motion and Flash Recorder States',
     (Subsys_Debug, DebugCmd_StartUnitTestMotion)            :   'Enable/Disable Unit Test Motion',
     (Subsys_Debug, DebugCmd_UnitTestMotionData)             :   'Unit Test Data',
+    (Subsys_Debug, DebugCmd_FWVersions)                     :   'Firmware Versions',
     (Subsys_MotionEngine, MotCmd_Downsample)                :   'Downsample',
     (Subsys_MotionEngine, MotCmd_MotionState)               :   'MotionState',
     (Subsys_MotionEngine, MotCmd_IMU_Data)                  :   'IMU Data',
@@ -310,6 +312,26 @@ class FlashSessionData(object):
         openCloseString = 'open' if self.openClose else 'close'
         return "Session {0}: {1}"\
         .format(self.sessionID, openCloseString)
+
+Neblina_FWVersions_fmt = "<B 3B 3B Q B" # API Release, MCU Major/Minor/Build, BLE Major/Minor/Build, Device ID
+class FWVersionsData(object):
+    """docstring for MotionStateData"""
+    def __init__(self, dataString):
+        self.mcuFWVersion = [0]*3
+        self.bleFWVersion = [0]*3
+        self.apiRelease,\
+        self.mcuFWVersion[0],self.mcuFWVersion[1],self.mcuFWVersion[2],\
+        self.bleFWVersion[0],self.bleFWVersion[1],self.bleFWVersion[2],\
+        self.deviceID,\
+        garbage = struct.unpack( Neblina_FWVersions_fmt, dataString )
+    def __str__(self):
+        return "API Release: {0}\n\
+        MCU Version: {1}.{2}.{3}\n\
+        BLE Version: {4}.{5}.{6}\n\
+        Device ID: {7}".format(self.apiRelease,\
+            self.mcuFWVersion[0], self.mcuFWVersion[1], self.mcuFWVersion[2],\
+            self.bleFWVersion[0], self.bleFWVersion[1], self.bleFWVersion[2],\
+            self.deviceID)
 
 # Special 70 byte packet
 Neblina_UnitTestMotionData_fmt = "<B 3h 3h 3h 4h 3h 3h 3h H B I I h B I I"
@@ -561,7 +583,8 @@ DebugResponses = {
     DebugCmd_SetInterface           : BlankData,
     DebugCmd_MotAndFlashRecState    : MotAndFlashRecStateData,
     DebugCmd_StartUnitTestMotion    : BlankData,
-    DebugCmd_UnitTestMotionData     : UnitTestMotionData
+    DebugCmd_UnitTestMotionData     : UnitTestMotionData,
+    DebugCmd_FWVersions             : FWVersionsData
 
 }
 

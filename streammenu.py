@@ -234,6 +234,10 @@ class StreamMenu(cmd.Cmd):
                 magVector=magPackets[idx].data.mag)
         self.comm.debugUnitTestEnable(False)
 
+    def do_versions(self, args):
+        versionPacket = self.comm.debugFWVersions()
+        print(versionPacket.data)
+
 
     ## Override methods in Cmd object ##
     def preloop(self):
