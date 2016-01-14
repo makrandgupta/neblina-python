@@ -74,28 +74,28 @@ class JigTest(unittest.TestCase):
     def test1_CurrentDraw(self):#---------current draw test-----------#
         print('\n-->current draw test =',latero.Adc_In[0],'V (normally > 10mA)')
         print('\tNeblina is drawing', latero.Adc_In[0]*100.0,'mA')
-        self.assertLess(zeroThresh,latero.Adc_In[0],"\n\nno voltage detected")
+        self.assertLess(zeroThresh/100,latero.Adc_In[0],"\n\nno current detected, is a neblina in the test jig?")
 
 
     def test2_6V6(self):#---------6.6V voltage test-----------#
         print('-->6.6V voltage test =',latero.Adc_In[1],'V')
-        self.assertLess(zeroThresh,latero.Adc_In[1],"\n\nno voltage detected")
+        self.assertLess(zeroThresh,latero.Adc_In[1],"\n\n6V6 not detected: "+str(latero.Adc_In[1])+'V')
         #self.assertAlmostEqual(6.6,latero.Adc_In[1],delta=6.6/100*tolerance,
-            #msg='\n\n6.6V is not in the '+str(tolerance)+"% tolerance zone")        
+            #msg='\n\n6.6V is not in the '+str(tolerance)+"% tolerance zone: "+str(latero.Adc_In[1])+'V')        
 
     def test3_3V2(self):#---------3.2V voltage test-----------#    
         print('-->3.2V voltage test =',latero.Adc_In[2],'V')
-        self.assertLess(zeroThresh,latero.Adc_In[2],"\n\nno voltage detected")
+        self.assertLess(zeroThresh,latero.Adc_In[2],"\n\n3V2 not detected: "+str(latero.Adc_In[2])+'V')
         self.assertAlmostEqual(3.2,latero.Adc_In[2],delta=3.2/100*tolerance,
-            msg='\n\n3.2V is not in the '+str(tolerance)+"% tolerance zone")        
+            msg="\n\n3.2V is not in the "+str(tolerance)+"% tolerance zone: "+str(latero.Adc_In[2])+'V')        
         
     def test4_VBATT(self):#---------VBAT voltage test-----------#      
         print('-->VBAT voltage test =',latero.Adc_In[3],'V')
         latero.VBatt = latero.Adc_In[3]
-        self.assertLess(zeroThresh,latero.Adc_In[3],"\n\nno voltage/battery detected")
+        self.assertLess(zeroThresh,latero.Adc_In[3],"\n\nno voltage/battery detected: "+str(latero.Adc_In[3])+'V')
         self.assertGreater(4.2,latero.Adc_In[3],
-                           "\n\nNeblina is over charging battery or no battery is connected")
-        self.assertLess(3.4,latero.Adc_In[3],"\n\nBatterie is broken or not connected")
+                           "\n\nNeblina is over charging battery or no battery is connected: "+str(latero.Adc_In[3])+'V')
+        self.assertLess(3.4,latero.Adc_In[3],"\n\nBatterie is broken or not connected: "+str(latero.Adc_In[3])+'V')
 
 
     def test5_CurrentChg(self):
@@ -111,26 +111,26 @@ class JigTest(unittest.TestCase):
         print('\n-->charge current test =',latero.Adc_In[0],'V')
         print('\tNeblina is charging the battery at',round(latero.Adc_In[0]/0.0027,2),'mA')
         self.assertLess(-0.02,latero.Adc_In[0],"\n\nNeblina is powered by VBatt (it shouldn't)")
-        #self.assertNotAlmostEqual(latero.Adc_In[0],0,delta=zeroThresh,
-        #    msg="\n\nNeblina is NOT charging the battery")
+        self.assertNotAlmostEqual(latero.Adc_In[0],0,delta=zeroThresh,
+            msg="\n\nNeblina is NOT charging the battery")
 
     def test6_5V(self):#---------5V voltage test-----------# 
         print('-->5V voltage test =',latero.Adc_In[1],'V')
-        self.assertLess(zeroThresh,latero.Adc_In[1],"\n\nno voltage detected")
-        self.assertAlmostEqual(5,latero.Adc_In[1],delta=5/100*tolerance,
-            msg='\n\n5V is not in the '+str(tolerance)+"% tolerance zone")        
+        self.assertLess(zeroThresh,latero.Adc_In[1],"\n\nno voltage detected: "+str(latero.Adc_In[1])+'V')
+        #self.assertAlmostEqual(5,latero.Adc_In[1],delta=5/100*tolerance,
+        #    msg='\n\n5V is not in the '+str(tolerance)+"% tolerance zone: "+str(latero.Adc_In[1])+'V')        
 
     def test7_1V8(self):#---------1.8V voltage test-----------#       
         print('-->1.8V voltage test =',latero.Adc_In[2],'V')
-        self.assertLess(zeroThresh,latero.Adc_In[2],"\n\nno voltage detected")
+        self.assertLess(zeroThresh,latero.Adc_In[2],"\n\nno voltage detected: "+str(latero.Adc_In[2])+'V')
         self.assertAlmostEqual(1.8,latero.Adc_In[2],delta=1.8/100*tolerance,
-            msg='\n\n1.8V is not in the '+str(tolerance)+"% tolerance zone")        
+            msg='\n\n1.8V is not in the '+str(tolerance)+"% tolerance zone: "+str(latero.Adc_In[2])+'V')        
         
     def test8_VSYS(self):#---------VSYS voltage test-----------#        
         print('-->VSYS voltage test =',latero.Adc_In[3],'V')
-        self.assertLess(zeroThresh,latero.Adc_In[3],"\n\nno voltage detected")
+        self.assertLess(zeroThresh,latero.Adc_In[3],"\n\nno voltage detected: "+str(latero.Adc_In[3])+'V')
         self.assertGreater(latero.Adc_In[3],latero.VBatt-0.1,
-            '\n\nVSYS is too low, it should >= to VBatt)')
+            "\n\nVSYS is too low, it should >= to VBatt: "+str(latero.Adc_In[3])+'V')
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(JigTest)
