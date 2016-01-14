@@ -41,6 +41,10 @@ class NeblinaComm(object):
                 print('Dropped bad packet')
                 print(nie)
                 continue
+            except KeyError as ke:
+                packet = None
+                print("Tried creating a packet with an invalid subsystem or command")
+                print(ke)
             except neb.CRCError as crce:
                 packet = None
                 print('CRCError')
@@ -82,10 +86,9 @@ class NeblinaComm(object):
                 packet = None
                 continue
             except KeyError as ke:
-                print("Key Error")
-                print(ke)
-                print("Unrecognized packet command or subsystem code")
                 packet = None
+                print("Tried creating a packet with an invalid subsystem or command")
+                print(ke)
                 continue
         return packet
 
