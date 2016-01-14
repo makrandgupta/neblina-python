@@ -778,8 +778,8 @@ class NebResponsePacket(object):
             packetStringLength = len(packetString)
             if(packetStringLength < 5):
                 raise InvalidPacketFormatError(\
-                    'Impossible packet, must have a data payload of at least 1 byte but got {0}')\
-                    .format(packetStringLength)
+                    'Impossible packet, must have a packet of at least 5 bytes but got {0}'\
+                    .format(packetStringLength))
 
             # The string can either be bytes or an actual string
             # Force it to a string if that is the case.
@@ -842,8 +842,10 @@ class CRCError(Exception):
 
 class InvalidPacketFormatError(Exception):
     """docstring for InvalidPacketFormatError"""
-    def __init__(self, errorString):
-        super(InvalidPacketFormatError, self).__init__(errorString)
+    def __init__(self, error):
+        self.errorString = error
+    def __str__(self):
+        return self.errorString
 
 def crc8(bytes):
     crc = 0

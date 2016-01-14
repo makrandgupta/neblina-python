@@ -51,24 +51,34 @@ class NeblinaComm(object):
         return ackPacket
         
     def waitForPacket(self, packetType, subSystem, command):
-        try:
-            packet = self.receivePacket()
-            # print('waiting and got: {0}'.format(packet))
-            while( ( (packet.header.packetType != packetType) and (packet.header.packetType != neb.PacketType_ErrorLogResp) ) or \
-                packet.header.subSystem != subSystem or \
-                packet.header.command != command):
+        packet = None
+        while( (packet == None) or \
+            ( (packet.header.packetType != packetType) and (packet.header.packetType != neb.PacketType_ErrorLogResp) ) or \
+            packet.header.subSystem != subSystem or \
+            packet.header.command != command):
+            try:
                 packet = self.receivePacket()
                 # print('waiting and got: {0}'.format(packet))
-        except NotImplementedError as nie:
-            print('Dropped bad packet')
-            print(nie)
-        except neb.CRCError as crce:
-            print('CRCError')
-            print(crce)
-        except KeyError as ke:
-            print("Key Error")
-            print(ke)
-            print("Unrecognized packet command or subsystem code")
+            except NotImplementedError as nie:
+                print('Dropped bad packet')
+                print(nie)
+                packet = None
+                continue
+            except neb.InvalidPacketFormatError as ipfe:
+                print(ipfe)
+                packet = None
+                continue
+            except neb.CRCError as crce:
+                print('CRCError')
+                print(crce)
+                packet = None
+                continue
+            except KeyError as ke:
+                print("Key Error")
+                print(ke)
+                print("Unrecognized packet command or subsystem code")
+                packet = None
+                continue
         return packet
 
     def switchStreamingInterface(self, interface=True):
