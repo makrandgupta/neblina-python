@@ -58,8 +58,11 @@ class NeblinaComm(object):
         ackPacket = self.waitForPacket(neb.PacketType_Ack, subSystem, command)
         return ackPacket
         
-    def waitForPacket(self, packetType, subSystem, command):
+    def waitForPacket(self, packetType, subSystem, command, timeout=False):
         packet = None
+        # Empty buffer packets are sent by the device periodically at an interval of 200ms
+        # Using these empty buffer packets for timeout
+        emptyBufferPackets = 0
         while( (packet == None) or \
             ( (packet.header.packetType != packetType) and (packet.header.packetType != neb.PacketType_ErrorLogResp) ) or \
             packet.header.subSystem != subSystem or \
@@ -75,7 +78,12 @@ class NeblinaComm(object):
             except neb.InvalidPacketFormatError as ipfe:
                 print(ipfe)
                 packet = None
-                continue
+                emptyBufferPackets += 1
+                if (timeout and emptyBufferPackets == 5): # 1 second timeout
+                    print('timeout')
+                    raise TimeoutError("Response from the module is taking too long.")
+                else:
+                    continue
             except neb.CRCError as crce:
                 print('CRCError')
                 print(crce)
