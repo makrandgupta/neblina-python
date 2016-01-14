@@ -31,7 +31,7 @@ class NeblinaComm(object):
                 packet.header.command != command):
                 if (packet.header.subSystem!=neb.Subsys_Debug):
                     packetCounter = packetCounter + 1
-                    # print('waiting and got: {0}'.format(packet.data))
+                    print('waiting and got: {0}'.format(packet.data))
                     packetList.append(packet)
                 packet = self.receivePacket()
         except NotImplementedError as nie:
