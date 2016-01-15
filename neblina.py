@@ -367,8 +367,7 @@ class UnitTestMotionData(object):
         self.timestamp, self.stepCount,\
         self.walkingDirection,\
         self.sitStand, self.sitTime, self.standTime,\
-        = struct.unpack(Neblina_UnitTestMotionData_fmt, dataString)
-        
+        = struct.unpack(Neblina_UnitTestMotionData_fmt, dataString)        
 
     def __str__(self):
         return "Motion: {0} \n\
