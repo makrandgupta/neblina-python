@@ -11,6 +11,19 @@ import time
 
 class ut_IntegrationTests(unittest.TestCase):
     setupHasAlreadyRun = False
+
+    def csvVectorsToList(self, csvFileName):
+        testVectorPacketList = []
+        with open(csvFileName, newline='') as testVectorFile:
+            testVectorReader = csv.reader(testVectorFile)
+            # Remove the empty rows
+            testVectors = [row for row in testVectorReader if len(row) != 0]
+        for vector in testVectors:
+            vectorInts = [int(packetByte) for packetByte in vector]
+            vectorBytes = (array.array('B', vectorInts).tostring())
+            testVectorPacketList.append(vectorBytes)
+        return testVectorPacketList
+
     def setUp(self):
         # Give it a break between each test
         time.sleep(0.5)
@@ -54,6 +67,17 @@ class ut_IntegrationTests(unittest.TestCase):
     def testStreamIMU(self):
         # self.comm.switchStreamingInterface(False)
         self.comm.motionStream(neb.MotCmd_IMU_Data, 100)
+
+    def testMotionEngine(self):
+        testInputVectorPacketList = self.csvVectorsToList('motEngineInputs.csv')
+        testOutputVectorPacketList = self.csvVectorsToList('motEngineOutputs.csv')
+        self.debugUnitTestEnable(True)
+        for packetBytes in testInputVectorPacketList:
+            self.comm.comslip.sendPacketToStream(self.comm.sc, packetBytes)
+            packet = self.comm.waitForPacket(neb.PacketType_RegularResponse, \
+                neb.Subsys_Debug, neb.DebugCmd_UnitTestMotionData)
+            print(packet)
+        self.debugUnitTestEnable(False)
 
 if __name__ == "__main__":
     unittest.main() # run all tests

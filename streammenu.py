@@ -224,20 +224,9 @@ class StreamMenu(cmd.Cmd):
             mySessionID = int(args)
         self.comm.flashPlayback(mySessionID)
 
-    def do_testVector(self, args):
-        self.comm.debugUnitTestEnable(True)
-        imuPackets = sim.createRandomIMUDataPacketList(50.0, 10, 1.0)
-        magPackets = sim.createRandomMAGDataPacketList(50.0, 10, 1.0)
-        for idx,imuPacket in enumerate(imuPackets):
-            self.comm.debugUnitTestSendVector(vectorTimestamp=imuPacket.data.timestamp,\
-                accelVector=imuPacket.data.accel, gyroVector=imuPacket.data.gyro,\
-                magVector=magPackets[idx].data.mag)
-        self.comm.debugUnitTestEnable(False)
-
     def do_versions(self, args):
         versionPacket = self.comm.debugFWVersions()
         print(versionPacket.data)
-
 
     ## Override methods in Cmd object ##
     def preloop(self):
