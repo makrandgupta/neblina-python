@@ -15,7 +15,6 @@ import array
 class ut_IntegrationTests(unittest.TestCase):
     setupHasAlreadyRun = False
 
-<<<<<<< HEAD
     def csvVectorsToList(self, csvFileName):
         testVectorPacketList = []
         with open(csvFileName, newline='') as testVectorFile:
