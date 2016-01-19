@@ -27,7 +27,7 @@ class StreamMenu(cmd.Cmd):
         self.prompt = '>>'
         self.intro = "Welcome to the Neblina Streaming Menu!"
         
-        # Check if config file exitst
+        # Check if config file exists
         if(not os.path.exists(self.configFileName)):
             self.setCOMPortName()
 
