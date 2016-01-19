@@ -410,6 +410,8 @@ class ut_NeblinaPackets(unittest.TestCase):
             self.assertEqual(packets[idx].data.stepCount, packet.data.stepCount)
             self.assertEqual(packets[idx].data.stepsPerMinute, packet.data.stepsPerMinute)
             self.assertEqual(packets[idx].data.walkingDirection, packet.data.walkingDirection)
+            self.assertGreaterEqual(packets[idx].data.walkingDirection, -180.0)
+            self.assertLessEqual(packets[idx].data.walkingDirection, 180.0)
 
     def testCreateIMUPackets(self):
         print("\n*** Testing Encoding and Decoding of IMU Packets ***")

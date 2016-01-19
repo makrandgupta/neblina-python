@@ -88,19 +88,14 @@ def createWalkingPathPacketList(numSteps, averageSPM=61.0, maxDegreesDeviation=2
     timestampDivergence = 0.5 # Half a second time divergence
 
     # Choose at which step numbers the turns should occur
-    stepIndices = []
+    turnStepIndices = []
     for ii in range(0,turns):
-        stepIndices.append( random.randint(1, numSteps) )
+        turnStepIndices.append( random.randint(1, numSteps) )
 
     for ii in range(0,numSteps):
         # Choose a new random direction
-        if(ii in stepIndices ):
+        if(ii in turnStepIndices ):
             angleVariation = random.randrange(-90, 91, 180)
-            # Make sure the direction stays within -180 and +180
-            if( angleVariation > 180.0 ):
-                angleVariation -= 360
-            elif ( angleVariation < -180.0 ):
-                angleVariation += 360
         else:
             angleVariation = random.gauss(0, 1.0)
             if( angleVariation > maxDegreesDeviation ):
@@ -110,6 +105,11 @@ def createWalkingPathPacketList(numSteps, averageSPM=61.0, maxDegreesDeviation=2
         
         # Update new walking direction
         walkingDirection = walkingDirection+angleVariation
+        # Make sure the direction stays within -180 and +180
+        if( walkingDirection > 180.0 ):
+            walkingDirection -= 360
+        elif ( walkingDirection < -180.0 ):
+            walkingDirection += 360
         
         # Choose a new timestamp
         secondsPerStep = 60.0/averageSPM
