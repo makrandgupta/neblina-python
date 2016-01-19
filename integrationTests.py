@@ -8,6 +8,8 @@ import os
 import serial
 import serial.tools.list_ports
 import time
+import csv
+import array
 
 class ut_IntegrationTests(unittest.TestCase):
     setupHasAlreadyRun = False
@@ -20,13 +22,13 @@ class ut_IntegrationTests(unittest.TestCase):
             testVectors = [row for row in testVectorReader if len(row) != 0]
         for vector in testVectors:
             vectorInts = [int(packetByte) for packetByte in vector]
-            vectorBytes = (array.array('B', vectorInts).tostring())
+            vectorBytes = (array.array('B', vectorInts).tobytes())
             testVectorPacketList.append(vectorBytes)
         return testVectorPacketList
 
     def setUp(self):
         # Give it a break between each test
-        time.sleep(0.5)
+        time.sleep(1)
 
         # if(self.setupHasAlreadyRun == False):
         self.configFileName = 'streamconfig.txt'
@@ -57,27 +59,35 @@ class ut_IntegrationTests(unittest.TestCase):
         # self.setupHasAlreadyRun = True
 
     def tearDown(self):
-        self.comm.switchStreamingInterface(False)
+        # self.comm.switchStreamingInterface(False)
+        self.comm.sc.close()
         print('Bye')
 
-    def testStreamEuler(self):
-        # self.comm.switchStreamingInterface(False)
-        self.comm.motionStream(neb.MotCmd_EulerAngle, 100)
+    # def testStreamEuler(self):
+    #     # self.comm.switchStreamingInterface(False)
+    #     self.comm.motionStream(neb.MotCmd_EulerAngle, 100)
 
-    def testStreamIMU(self):
-        # self.comm.switchStreamingInterface(False)
-        self.comm.motionStream(neb.MotCmd_IMU_Data, 100)
+    # def testStreamIMU(self):
+    #     # self.comm.switchStreamingInterface(False)
+    #     self.comm.motionStream(neb.MotCmd_IMU_Data, 100)
+
+    # def testVersion(self):
+    #     self.comm.debugFWVersions()
 
     def testMotionEngine(self):
         testInputVectorPacketList = self.csvVectorsToList('motEngineInputs.csv')
         testOutputVectorPacketList = self.csvVectorsToList('motEngineOutputs.csv')
-        self.debugUnitTestEnable(True)
+        self.comm.debugUnitTestEnable(True)
+        print('\nUnit Test Enabled\n')
+        numTestVectors = 0
         for packetBytes in testInputVectorPacketList:
+            # print('Sending {0} to stream'.format(binascii.hexlify(packetBytes)))
             self.comm.comslip.sendPacketToStream(self.comm.sc, packetBytes)
             packet = self.comm.waitForPacket(neb.PacketType_RegularResponse, \
                 neb.Subsys_Debug, neb.DebugCmd_UnitTestMotionData)
-            print(packet)
-        self.debugUnitTestEnable(False)
+            numTestVectors += 1
+            print('Sent %d testVectors out of %d\r' % (numTestVectors,len(testInputVectorPacketList)) , end="", flush=True)
+        self.comm.debugUnitTestEnable(False)
 
 if __name__ == "__main__":
     unittest.main() # run all tests
