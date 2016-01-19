@@ -45,7 +45,7 @@ class ut_IntegrationTests(unittest.TestCase):
         sc = None
         while sc is None:
             try:
-                sc = serial.Serial(port=comPortName,baudrate=230400)
+                sc = serial.Serial(port=comPortName,baudrate=115200)
             except serial.serialutil.SerialException as se:
                 if 'Device or resource busy:' in se.__str__():
                     print('Opening COM port is taking a little while, please stand by...')
@@ -59,34 +59,29 @@ class ut_IntegrationTests(unittest.TestCase):
         # self.setupHasAlreadyRun = True
 
     def tearDown(self):
-        # self.comm.switchStreamingInterface(False)
         self.comm.sc.close()
-        print('Bye')
+        print('Closed COM Port')
 
     # def testStreamEuler(self):
-    #     # self.comm.switchStreamingInterface(False)
     #     self.comm.motionStream(neb.MotCmd_EulerAngle, 100)
 
     # def testStreamIMU(self):
-    #     # self.comm.switchStreamingInterface(False)
     #     self.comm.motionStream(neb.MotCmd_IMU_Data, 100)
 
     # def testVersion(self):
     #     self.comm.debugFWVersions()
 
     def testMotionEngine(self):
-        testInputVectorPacketList = self.csvVectorsToList('motEngineInputs.csv')
-        testOutputVectorPacketList = self.csvVectorsToList('motEngineOutputs.csv')
+        testInputVectorPacketList = self.csvVectorsToList('./SampleData/motEngineInputs.csv')
+        testOutputVectorPacketList = self.csvVectorsToList('./SampleData/motEngineOutputs.csv')
         self.comm.debugUnitTestEnable(True)
-        print('\nUnit Test Enabled\n')
-        numTestVectors = 0
-        for packetBytes in testInputVectorPacketList:
+        for idx,packetBytes in enumerate(testInputVectorPacketList):
             # print('Sending {0} to stream'.format(binascii.hexlify(packetBytes)))
             self.comm.comslip.sendPacketToStream(self.comm.sc, packetBytes)
             packet = self.comm.waitForPacket(neb.PacketType_RegularResponse, \
                 neb.Subsys_Debug, neb.DebugCmd_UnitTestMotionData)
-            numTestVectors += 1
-            print('Sent %d testVectors out of %d\r' % (numTestVectors,len(testInputVectorPacketList)) , end="", flush=True)
+            self.assertEqual(testOutputVectorPacketList[idx], packet.stringEncode())
+            print('Sent %d testVectors out of %d\r' % (idx,len(testInputVectorPacketList)) , end="", flush=True)
         self.comm.debugUnitTestEnable(False)
 
 if __name__ == "__main__":

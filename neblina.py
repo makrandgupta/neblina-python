@@ -403,6 +403,27 @@ class UnitTestMotionData(object):
         self.walkingDirection,\
         self.sitStand, self.sitTime, self.standTime)
 
+    def encode(self):
+        packetBytes = struct.pack(Neblina_UnitTestMotionData_fmt,\
+            self.startStop,\
+            self.accel[0], self.accel[1], self.accel[2],\
+            self.gyro[0], self.gyro[1], self.gyro[2],\
+            self.mag[0], self.mag[1], self.mag[2],\
+            self.quaternions[0], self.quaternions[1],\
+            self.quaternions[2], self.quaternions[3],\
+            self.yaw, self.pitch, self.roll,\
+            self.externalForces[0],\
+            self.externalForces[1],\
+            self.externalForces[2],\
+            self.eulerAngleErrors[0],\
+            self.eulerAngleErrors[1],\
+            self.eulerAngleErrors[2],\
+            self.motionTrack, self.motionTrackProgress,\
+            self.timestamp, self.stepCount,\
+            self.walkingDirection,\
+            self.sitStand, self.sitTime, self.standTime)
+        return packetBytes
+
 Neblina_MotionState_fmt = "<I B 11s" # Timestamp, start/stop
 class MotionStateData(object):
     """docstring for MotionStateData"""

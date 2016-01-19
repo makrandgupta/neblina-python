@@ -70,7 +70,6 @@ class NeblinaComm(object):
             packet.header.command != command):
             try:
                 packet = self.receivePacket()
-                # print('waiting and got: {0}'.format(packet))
             except NotImplementedError as nie:
                 print('Dropped bad packet')
                 print(nie)
@@ -306,7 +305,6 @@ class NeblinaComm(object):
             timestamp=vectorTimestamp,\
             accel=accelVector, gyro=gyroVector,\
             mag=magVector)
-        print('Sent test vector command')
         self.waitForPacket(neb.PacketType_RegularResponse, neb.Subsys_Debug, neb.DebugCmd_UnitTestMotionData)
 
 
