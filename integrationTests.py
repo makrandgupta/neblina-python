@@ -11,9 +11,11 @@ import time
 import csv
 import array
 
+
 class ut_IntegrationTests(unittest.TestCase):
     setupHasAlreadyRun = False
 
+<<<<<<< HEAD
     def csvVectorsToList(self, csvFileName):
         testVectorPacketList = []
         with open(csvFileName, newline='') as testVectorFile:
@@ -26,6 +28,22 @@ class ut_IntegrationTests(unittest.TestCase):
             testVectorPacketList.append(vectorBytes)
         return testVectorPacketList
 
+    def setCOMPortName(self):
+        self.bigLine = '-------------------------------------------------------------------\n'
+        self.prompt = '>>'
+        portList = [port[0] for port in serial.tools.list_ports.comports()]
+        port = input('Select the COM port to use:' + '\n'.join(portList) + '\n' +  \
+            self.bigLine + self.prompt)
+        while(port not in portList):
+            print('{0} not in the available COM ports'.format(port))
+            port = input('Select the COM port to use:' + '\n'.join(portList[0]) + '\n' + \
+                self.bigLine + self.prompt)
+        
+        # Write it to the config file
+        configFile = open(self.configFileName, 'w')
+        configFile.write(port)
+        configFile.close()
+    
     def setUp(self):
         # Give it a break between each test
         time.sleep(1)
