@@ -62,14 +62,14 @@ class ut_IntegrationTests(unittest.TestCase):
         self.comm.sc.close()
         print('Closed COM Port')
 
-    # def testStreamEuler(self):
-    #     self.comm.motionStream(neb.MotCmd_EulerAngle, 100)
+    def testStreamEuler(self):
+        self.comm.motionStream(neb.MotCmd_EulerAngle, 100)
 
-    # def testStreamIMU(self):
-    #     self.comm.motionStream(neb.MotCmd_IMU_Data, 100)
+    def testStreamIMU(self):
+        self.comm.motionStream(neb.MotCmd_IMU_Data, 100)
 
-    # def testVersion(self):
-    #     self.comm.debugFWVersions()
+    def testVersion(self):
+        self.comm.debugFWVersions()
 
     def testMotionEngine(self):
         testInputVectorPacketList = self.csvVectorsToList('./SampleData/motEngineInputs.csv')
