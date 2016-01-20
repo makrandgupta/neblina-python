@@ -291,6 +291,30 @@ class NeblinaComm(object):
             for item in packetList:
                 thefile.write("%s\n" % item.stringEncode())
 
+    def getLEDs(self, ledIndicesList):
+        if type(ledIndicesList) != list:
+            print("Use this function with a list of leds you want to know the value as an argument.")
+            return
+        self.sendCommand(neb.Subsys_LED, neb.LEDCmd_GetVal, ledIndicesList)
+        packet = self.waitForPacket(neb.PacketType_RegularResponse,\
+            neb.Subsys_LED, neb.LEDCmd_GetVal)
+        return packet.data.ledTupleList
+
+    def getLED(self, index):
+        self.sendCommand(neb.Subsys_LED, neb.LEDCmd_GetVal, [index])
+        packet = self.waitForPacket(neb.PacketType_RegularResponse,\
+            neb.Subsys_LED, neb.LEDCmd_GetVal)
+        return packet.data.ledTupleList[0]
+
+    def setLEDs(self, ledValues):
+        if type(ledValues) != list and type(ledValues[0]) == tuple:
+            print("Use this function with a list of tuples as an argument.")
+            return
+        self.sendCommand(neb.Subsys_LED, neb.LEDCmd_SetVal, ledValueTupleList=ledValues)
+
+    def setLED(self, ledIndex, ledValue):
+        self.sendCommand(neb.Subsys_LED, neb.LEDCmd_SetVal, ledValueTupleList=(ledIndex,ledValue) )
+
     def debugFWVersions(self):
         self.sendCommand(neb.Subsys_Debug, neb.DebugCmd_FWVersions)
         packet = self.waitForPacket(neb.PacketType_RegularResponse, neb.Subsys_Debug, neb.DebugCmd_FWVersions)
