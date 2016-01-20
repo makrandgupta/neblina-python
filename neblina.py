@@ -5,6 +5,7 @@
 
 import struct
 import binascii
+from itertools import zip_longest
 
 # Control Byte Masks
 Subsys_BitMask              =   0x1F
@@ -340,6 +341,20 @@ class EEPROMReadData(object):
 
     def __str__(self):
         return "Page# {0} Data Bytes:{1} ".format(self.pageNumber, self.dataBytes)
+
+Neblina_LEDGetVal_fmt = "<B {0}s {1}s" # Number of LEDs, Index/Value, Index/Value, (...)
+class LEDGetValData(object):
+    """docstring for LEDGetValData"""
+    def __init__(self, dataString):
+        numLEDs = int(dataString[0])
+        numLEDBytes = numLEDs*2
+        numGarbageBytes = (15-numLEDBytes)
+        stringFormat = Neblina_LEDGetVal_fmt.format(numLEDBytes, numGarbageBytes)
+        numLEDs, ledBytes, garbage = struct.unpack( stringFormat, dataString )
+        self.ledTupleList = list(grouper(ledBytes, 2))
+
+    def __str__(self):
+        return "LED Values: {0}".format(self.ledTupleList)
 
 Neblina_BatteryLevel_fmt = "<I H 10s" # Battery Level (%)
 class BatteryLevelData(object):
@@ -698,13 +713,19 @@ EEPROMResponses = {
     EEPROMCmd_Write             : EEPROMReadData,
 }
 
+LEDResponses = {
+    LEDCmd_SetVal               : BlankData,
+    LEDCmd_GetVal               : LEDGetValData,
+    # LEDCmd_Config               : LED
+}
+
 # Dictionary containing the dictionary of data object constructors
 ResponsePacketDataConstructors = {
     Subsys_Debug                :   DebugResponses,
     Subsys_MotionEngine         :   MotionResponses,
     Subsys_PowerManagement      :   PowerManagementResponses,
     Subsys_DigitalIO            :   PlaceholderDataConstructors,
-    Subsys_LED                  :   PlaceholderDataConstructors,
+    Subsys_LED                  :   LEDResponses,
     Subsys_ADC                  :   PlaceholderDataConstructors,
     Subsys_DAC                  :   PlaceholderDataConstructors,
     Subsys_I2C                  :   PlaceholderDataConstructors,
@@ -926,6 +947,11 @@ class InvalidPacketFormatError(Exception):
         self.errorString = error
     def __str__(self):
         return self.errorString
+
+# http://stackoverflow.com/questions/434287/what-is-the-most-pythonic-way-to-iterate-over-a-list-in-chunks
+def grouper(iterable, n, fillvalue=None):
+    args = [iter(iterable)] * n
+    return zip_longest(*args, fillvalue=fillvalue)
 
 def crc8(bytes):
     crc = 0

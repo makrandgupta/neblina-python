@@ -106,6 +106,20 @@ class ut_NeblinaPackets(unittest.TestCase):
         self.assertEqual(packet.data.sitStand,   True )
         self.assertEqual(packet.data.recorderStatus,   2)
 
+    def testDecodeLED(self):
+        print("\n*** Testing LED Command Decoding ***")
+        commandHeaderBytes = b'\x04\x10\x1c\x02'
+        commandDataBytes= b'\x03\x04\x23\x05\xfe\x08\xaa\x01\x02\xba\xbe\x00\x01\x02\x03\x04'
+        commandBytes = commandHeaderBytes+commandDataBytes
+        packet = neb.NebResponsePacket(commandBytes)
+        self.assertEqual(len(packet.data.ledTupleList), 3)
+        self.assertEqual(packet.data.ledTupleList[0][0], 4)
+        self.assertEqual(packet.data.ledTupleList[0][1], 35)
+        self.assertEqual(packet.data.ledTupleList[1][0], 5)
+        self.assertEqual(packet.data.ledTupleList[1][1], 254)
+        self.assertEqual(packet.data.ledTupleList[2][0], 8)
+        self.assertEqual(packet.data.ledTupleList[2][1], 170)
+
     def testDecodeStorage(self):
         print("\n*** Testing Flash Storage Decoding ***")
         packets, errorList = self.buildPacketListFromSLIP("SampleData/FlashRecordPlayback.bin")
