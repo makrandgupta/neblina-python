@@ -383,9 +383,6 @@ class ut_NeblinaPackets(unittest.TestCase):
         setLEDValuesPacket = neb.NebCommandPacket(\
             neb.Subsys_LED, neb.LEDCmd_SetVal, ledValueTupleList=ledValues)
         packetBytes = bytearray(setLEDValuesPacket.stringEncode())
-        print(binascii.hexlify(packetBytes[4:]))
-        print(len(packetBytes[4:]))
-        print(len(packetBytes))
         self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_LED)
         self.assertEqual(packetBytes[3], neb.LEDCmd_SetVal)
         self.assertEqual(packetBytes[4], 6)
@@ -401,6 +398,22 @@ class ut_NeblinaPackets(unittest.TestCase):
         self.assertEqual(packetBytes[14], 128)
         self.assertEqual(packetBytes[15], 12)
         self.assertEqual(packetBytes[16], 11)
+
+        leds = [3,5,1,6,7,2,4]
+        getLEDValuesPacket = neb.NebCommandPacket(\
+            neb.Subsys_LED, neb.LEDCmd_GetVal,\
+            ledIndices=leds)
+        packetBytes = bytearray(getLEDValuesPacket.stringEncode())
+        self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_LED)
+        self.assertEqual(packetBytes[3], neb.LEDCmd_GetVal)
+        self.assertEqual(packetBytes[4], 7)
+        self.assertEqual(packetBytes[5], 3)
+        self.assertEqual(packetBytes[6], 5)
+        self.assertEqual(packetBytes[7], 1)
+        self.assertEqual(packetBytes[8], 6)
+        self.assertEqual(packetBytes[9], 7)
+        self.assertEqual(packetBytes[10], 2)
+        self.assertEqual(packetBytes[11], 4)
 
 
     def testCreateEulerPackets(self):

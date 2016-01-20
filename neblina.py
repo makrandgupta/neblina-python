@@ -92,7 +92,7 @@ FirmwareManagementCmd_BLE   =   0x02
 
 # LED Information Commands
 LEDCmd_SetVal               =   0x01
-LEDCmd_ReadVal              =   0x02
+LEDCmd_GetVal               =   0x02
 LEDCmd_Config               =   0x03
 
 # Dictionary containing the string descriptors of each command
@@ -126,7 +126,7 @@ CommandStrings = {
     (Subsys_DigitalIO, DigitalIOCmd_NotifySet)              :   'Notify Set',
     (Subsys_DigitalIO, DigitalIOCmd_NotifyEvent)            :   'Notify Event',
     (Subsys_LED, LEDCmd_SetVal)                             :   'LED Set Value',
-    (Subsys_LED, LEDCmd_ReadVal)                            :   'LED Read Value',
+    (Subsys_LED, LEDCmd_GetVal)                             :   'LED Read Value',
     (Subsys_LED, LEDCmd_Config)                             :   'LED Config',
     (Subsys_ADC, 0)                                         :   'ADC Command',
     (Subsys_DAC, 0)                                         :   'DAC Command',
@@ -226,13 +226,13 @@ class NebDownsampleCommandData(NebCommandData):
             self.timestamp, self.enable, garbage)
         return commandDataString
 
-Neblina_SetLEDData_fmt = "<B {0}s {1}s" # LED Index/Value, LED Index/Value, LED Index/Value (...) 
+Neblina_SetLEDData_fmt = "<B {0}s {1}s" # Number of LEDs, LED Index/Value, LED Index/Value, LED Index/Value (...) 
 class NebSetLEDCommandData(object):
     """docstring for NebEEPROMCommandData"""
     def __init__(self, ledValueTupleList):
         if(len(ledValueTupleList) > 7):
             raise InvalidPacketFormatError("The packet can't hold more than 7 LED Values")
-        self.ledValues = ledValueTupleList # read = False, write = True
+        self.ledValues = ledValueTupleList
 
     def encode(self):
         numLEDs = len(self.ledValues)
@@ -251,9 +251,35 @@ class NebSetLEDCommandData(object):
 
         stringFormat = Neblina_SetLEDData_fmt.format(numLEDs*bytesPerLED,\
          numGarbageBytes)
-        print(stringFormat)
         commandDataString = struct.pack(\
             stringFormat, numLEDs, ledValueBytes, garbage)
+        return commandDataString
+
+Neblina_GetLEDData_fmt = "<B {0}s {1}s" # Number of LEDs, Index, Index, (...) 
+class NebGetLEDCommandData(object):
+    """docstring for NebEEPROMCommandData"""
+    def __init__(self, ledIndices):
+        if(len(ledIndices) > 7):
+            raise InvalidPacketFormatError("You can't request more than 7 LED Values")
+        self.ledIndices = ledIndices
+
+    def encode(self):
+        numLEDs = len(self.ledIndices)
+        maxLEDbytes = 7
+
+        # Extract the values of LEDs
+        ledIndexBytes = b''
+        for ledIndex in self.ledIndices:
+            ledIndexBytes += struct.pack('>B', ledIndex)
+
+        # numGarbageBytes = len(ledIndexBytes)+1
+        numGarbageBytes = (maxLEDbytes-len(ledIndexBytes))+8
+        garbage = b'00'*numGarbageBytes
+
+        stringFormat = Neblina_GetLEDData_fmt.format(numLEDs,\
+         numGarbageBytes)
+        commandDataString = struct.pack(\
+            stringFormat, numLEDs, ledIndexBytes, garbage)
         return commandDataString
 
 Neblina_EEPROMCommandPacketData_fmt = "<H 8s 6s" # Page number, 8 bytes R/W Data
@@ -749,6 +775,8 @@ class NebCommandPacket(object):
                 self.data = NebEEPROMCommandData(True, kwargs['pageNumber'], kwargs['dataBytes'])
         elif(subSystem == Subsys_LED and commandType == LEDCmd_SetVal):
             self.data = NebSetLEDCommandData(kwargs['ledValueTupleList'])
+        elif(subSystem == Subsys_LED and commandType == LEDCmd_GetVal):
+            self.data = NebGetLEDCommandData(kwargs['ledIndices'])
         else:
             self.data = NebCommandData(enable)
         self.header = NebHeader(subSystem, PacketType_Command, commandType, length=len(self.data.encode()))
