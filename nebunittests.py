@@ -378,6 +378,30 @@ class ut_NeblinaPackets(unittest.TestCase):
             self.assertEqual(testPacketBytes[24], magPacketString[12])
             self.assertEqual(testPacketBytes[25], magPacketString[13])
 
+        # LED Command Packets
+        ledValues = [(0,1),(1,34),(3,0),(4,254),(5,128),(12,11)]
+        setLEDValuesPacket = neb.NebCommandPacket(\
+            neb.Subsys_LED, neb.LEDCmd_SetVal, ledValueTupleList=ledValues)
+        packetBytes = bytearray(setLEDValuesPacket.stringEncode())
+        print(binascii.hexlify(packetBytes[4:]))
+        print(len(packetBytes[4:]))
+        print(len(packetBytes))
+        self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_LED)
+        self.assertEqual(packetBytes[3], neb.LEDCmd_SetVal)
+        self.assertEqual(packetBytes[4], 6)
+        self.assertEqual(packetBytes[5], 0x00)
+        self.assertEqual(packetBytes[6], 0x01)
+        self.assertEqual(packetBytes[7], 0x01)
+        self.assertEqual(packetBytes[8], 34)
+        self.assertEqual(packetBytes[9], 3)
+        self.assertEqual(packetBytes[10], 0)
+        self.assertEqual(packetBytes[11], 4)
+        self.assertEqual(packetBytes[12], 254)
+        self.assertEqual(packetBytes[13], 5)
+        self.assertEqual(packetBytes[14], 128)
+        self.assertEqual(packetBytes[15], 12)
+        self.assertEqual(packetBytes[16], 11)
+
 
     def testCreateEulerPackets(self):
         print("\n*** Testing Encoding and Decoding of Euler Angle Packets ***")
