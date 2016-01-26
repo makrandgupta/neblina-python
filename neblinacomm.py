@@ -100,7 +100,16 @@ class NeblinaComm(object):
         # False = BLE
         self.sendCommand(neb.Subsys_Debug, neb.DebugCmd_SetInterface, interface)
         print('Waiting for the module to switch its interface...')
-        self.waitForAck(neb.Subsys_Debug, neb.DebugCmd_SetInterface)
+        packet = self.waitForAck(neb.Subsys_Debug, neb.DebugCmd_SetInterface)
+        numTries = 0
+        while(packet == None):
+            numTries += 1
+            if numTries > 5:
+                print('The unit is not responding. Exiting...')
+                exit()
+            print('Trying again...')
+            self.sendCommand(neb.Subsys_Debug, neb.DebugCmd_SetInterface, interface)
+            packet = self.waitForAck(neb.Subsys_Debug, neb.DebugCmd_SetInterface)
 
     # Debug Commands
     def motionGetStates(self):
@@ -133,8 +142,9 @@ class NeblinaComm(object):
             packet = self.waitForAck(neb.Subsys_MotionEngine, streamingType)
             numTries += 1
             if numTries > 5:
-                print('Tried 5 times and it doesn\'t respond. Exiting.')
-                return None
+                print('Tried {0} times and it doesn\'t respond. Exiting.'.format(numTries))
+                exit()
+        numTries = 0
 
         # Stream forever if the number of packets is unspecified (None)
         keepStreaming = (numPackets == None or numPackets > 0)
@@ -161,11 +171,15 @@ class NeblinaComm(object):
                 print(crce)
             except TimeoutError as te:
                 print('Timed out, sending command again.')
+                numTries += 1
                 self.sendCommand(neb.Subsys_MotionEngine, streamingType, True)
+                if numTries > 3:
+                    print('Tried {0} times and it doesn\'t respond. Exiting.'.format(numTries))
+                    exit()
             except Exception as e:
                 print(e)
         # Stop whatever it was streaming
-        self.sendCommand(neb.Subsys_MotionEngine, streamingType, False)      
+        self.sendCommand(neb.Subsys_MotionEngine, streamingType, False)
 
     def motionSetDownsample(self, factor):
         self.sendCommand(neb.Subsys_MotionEngine,\
