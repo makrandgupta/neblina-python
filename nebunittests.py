@@ -429,6 +429,14 @@ class ut_NeblinaPackets(unittest.TestCase):
         self.assertEqual(packetBytes[10], 2)
         self.assertEqual(packetBytes[11], 4)
 
+        # Flash Session Info
+        sessionInfoCommandPacket = neb.NebCommandPacket(neb.Subsys_Storage,\
+            neb.StorageCmd_SessionInfo, sessionID = 10)
+        packetBytes = bytearray(sessionInfoCommandPacket.stringEncode())
+        self.assertEqual(packetBytes[0], (neb.PacketType_Command << 5)| neb.Subsys_Storage)
+        self.assertEqual(packetBytes[3], neb.StorageCmd_SessionInfo)
+        self.assertEqual(packetBytes[8], 0x0A)
+        self.assertEqual(packetBytes[9], 0x00)
 
     def testCreateEulerPackets(self):
         print("\n*** Testing Encoding and Decoding of Euler Angle Packets ***")

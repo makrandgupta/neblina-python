@@ -74,6 +74,8 @@ MotCmd_ResetTimeStamp       =   0x10 # Reset timestamp
 StorageCmd_EraseAll         =   0x01 # Full-erase for the on-chip NOR flash memory
 StorageCmd_Record           =   0x02 # Either start a new recording session, or close the currently open one
 StorageCmd_Playback         =   0x03 # Either open a previously recorded session for playback or close the one that is currently open and being played
+StorageCmd_NumSessions      =   0x04 # Get Number of sessions currently on the flash storage
+StorageCmd_SessionInfo      =   0x05 # Get information associated with a particular session
 
 # EEPROM Command
 EEPROMCmd_Read              =   0x01 # Read a page
@@ -139,6 +141,8 @@ CommandStrings = {
     (Subsys_Storage, StorageCmd_EraseAll)                   :   'Erase All',
     (Subsys_Storage, StorageCmd_Record)                     :   'Record',
     (Subsys_Storage, StorageCmd_Playback)                   :   'Playback',
+    (Subsys_Storage, StorageCmd_NumSessions)                :   'Num Sessions',
+    (Subsys_Storage, StorageCmd_SessionInfo)                :   'Session ID',
     (Subsys_EEPROM, EEPROMCmd_Read)                         :   'Read',
     (Subsys_EEPROM, EEPROMCmd_Write)                        :   'Write',
 }
@@ -188,6 +192,21 @@ class NebFlashPlaybackCommandData(object):
         openCloseString = 'open' if self.openClose else 'close'
         return "Flash Command Session {0}: {1}"\
         .format(self.sessionID, openCloseString)
+
+Neblina_FlashSessionInfo_fmt = "<I H 10s" # Timestamp, session ID
+class NebFlashSessionInfoCommandData(object):
+    """docstring for MotionStateData"""
+    def __init__(self, sessionID):
+        self.sessionID = sessionID
+    def encode(self):
+        garbage = ('\000'*10).encode('utf-8')
+        timestamp = 0
+        commandDataString = struct.pack(Neblina_FlashSessionInfo_fmt,\
+            timestamp, self.sessionID, garbage)
+        return commandDataString
+    def __str__(self):
+        return "Flash Command Info Session {0}"\
+        .format(self.sessionID)
 
 # Special 26 byte packet
 Neblina_UnitTestMotionCommandData_fmt = "<I 3h 3h 3h" # Timestamp, accel, gyro, mag
@@ -789,6 +808,8 @@ class NebCommandPacket(object):
             self.data = NebAccRangeCommandData(enable)
         elif(subSystem == Subsys_Storage and commandType == StorageCmd_Playback ):
             self.data = NebFlashPlaybackCommandData(enable, kwargs['sessionID'])
+        elif(subSystem == Subsys_Storage and commandType == StorageCmd_SessionInfo):
+            self.data = NebFlashSessionInfoCommandData(kwargs['sessionID'])
         elif(subSystem == Subsys_EEPROM):
             if( commandType == EEPROMCmd_Read):
                 self.data = NebEEPROMCommandData(False, kwargs['pageNumber'])
