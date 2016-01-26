@@ -89,6 +89,10 @@ class NeblinaComm(object):
                 print("Tried creating a packet with an invalid subsystem or command")
                 print(ke)
                 continue
+            except TimeoutError as te:
+                packet = None
+                print('Read timed out.')
+                return None
         return packet
 
     def switchStreamingInterface(self, interface=True):
@@ -119,9 +123,18 @@ class NeblinaComm(object):
         errorList = []
         # Send command to start streaming
         self.sendCommand(neb.Subsys_MotionEngine, streamingType, True)
-
         packet = self.waitForAck(neb.Subsys_MotionEngine, streamingType)
-        # print('Got Ack: {0}'.format(packet))
+
+        # Timeout mechanism.
+        numTries = 0
+        while (packet == None):
+            print('Timed out. Trying again.')
+            self.sendCommand(neb.Subsys_MotionEngine, streamingType, True)
+            packet = self.waitForAck(neb.Subsys_MotionEngine, streamingType)
+            numTries += 1
+            if numTries > 5:
+                print('Tried 5 times and it doesn\'t respond. Exiting.')
+                return None
 
         # Stream forever if the number of packets is unspecified (None)
         keepStreaming = (numPackets == None or numPackets > 0)
@@ -146,6 +159,9 @@ class NeblinaComm(object):
             except neb.CRCError as crce:
                 print('CRCError')
                 print(crce)
+            except TimeoutError as te:
+                print('Timed out, sending command again.')
+                self.sendCommand(neb.Subsys_MotionEngine, streamingType, True)
             except Exception as e:
                 print(e)
         # Stop whatever it was streaming
