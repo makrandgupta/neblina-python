@@ -384,7 +384,7 @@ class FlashSessionData(object):
         return "Session {0}: {1}"\
         .format(self.sessionID, openCloseString)
 
-Neblina_FWVersions_fmt = "<B 3B 3B Q B" # API Release, MCU Major/Minor/Build, BLE Major/Minor/Build, Device ID
+Neblina_FWVersions_fmt = "<B 3B 3B 8s B" # API Release, MCU Major/Minor/Build, BLE Major/Minor/Build, Device ID
 class FWVersionsData(object):
     """docstring for MotionStateData"""
     def __init__(self, dataString):
@@ -402,7 +402,7 @@ class FWVersionsData(object):
         Device ID: {7}".format(self.apiRelease,\
             self.mcuFWVersion[0], self.mcuFWVersion[1], self.mcuFWVersion[2],\
             self.bleFWVersion[0], self.bleFWVersion[1], self.bleFWVersion[2],\
-            self.deviceID)
+            binascii.hexlify(self.deviceID))
 
 # Special 70 byte packet
 Neblina_UnitTestMotionData_fmt = "<B 3h 3h 3h 4h 3h 3h 3h H B I I h B I I"
