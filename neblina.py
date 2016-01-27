@@ -390,7 +390,7 @@ class BatteryLevelData(object):
 
 # Neblina_FlashSession_fmt = "<I B H 9s" # Timestamp, open/close, session ID
 class FlashSessionData(object):
-    """docstring for MotionStateData"""
+    """docstring for FlashSessionData"""
     def __init__(self, dataString):
         timestamp,\
         openCloseByte,\
@@ -403,9 +403,31 @@ class FlashSessionData(object):
         return "Session {0}: {1}"\
         .format(self.sessionID, openCloseString)
 
+Neblina_FlashSessionInfo_fmt = "<I H 10s" # Timestamp, session ID
+class FlashSessionInfoData(object):
+    """docstring for FlashSessionInfoData"""
+    def __init__(self, dataString):
+        self.sessionLength,\
+        self.sessionID,\
+        garbage = struct.unpack( Neblina_FlashSessionInfo_fmt, dataString )
+    def __str__(self):
+        return "Session {0}: {1} bytes"\
+        .format(self.sessionID, self.sessionLength)
+
+Neblina_FlashNumSessions_fmt = "<I H 10s" # Reserved, number of sessions
+class FlashNumSessionsData(object):
+    """docstring for FlashNumSessionsData"""
+    def __init__(self, dataString):
+        reserved,\
+        self.numSessions,\
+        garbage = struct.unpack( Neblina_FlashNumSessions_fmt, dataString )
+    def __str__(self):
+        return "Number of sessions: {0}"\
+        .format(self.numSessions)
+
 Neblina_FWVersions_fmt = "<B 3B 3B 8s B" # API Release, MCU Major/Minor/Build, BLE Major/Minor/Build, Device ID
 class FWVersionsData(object):
-    """docstring for MotionStateData"""
+    """docstring for FWVersionsData"""
     def __init__(self, dataString):
         self.mcuFWVersion = [0]*3
         self.bleFWVersion = [0]*3
@@ -701,7 +723,9 @@ DebugResponses = {
 StorageResponses = {
     StorageCmd_EraseAll         : BlankData,
     StorageCmd_Record           : FlashSessionData,
-    StorageCmd_Playback         : FlashSessionData
+    StorageCmd_Playback         : FlashSessionData,
+    StorageCmd_NumSessions      : FlashNumSessionsData,
+    StorageCmd_SessionInfo      : FlashSessionInfoData,
 }
 
 PowerManagementResponses = {

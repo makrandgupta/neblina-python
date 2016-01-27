@@ -303,7 +303,6 @@ class NeblinaComm(object):
         print('The acknowledge packet is received, and session %d is closed successfully' % sessionID)
 
     def flashPlayback(self, pbSessionID):
-
         self.sendCommand(neb.Subsys_Storage, neb.StorageCmd_Playback, True, sessionID=pbSessionID)
         print('Sent the start playback command, waiting for response...')
         #wait for confirmation
@@ -320,6 +319,21 @@ class NeblinaComm(object):
             thefile = open('QData', 'w')
             for item in packetList:
                 thefile.write("%s\n" % item.stringEncode())
+
+    def flashGetSessions(self):
+        self.sendCommand(neb.Subsys_Storage, neb.StorageCmd_NumSessions)
+        packet = self.waitForPacket(neb.PacketType_RegularResponse,\
+            neb.Subsys_Storage, neb.StorageCmd_NumSessions)
+        return packet.data.numSessions
+
+    def flashGetSessionInfo(self, sessionID):
+        self.sendCommand(neb.Subsys_Storage, neb.StorageCmd_SessionInfo, sessionID=sessionID)
+        packet = self.waitForPacket(neb.PacketType_RegularResponse,\
+            neb.Subsys_Storage, neb.StorageCmd_SessionInfo)
+        if(packet.data.sessionLength == 0xFFFFFFFF):
+            return None
+        else:
+            return (packet.data.sessionID, packet.data.sessionLength)
 
     def getLEDs(self, ledIndicesList):
         if type(ledIndicesList) != list:

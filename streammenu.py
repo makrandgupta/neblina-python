@@ -191,7 +191,22 @@ class StreamMenu(cmd.Cmd):
 
     def do_flashState(self, args):
         state = self.comm.flashGetState()
-        print(state)
+        print('State: {0}'.format(state))
+        sessions = self.comm.flashGetSessions()
+        print('Num of sessions: {0}'.format(sessions))
+
+    def do_flashSessionInfo(self, args):
+        if(len(args) <= 0):
+            sessionID = 65535
+        elif(len(args) > 0):
+            sessionID = int(args)
+        info = self.comm.flashGetSessionInfo(sessionID)
+        if(info == None):
+            print('Session {0} does not exist on the flash'\
+                .format(sessionID))
+        else:
+            print( "Session {0}: {1} bytes"\
+            .format(info[0], info[1]) )
 
     def do_flashErase(self, args):
         self.comm.flashErase()
