@@ -1,6 +1,12 @@
 [![Build Status](https://travis-ci.org/Motsai/neblina-python.svg)](https://travis-ci.org/Motsai/neblina-python)
-# neblina-python
+# Neblina Python Scripts
+![ProMotion Board](http://d2r8jqmejizzox.cloudfront.net/642057-1694090-374x281-Neblinapic.jpg)
+
 Python scripts that interact with and simulate the behaviour of the Neblina Motion Capture module.
+# Requirements
+* python3
+* pyserial
+* Windows or Linux
 
 # Running the python scripts
 Start by cloning the git repository onto your computer:
