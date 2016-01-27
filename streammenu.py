@@ -48,6 +48,7 @@ class StreamMenu(cmd.Cmd):
                 time.sleep(1)
         
         self.comm = nebcomm.NeblinaComm(sc)
+        self.comm.sc.flushInput()
         # Make the module stream towards the UART instead of the default BLE
         self.comm.switchStreamingInterface(True)
 
