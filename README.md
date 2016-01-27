@@ -13,15 +13,19 @@ pip3 install pyserial
 ```
 To be able to run interaction scripts, you must first instantiate the pyslip submodule:
 ```
-cd pyslip
 git submodule init
 git submodule update
 ```
+
+Connect the Neblina module to your computer through the Serial COM port. On the [ProMotion](http://promotion.motsai.com/) board, there is a serial USB-COM already provided. Once the module is connected, take note of the COM port name. On Windows, the name would be COMx. On Linux, it would be /dev/ttyACMx.
 
 Execute the interaction shell (Linux):
 ```
 PYTHONPATH=./pyslip/ python3 streammenu.py
 ```
+
+On the execution of the shell script, the program will ask you for the name of the COM port to connect to. Type the name of the COM port associated with the module and press 'Enter'.
+
 
 #Running the unit tests
 The unit tests allow for the validation of the decoding and encoding process of the packets. 
