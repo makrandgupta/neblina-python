@@ -51,6 +51,7 @@ class StreamMenu(cmd.Cmd):
         self.comm.sc.flushInput()
         # Make the module stream towards the UART instead of the default BLE
         self.comm.switchStreamingInterface(True)
+        self.comm.motionStopStreams()
 
     # If the user exits with Ctrl-C, try switching the interface back to BLE
     def cmdloop(self):
