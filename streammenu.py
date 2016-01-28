@@ -206,8 +206,8 @@ class StreamMenu(cmd.Cmd):
             print('Session {0} does not exist on the flash'\
                 .format(sessionID))
         else:
-            print( "Session {0}: {1} bytes"\
-            .format(info[0], info[1]) )
+            print( "Session %d: %d packets (%d bytes)"\
+            %(info[0], info[1]/18, info[1]) )
 
     def do_flashErase(self, args):
         self.comm.flashErase()
