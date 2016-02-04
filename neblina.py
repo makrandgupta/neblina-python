@@ -53,22 +53,22 @@ DebugCmd_FWVersions             =   0x05
 PowCmd_GetBatteryLevel      =   0x00
 
 # Motion engine commands
-MotCmd_Downsample           =   0x01 # Downsampling factor definition
-MotCmd_MotionState          =   0x02 # streaming Motion State
-MotCmd_IMU_Data             =   0x03 # streaming the 6-axis IMU data
-MotCmd_Quaternion           =   0x04 # streaming the quaternion data
-MotCmd_EulerAngle           =   0x05 # streaming the Euler angles
-MotCmd_ExtForce             =   0x06 # streaming the external force
-MotCmd_SetFusionType        =   0x07 # setting the Fusion type to either 6-axis or 9-axis
-MotCmd_TrajectoryRecStart   =   0x08 # start recording orientation trajectory
-MotCmd_TrajectoryRecStop    =   0x09 # stop recording orientation trajectory
-MotCmd_TrajectoryDistance   =   0x0A # calculating the distance from a pre-recorded orientation trajectory
-MotCmd_Pedometer            =   0x0B # streaming pedometer data
-MotCmd_MAG_Data             =   0x0C # streaming magnetometer data
-MotCmd_SittingStanding      =   0x0D # streaming sitting standing
-MotCmd_AccRange             =   0x0E # set accelerometer range
-MotCmd_DisableStreaming     =   0x0F # disable everything that is currently being streamed
-MotCmd_ResetTimeStamp       =   0x10 # Reset timestamp
+MotCmd_Downsample               =   0x01 # Downsampling factor definition
+MotCmd_MotionState              =   0x02 # streaming Motion State
+MotCmd_IMU_Data                 =   0x03 # streaming the 6-axis IMU data
+MotCmd_Quaternion               =   0x04 # streaming the quaternion data
+MotCmd_EulerAngle               =   0x05 # streaming the Euler angles
+MotCmd_ExtForce                 =   0x06 # streaming the external force
+MotCmd_SetFusionType            =   0x07 # setting the Fusion type to either 6-axis or 9-axis
+MotCmd_TrajectoryRecStartStop   =   0x08 # start recording orientation trajectory
+# MotCmd_TrajectoryRecStop      =   0x09 # stop recording orientation trajectory
+MotCmd_TrajectoryInfo           =   0x09 # calculating the distance from a pre-recorded orientation trajectory
+MotCmd_Pedometer                =   0x0A # streaming pedometer data
+MotCmd_MAG_Data                 =   0x0B # streaming magnetometer data
+MotCmd_SittingStanding          =   0x0C # streaming sitting standing
+MotCmd_AccRange                 =   0x0E # set accelerometer range
+MotCmd_DisableStreaming         =   0x0F # disable everything that is currently being streamed
+MotCmd_ResetTimeStamp           =   0x10 # Reset timestamp
 
 # Storage commands
 StorageCmd_EraseAll         =   0x01 # Full-erase for the on-chip NOR flash memory
@@ -112,9 +112,9 @@ CommandStrings = {
     (Subsys_MotionEngine, MotCmd_EulerAngle)                :   'Euler Angle',
     (Subsys_MotionEngine, MotCmd_ExtForce)                  :   'ExtForce',
     (Subsys_MotionEngine, MotCmd_SetFusionType)             :   'SetFusionType',
-    (Subsys_MotionEngine, MotCmd_TrajectoryRecStart)        :   'Trajectory Record Start',
-    (Subsys_MotionEngine, MotCmd_TrajectoryRecStop)         :   'Trajectory Record Stop',
-    (Subsys_MotionEngine, MotCmd_TrajectoryDistance)        :   'Trajectory Distance',
+    (Subsys_MotionEngine, MotCmd_TrajectoryRecStartStop)    :   'Trajectory Record Start',
+    # (Subsys_MotionEngine, MotCmd_TrajectoryRecStop)         :   'Trajectory Record Stop',
+    (Subsys_MotionEngine, MotCmd_TrajectoryInfo)        :   'Trajectory Distance',
     (Subsys_MotionEngine, MotCmd_Pedometer)                 :   'Pedometer',
     (Subsys_MotionEngine, MotCmd_MAG_Data)                  :   'MAG Data',
     (Subsys_MotionEngine, MotCmd_SittingStanding)           :   'Sitting-Standing',
@@ -733,22 +733,22 @@ PowerManagementResponses = {
 }
 
 MotionResponses = {
-    MotCmd_Downsample           : BlankData,              # Downsampling factor definition
-    MotCmd_MotionState          : MotionStateData,        # streaming Motion State
-    MotCmd_IMU_Data             : IMUData,                # streaming the 6-axis IMU data
-    MotCmd_Quaternion           : QuaternionData,         # streaming the quaternion data
-    MotCmd_EulerAngle           : EulerAngleData,         # streaming the Euler angles
-    MotCmd_ExtForce             : ExternalForceData,      # streaming the external force
-    MotCmd_SetFusionType        : BlankData,              # setting the Fusion type to either 6-axis or 9-axis
-    MotCmd_TrajectoryRecStart   : TrajectoryDistanceData, # start recording orientation trajectory
-    MotCmd_TrajectoryRecStop    : TrajectoryDistanceData, # stop recording orientation trajectory
-    MotCmd_TrajectoryDistance   : TrajectoryDistanceData, # calculating the distance from a pre-recorded orientation trajectory
-    MotCmd_Pedometer            : PedometerData,          # streaming pedometer data
-    MotCmd_MAG_Data             : MAGData,                # streaming magnetometer data
-    MotCmd_SittingStanding      : BlankData,              # streaming sitting standing
-    MotCmd_AccRange             : BlankData,              # set accelerometer range
-    MotCmd_DisableStreaming     : BlankData,              # disable everything that is currently being streamed
-    MotCmd_ResetTimeStamp       : BlankData
+    MotCmd_Downsample               : BlankData,              # Downsampling factor definition
+    MotCmd_MotionState              : MotionStateData,        # streaming Motion State
+    MotCmd_IMU_Data                 : IMUData,                # streaming the 6-axis IMU data
+    MotCmd_Quaternion               : QuaternionData,         # streaming the quaternion data
+    MotCmd_EulerAngle               : EulerAngleData,         # streaming the Euler angles
+    MotCmd_ExtForce                 : ExternalForceData,      # streaming the external force
+    MotCmd_SetFusionType            : BlankData,              # setting the Fusion type to either 6-axis or 9-axis
+    MotCmd_TrajectoryRecStartStop   : TrajectoryDistanceData, # start recording orientation trajectory
+    # MotCmd_TrajectoryRecStop      : TrajectoryDistanceData, # stop recording orientation trajectory
+    MotCmd_TrajectoryInfo           : TrajectoryDistanceData, # calculating the distance from a pre-recorded orientation trajectory
+    MotCmd_Pedometer                : PedometerData,          # streaming pedometer data
+    MotCmd_MAG_Data                 : MAGData,                # streaming magnetometer data
+    MotCmd_SittingStanding          : BlankData,              # streaming sitting standing
+    MotCmd_AccRange                 : BlankData,              # set accelerometer range
+    MotCmd_DisableStreaming         : BlankData,              # disable everything that is currently being streamed
+    MotCmd_ResetTimeStamp           : BlankData
 }
 
 EEPROMResponses = {
