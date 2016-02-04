@@ -51,6 +51,7 @@ DebugCmd_FWVersions             =   0x05
 
 # Power Management commands
 PowCmd_GetBatteryLevel      =   0x00
+PowCmd_GetTemperature       =   0x01
 
 # Motion engine commands
 MotCmd_Downsample               =   0x01 # Downsampling factor definition
@@ -69,6 +70,7 @@ MotCmd_SittingStanding          =   0x0C # streaming sitting standing
 MotCmd_AccRange                 =   0x0E # set accelerometer range
 MotCmd_DisableStreaming         =   0x0F # disable everything that is currently being streamed
 MotCmd_ResetTimeStamp           =   0x10 # Reset timestamp
+MotCmd_RotationInfo             =   0x12 # Rotation info in roll: number of rotations and speed in rpm
 
 # Storage commands
 StorageCmd_EraseAll         =   0x01 # Full-erase for the on-chip NOR flash memory
@@ -121,7 +123,9 @@ CommandStrings = {
     (Subsys_MotionEngine, MotCmd_AccRange)                  :   'AccRange',
     (Subsys_MotionEngine, MotCmd_DisableStreaming)          :   'Disable Streaming',
     (Subsys_MotionEngine, MotCmd_ResetTimeStamp)            :   'Reset Timestamp',
+    (Subsys_MotionEngine, MotCmd_RotationInfo)              :   'Rotation Info',
     (Subsys_PowerManagement, PowCmd_GetBatteryLevel)        :   'Battery Level',
+    (Subsys_PowerManagement, PowCmd_GetTemperature)         :   'Board Temperature',
     (Subsys_DigitalIO, DigitalIOCmd_SetConfig)              :   'Set Config',
     (Subsys_DigitalIO, DigitalIOCmd_GetConfig)              :   'Get Config',
     (Subsys_DigitalIO, DigitalIOCmd_SetValue)               :   'Set Value',
@@ -388,6 +392,21 @@ class BatteryLevelData(object):
     def __str__(self):
         return "batteryLevel: {0}%".format(self.batteryLevel)
 
+Neblina_Temperature_fmt = "<I h 10s" # Temperature x100 in Celsius
+class TemperatureData(object):
+    """docstring for TemperatureData"""
+    def __init__(self, dataString):
+        # timestamp = 0
+        timestamp, \
+        self.temperature,\
+        garbage = struct.unpack( Neblina_Temperature_fmt, dataString )
+        self.temperature = self.temperature/100
+
+    def __str__(self):
+        return "Temperature: {0}%".format(self.temperature)
+
+
+
 # Neblina_FlashSession_fmt = "<I B H 9s" # Timestamp, open/close, session ID
 class FlashSessionData(object):
     """docstring for FlashSessionData"""
@@ -601,6 +620,25 @@ class PedometerData(object):
         .format(self.timestamp, self.stepCount,\
         self.stepsPerMinute, self.walkingDirection)
 
+Neblina_RotationInfo_fmt = "<I I H 6s" # Timestamp, rotationCount, rpm speed
+class RotationData(object):
+    """docstring for RotationData"""
+    def __init__(self, dataString):
+        self.timestamp,self.rotationCount,\
+        self.rpm,\
+        garbage = struct.unpack( Neblina_RotationInfo_fmt, dataString )
+
+    def encode(self):
+        garbage = ('\000'*6).encode('utf-8')
+        packetString = struct.pack(Neblina_Pedometer_fmt, self.timestamp,\
+        self.stepCount, self.stepsPerMinute, int(self.walkingDirection*10), garbage)
+        return packetString
+
+    def __str__(self):
+        return "{0}us: rotationCount:{1}, rpm:{2}"\
+        .format(self.timestamp, self.rotationCount,\
+        self.rpm)
+
 Neblina_Quat_t_fmt = "<I 4h 4s"
 class QuaternionData(object):
     """docstring for QuaternionData"""
@@ -730,6 +768,7 @@ StorageResponses = {
 
 PowerManagementResponses = {
     PowCmd_GetBatteryLevel      : BatteryLevelData,
+    PowCmd_GetTemperature       : TemperatureData,
 }
 
 MotionResponses = {
@@ -748,7 +787,8 @@ MotionResponses = {
     MotCmd_SittingStanding          : BlankData,              # streaming sitting standing
     MotCmd_AccRange                 : BlankData,              # set accelerometer range
     MotCmd_DisableStreaming         : BlankData,              # disable everything that is currently being streamed
-    MotCmd_ResetTimeStamp           : BlankData
+    MotCmd_ResetTimeStamp           : BlankData,
+    MotCmd_RotationInfo             : RotationData            # streaming rotation info data
 }
 
 EEPROMResponses = {
@@ -917,6 +957,18 @@ class NebResponsePacket(object):
         responsePacket.header.crc = genNebCRC8(bytearray(responsePacket.stringEncode()))
         return responsePacket
 
+    @classmethod
+    def createRotationResponsePacket(cls, timestamp, rotationCount, rpm):
+        garbage = ('\000'*6).encode('utf-8')
+        dataString = struct.pack( Neblina_RotationInfo_fmt, timestamp, rotationCount,\
+         rpm, garbage )
+        data = RotationData(dataString)
+        # Perform CRC of data bytes
+        crc = crc8(bytearray(dataString))
+        header = NebHeader(Subsys_MotionEngine, False, MotCmd_RotationInfo, crc, len(dataString))
+        responsePacket = NebResponsePacket(packetString=None, header=header, data=data, checkCRC=False)
+        responsePacket.header.crc = genNebCRC8(bytearray(responsePacket.stringEncode()))
+        return responsePacket
 
     def __init__(self, packetString=None, header=None, data=None, checkCRC=True):
         if (packetString != None):

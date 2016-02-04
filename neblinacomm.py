@@ -170,12 +170,13 @@ class NeblinaComm(object):
                 print('CRCError')
                 print(crce)
             except TimeoutError as te:
-                print('Timed out, sending command again.')
-                numTries += 1
-                self.sendCommand(neb.Subsys_MotionEngine, streamingType, True)
-                if numTries > 3:
-                    print('Tried {0} times and it doesn\'t respond. Exiting.'.format(numTries))
-                    exit()
+                if (streamingType!=neb.MotCmd_RotationInfo and streamingType!=neb.MotCmd_Pedometer):
+                    print('Timed out, sending command again.')
+                    numTries += 1
+                    self.sendCommand(neb.Subsys_MotionEngine, streamingType, True)
+                    if numTries > 3:
+                        print('Tried {0} times and it doesn\'t respond. Exiting.'.format(numTries))
+                        exit()
             except Exception as e:
                 print(e)
         # Stop whatever it was streaming
@@ -227,6 +228,18 @@ class NeblinaComm(object):
             neb.Subsys_PowerManagement,\
             neb.PowCmd_GetBatteryLevel)
         return packet.data.batteryLevel
+
+    def getTemperature(self):
+        self.sendCommand(neb.Subsys_PowerManagement,\
+            neb.PowCmd_GetTemperature, True)
+
+        # Drop all packets until you get an ack
+        packet = self.waitForAck(neb.Subsys_PowerManagement,\
+            neb.PowCmd_GetTemperature)
+        packet = self.waitForPacket(neb.PacketType_RegularResponse,\
+            neb.Subsys_PowerManagement,\
+            neb.PowCmd_GetTemperature)
+        return packet.data.temperature
 
     def flashErase(self):
         # Step 1 - Initialization

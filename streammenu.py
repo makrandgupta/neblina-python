@@ -157,6 +157,10 @@ class StreamMenu(cmd.Cmd):
         batteryLevel = self.comm.getBatteryLevel()
         print('Battery Level: {0}%'.format(batteryLevel))
 
+    def do_getTemperature(self, args):
+        temp = self.comm.getTemperature()
+        print('Board Temperature: {0} degrees (Celsius)'.format(temp))
+
     def do_streamEuler(self, args):
         self.comm.motionStream(neb.MotCmd_EulerAngle)
 
@@ -165,6 +169,12 @@ class StreamMenu(cmd.Cmd):
 
     def do_streamMAG(self, args):
         self.comm.motionStream(neb.MotCmd_MAG_Data)
+
+    def do_streamRotation(self, args):
+        self.comm.motionStream(neb.MotCmd_RotationInfo)
+
+    def do_streamPedometer(self, args):
+        self.comm.motionStream(neb.MotCmd_Pedometer)
 
     def do_stopStreams(self, args):
         self.comm.motionStopStreams()
