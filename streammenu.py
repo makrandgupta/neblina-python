@@ -176,6 +176,9 @@ class StreamMenu(cmd.Cmd):
     def do_streamPedometer(self, args):
         self.comm.motionStream(neb.MotCmd_Pedometer)
 
+    def do_streamGesture(self, args):
+        self.comm.motionStream(neb.MotCmd_FingerGesture)
+
     def do_stopStreams(self, args):
         self.comm.motionStopStreams()
 

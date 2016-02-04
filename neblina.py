@@ -70,6 +70,7 @@ MotCmd_SittingStanding          =   0x0C # streaming sitting standing
 MotCmd_AccRange                 =   0x0E # set accelerometer range
 MotCmd_DisableStreaming         =   0x0F # disable everything that is currently being streamed
 MotCmd_ResetTimeStamp           =   0x10 # Reset timestamp
+MotCmd_FingerGesture            =   0x11 # Finger Gesture command
 MotCmd_RotationInfo             =   0x12 # Rotation info in roll: number of rotations and speed in rpm
 
 # Storage commands
@@ -123,6 +124,7 @@ CommandStrings = {
     (Subsys_MotionEngine, MotCmd_AccRange)                  :   'AccRange',
     (Subsys_MotionEngine, MotCmd_DisableStreaming)          :   'Disable Streaming',
     (Subsys_MotionEngine, MotCmd_ResetTimeStamp)            :   'Reset Timestamp',
+    (Subsys_MotionEngine, MotCmd_FingerGesture)             :   'Finger Gesture',
     (Subsys_MotionEngine, MotCmd_RotationInfo)              :   'Rotation Info',
     (Subsys_PowerManagement, PowCmd_GetBatteryLevel)        :   'Battery Level',
     (Subsys_PowerManagement, PowCmd_GetTemperature)         :   'Board Temperature',
@@ -620,6 +622,38 @@ class PedometerData(object):
         .format(self.timestamp, self.stepCount,\
         self.stepsPerMinute, self.walkingDirection)
 
+Neblina_FingerGesture_fmt = "<I B 11s" # Timestamp, rotationCount, rpm speed
+class FingerGestureData(object):
+    """docstring for RotationData"""
+    def __init__(self, dataString):
+        self.timestamp,self.gesture,\
+        garbage = struct.unpack( Neblina_FingerGesture_fmt, dataString )
+
+    def encode(self):
+        garbage = ('\000'*11).encode('utf-8')
+        packetString = struct.pack(Neblina_FingerGesture_fmt, self.timestamp,\
+        self.gesture, garbage)
+        return packetString
+
+    def __str__(self):
+        if self.gesture==0:
+            return "{0}us: Gesture:Swiped Left".format(self.timestamp)
+        elif self.gesture==1:
+            return "{0}us: Gesture:Swiped Right".format(self.timestamp)
+        elif self.gesture==2:
+            return "{0}us: Gesture:Swiped Up".format(self.timestamp)
+        elif self.gesture==3:
+            return "{0}us: Gesture:Swiped Down".format(self.timestamp)
+        elif self.gesture==4:
+            return "{0}us: Gesture:Flipped Left".format(self.timestamp)
+        elif self.gesture==5:
+            return "{0}us: Gesture:Flipped Right".format(self.timestamp)
+        elif self.gesture==6:
+            return "{0}us: Gesture:Double Tap".format(self.timestamp)
+        else:
+            return "{0}us: Gesture:None ".format(self.timestamp)
+
+
 Neblina_RotationInfo_fmt = "<I I H 6s" # Timestamp, rotationCount, rpm speed
 class RotationData(object):
     """docstring for RotationData"""
@@ -630,14 +664,15 @@ class RotationData(object):
 
     def encode(self):
         garbage = ('\000'*6).encode('utf-8')
-        packetString = struct.pack(Neblina_Pedometer_fmt, self.timestamp,\
-        self.stepCount, self.stepsPerMinute, int(self.walkingDirection*10), garbage)
+        packetString = struct.pack(Neblina_RotationInfo_fmt, self.timestamp,\
+        self.rotationCount, self.rpm, garbage)
         return packetString
 
     def __str__(self):
         return "{0}us: rotationCount:{1}, rpm:{2}"\
         .format(self.timestamp, self.rotationCount,\
         self.rpm)
+
 
 Neblina_Quat_t_fmt = "<I 4h 4s"
 class QuaternionData(object):
@@ -788,6 +823,7 @@ MotionResponses = {
     MotCmd_AccRange                 : BlankData,              # set accelerometer range
     MotCmd_DisableStreaming         : BlankData,              # disable everything that is currently being streamed
     MotCmd_ResetTimeStamp           : BlankData,
+    MotCmd_FingerGesture            : FingerGestureData,       # streaming finger gesture data
     MotCmd_RotationInfo             : RotationData            # streaming rotation info data
 }
 
