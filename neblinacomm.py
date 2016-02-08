@@ -323,7 +323,7 @@ class NeblinaComm(object):
             neb.Subsys_Storage, neb.StorageCmd_Playback)
         if(packet.header.packetType==neb.PacketType_ErrorLogResp):
             print('Playback failed due to an invalid session number request!')
-            return
+            return 0
         else:
             pbSessionID = packet.data.sessionID
             print('Playback routine started from session number %d' % pbSessionID);
@@ -332,6 +332,7 @@ class NeblinaComm(object):
             thefile = open('QData', 'w')
             for item in packetList:
                 thefile.write("%s\n" % item.stringEncode())
+            return len(packetList)
 
     def flashGetSessions(self):
         self.sendCommand(neb.Subsys_Storage, neb.StorageCmd_NumSessions)

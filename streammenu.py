@@ -261,6 +261,77 @@ class StreamMenu(cmd.Cmd):
         versionPacket = self.comm.debugFWVersions()
         print(versionPacket.data)
 
+    def do_testProMotion(self, args):
+        print( "Started the test routine for the ProMotion board..." )
+        print( "==================================================================================" )
+        print( "Test#1: Checking communication with the LSM9DS1 chip by getting the temperature..." )
+        print( "==================================================================================" )
+        temp = self.comm.getTemperature()
+        print('Board Temperature: {0} degrees (Celsius)'.format(temp))
+        print( "Test#1 was successful!" )
+        print(" ")
+        print( "=================================================================================================" )
+        print ( "Test#2: Checking communication between Nordic and KL26 chips by getting the firmware versions..." )
+        print( "=================================================================================================" )
+        versionPacket = self.comm.debugFWVersions()
+        print(versionPacket.data)
+        if (versionPacket.data.bleFWVersion[0]==255):
+            print ( "The Nordic firmware is still unknown. ")
+            print ( "Try running the script again after 20 seconds to make sure that Nordic sends its firmware version!" )
+            print ( "If the problem persists, there is a communication problem between Nordic and KL26 chips..." )
+            self.comm.switchStreamingInterface(False)
+            return -1
+        print( "Test#2 was successful!" )
+        print(" ")
+        print( "==========================================================================" )
+        print ( "Test#3: Checking the EEPROM by issuing a write command followed by a read" )
+        print( "==========================================================================" )
+        dataString = "UnitTest"
+        dataString = dataString.encode('utf-8')
+        self.comm.EEPROMWrite(0, dataString)
+        dataBytes = self.comm.EEPROMRead(0)
+        if (dataBytes==dataString):
+            print( "Test#3 was successful!" )
+            print(" ")
+            print( "==============================================" )
+            print( "Test#4: Flash Recorder Test on Quaternion Data" )
+            print( "==============================================" )
+            print( "Recording 1000 Quaternion packets now..." )
+            self.comm.flashRecord(1000, neb.MotCmd_Quaternion)
+            print( "Playing back 1000 Quaternion packets now..." )
+            num = self.comm.flashPlayback(65535)
+            if (num==1000):
+                print( "Test#4 was successful!" )
+                print(" ")
+                print( "===============================================" )
+                print( "Test#5: Flash Recorder Test on Euler Angle Data" )
+                print( "===============================================" )
+                print( "Recording 1000 Euler Angle now..." )
+                self.comm.flashRecord(1000, neb.MotCmd_EulerAngle)
+                print( "Playing back 1000 Euler Angle packets now..." )
+                num = self.comm.flashPlayback(65535)
+                if (num==1000):
+                    print( "Test#5 was successful!" )
+                    print(" ")
+                    print( "=====================================================================================" )
+                    print( "Test#6: Checking the communication with the PMIC chip by getting the battery level..." )
+                    print( "=====================================================================================" )
+                    batteryLevel = self.comm.getBatteryLevel()
+                    print('Battery Level: {0}%'.format(batteryLevel))
+                    print(" ")
+                    print( "============================================" )
+                    print( "The ProMotion test routing was successful!!!" )
+                    print( "============================================" )
+                else:
+                    print( "ERROR: Euler Angle data storage/playback failed!!!" )
+            else:
+                print( "ERROR: Quaternion data storage/playback failed!!!" )
+        else:
+            print( "ERROR: EEPROM Read-Back Test Failed!!!" )
+
+
+
+
     ## Override methods in Cmd object ##
     def preloop(self):
         """Initialization before prompting user for commands.
