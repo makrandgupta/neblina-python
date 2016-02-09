@@ -179,6 +179,12 @@ class StreamMenu(cmd.Cmd):
     def do_streamGesture(self, args):
         self.comm.motionStream(neb.MotCmd_FingerGesture)
 
+    def do_streamTrajectory(self, args):
+        self.comm.sendCommand(neb.Subsys_MotionEngine, neb.MotCmd_TrajectoryRecStartStop, True) # start recording a reference orientation trajectory
+        packet = self.comm.waitForAck(neb.Subsys_MotionEngine, neb.MotCmd_TrajectoryRecStartStop)
+        print("Recording a reference trajectory...")
+        self.comm.motionStream(neb.MotCmd_TrajectoryInfo)
+
     def do_stopStreams(self, args):
         self.comm.motionStopStreams()
 

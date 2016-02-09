@@ -170,7 +170,7 @@ class NeblinaComm(object):
                 print('CRCError')
                 print(crce)
             except TimeoutError as te:
-                if (streamingType!=neb.MotCmd_RotationInfo and streamingType!=neb.MotCmd_Pedometer and streamingType!=neb.MotCmd_FingerGesture):
+                if (streamingType!=neb.MotCmd_RotationInfo and streamingType!=neb.MotCmd_Pedometer and streamingType!=neb.MotCmd_FingerGesture and streamingType!=neb.MotCmd_TrajectoryInfo):
                     print('Timed out, sending command again.')
                     numTries += 1
                     self.sendCommand(neb.Subsys_MotionEngine, streamingType, True)

@@ -585,7 +585,7 @@ class ExternalForceData(object):
         .format(self.timestamp,self.externalForces[0],\
             self.externalForces[1], self.externalForces[2])
 
-Neblina_TrajectoryDistance_fmt = "<I 3h 6s" # Timestamp, Euler angle errors
+Neblina_TrajectoryDistance_fmt = "<I 3h H B 3s" # Timestamp, Euler angle errors, repeat count, percentage of completion
 class TrajectoryDistanceData(object):
     """docstring for TrajectoryDistance"""
     def __init__(self, dataString):
@@ -594,12 +594,14 @@ class TrajectoryDistanceData(object):
         self.eulerAngleErrors[0],\
         self.eulerAngleErrors[1],\
         self.eulerAngleErrors[2],\
+        self.count,\
+        self.progress,\
         garbage = struct.unpack( Neblina_TrajectoryDistance_fmt, dataString )
 
     def __str__(self):
-        return "{0}us: eulerAngleErrors(x,y,z):({1},{2},{3})"\
+        return "{0}us: eulerAngleErrors(yaw,pitch,roll):({1},{2},{3}), count:{4}, progress:{5}%"\
         .format(self.timestamp,self.eulerAngleErrors[0],\
-            self.eulerAngleErrors[1], self.eulerAngleErrors[2])
+            self.eulerAngleErrors[1], self.eulerAngleErrors[2], self.count, self.progress)
 
 Neblina_Pedometer_fmt = "<I H B h 7s" # Timestamp, stepCount, stepsPerMinute, walking direction 
 class PedometerData(object):
