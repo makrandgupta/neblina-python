@@ -54,77 +54,204 @@ class TestProMotion(cmd.Cmd):
         self.comm.switchStreamingInterface(True)
         self.comm.motionStopStreams()
 
+        thefile = open('ProMotionTestLog.txt', 'w')
         print(" ")
-        print( "Started the test routine for the ProMotion board..." )
-        print( "==================================================================================" )
-        print( "Test#1: Checking communication with the LSM9DS1 chip by getting the temperature..." )
-        print( "==================================================================================" )
+        dataString = "*** ProMotion Board Test Routine ***\n"
+        print(dataString)
+        thefile.write(dataString)
+        thefile.write("\n")
+        dataString = "=================================================================================="
+        print( dataString )
+        thefile.write(dataString)
+        thefile.write("\n")
+        dataString = "Test#1: Checking communication with the LSM9DS1 chip by getting the temperature..."
+        print( dataString )
+        thefile.write(dataString)
+        thefile.write("\n")
+        dataString = "=================================================================================="
+        print( dataString )
+        thefile.write(dataString)
+        thefile.write("\n")
         temp = self.comm.getTemperature()
-        print('Board Temperature: {0} degrees (Celsius)'.format(temp))
-        print( "Test#1 Passed!!!" )
+        dataString = 'Board Temperature: {0} degrees (Celsius)'.format(temp)
+        print(dataString)
+        thefile.write(dataString)
+        thefile.write("\n")
+
+        dataString =  "Test#1 Passed!!!"
+        print( dataString )
+        thefile.write(dataString)
+        thefile.write("\n\n")
         print(" ")
-        print( "=================================================================================================" )
-        print ( "Test#2: Checking communication between Nordic and KL26 chips by getting the firmware versions..." )
-        print( "=================================================================================================" )
+        dataString = "================================================================================================="
+        print( dataString )
+        thefile.write(dataString)
+        thefile.write("\n")
+        dataString = "Test#2: Checking communication between Nordic and KL26 chips by getting the firmware versions..."
+        print( dataString )
+        thefile.write(dataString)
+        thefile.write("\n")
+        dataString = "================================================================================================="
+        print( dataString )
+        thefile.write(dataString)
+        thefile.write("\n")
         versionPacket = self.comm.debugFWVersions()
         print(versionPacket.data)
         if (versionPacket.data.bleFWVersion[0]==255):
-            print ( "The Nordic firmware is still unknown. ")
-            print ( "Try running the script again after 20 seconds to make sure that Nordic sends its firmware version!" )
-            print ( "If the problem persists, there is a communication problem between Nordic and KL26 chips..." )
+            dataString = "The Nordic firmware is still unknown."
+            print( dataString )
+            thefile.write(dataString)
+            thefile.write("\n")
+            dataString = "Try running the script again after 20 seconds to make sure that Nordic sends its firmware version!"
+            print( dataString )
+            thefile.write(dataString)
+            thefile.write("\n")
+            dataString = "If the problem persists, there is a communication problem between Nordic and KL26 chips..."
+            print( dataString )
+            thefile.write(dataString)
+            thefile.write("\n")
             self.comm.switchStreamingInterface(False)
-            return -1
-        print( "Test#2 Passed!!!" )
+            dataString = "Exiting..."
+            print( dataString )
+            thefile.write(dataString)
+            thefile.write("\n")
+            return
+        dataString = "Test#2 Passed!!!"
+        print( dataString )
+        thefile.write(dataString)
+        thefile.write("\n\n")
         print(" ")
-        print( "==========================================================================" )
-        print ( "Test#3: Checking the EEPROM by issuing a write command followed by a read" )
-        print( "==========================================================================" )
+        dataString = "=========================================================================="
+        print( dataString )
+        thefile.write(dataString)
+        thefile.write("\n")
+        dataString = "Test#3: Checking the EEPROM by issuing a write command followed by a read"
+        print( dataString )
+        thefile.write(dataString)
+        thefile.write("\n")
+        dataString = "=========================================================================="
+        print( dataString )
+        thefile.write(dataString)
+        thefile.write("\n")
         dataString = "UnitTest"
         dataString = dataString.encode('utf-8')
         self.comm.EEPROMWrite(0, dataString)
         dataBytes = self.comm.EEPROMRead(0)
         if (dataBytes==dataString):
-            print( "Test#3 Passed!!!" )
+            dataString = "Test#3 Passed!!!"
+            print( dataString )
+            thefile.write(dataString)
+            thefile.write("\n\n")
             print(" ")
-            print( "==============================================" )
-            print( "Test#4: Flash Recorder Test on Quaternion Data" )
-            print( "==============================================" )
-            print( "Recording 1000 Quaternion packets now..." )
+            dataString = "=============================================="
+            print( dataString )
+            thefile.write(dataString)
+            thefile.write("\n")
+            dataString = "Test#4: Flash Recorder Test on Quaternion Data"
+            print( dataString )
+            thefile.write(dataString)
+            thefile.write("\n")
+            dataString = "=============================================="
+            print( dataString )
+            thefile.write(dataString)
+            thefile.write("\n")
+            dataString = "Recording 1000 Quaternion packets now..."
+            print( dataString )
+            thefile.write(dataString)
+            thefile.write("\n")
             self.comm.flashRecord(1000, neb.MotCmd_Quaternion)
-            print( "Playing back 1000 Quaternion packets now..." )
+            dataString = "Playing back 1000 Quaternion packets now..."
+            print( dataString )
+            thefile.write(dataString)
+            thefile.write("\n")
             num = self.comm.flashPlayback(65535)
             if (num==1000):
-                print( "Test#4 Passed!!!" )
+                dataString = "Test#4 Passed!!!"
+                print( dataString )
+                thefile.write(dataString)
+                thefile.write("\n\n")
                 print(" ")
-                print( "===============================================" )
-                print( "Test#5: Flash Recorder Test on Euler Angle Data" )
-                print( "===============================================" )
-                print( "Recording 1000 Euler Angle now..." )
+                dataString = "==============================================="
+                print( dataString )
+                thefile.write(dataString)
+                thefile.write("\n")
+                dataString = "Test#5: Flash Recorder Test on Euler Angle Data"
+                print( dataString )
+                thefile.write(dataString)
+                thefile.write("\n")
+                dataString = "==============================================="
+                print( dataString )
+                thefile.write(dataString)
+                thefile.write("\n")
+                dataString = "Recording 1000 Euler Angle now..."
+                print( dataString )
+                thefile.write(dataString)
+                thefile.write("\n")
                 self.comm.flashRecord(1000, neb.MotCmd_EulerAngle)
-                print( "Playing back 1000 Euler Angle packets now..." )
+                dataString = "Playing back 1000 Euler Angle packets now..."
+                print( dataString )
+                thefile.write(dataString)
+                thefile.write("\n")
+
                 num = self.comm.flashPlayback(65535)
                 if (num==1000):
-                    print( "Test#5 Passed!!!" )
+                    dataString = "Test#5 Passed!!!"
+                    print( dataString )
+                    thefile.write(dataString)
+                    thefile.write("\n\n")
                     print(" ")
-                    print( "=====================================================================================" )
-                    print( "Test#6: Checking the communication with the PMIC chip by getting the battery level..." )
-                    print( "=====================================================================================" )
+                    dataString = "====================================================================================="
+                    print( dataString )
+                    thefile.write(dataString)
+                    thefile.write("\n")
+                    dataString = "Test#6: Checking the communication with the PMIC chip by getting the battery level..."
+                    print( dataString )
+                    thefile.write(dataString)
+                    thefile.write("\n")
+                    dataString = "====================================================================================="
+                    print( dataString )
+                    thefile.write(dataString)
+                    thefile.write("\n")
                     batteryLevel = self.comm.getBatteryLevel()
-                    print('Battery Level: {0}%'.format(batteryLevel))
+                    dataString = 'Battery Level: {0}%'.format(batteryLevel)
+                    print( dataString )
+                    thefile.write(dataString)
+                    thefile.write("\n\n")
                     print(" ")
-                    print( "============================================" )
-                    print( "The ProMotion test routing was successful!!!" )
-                    print( "============================================" )
+                    dataString = "============================================"
+                    print( dataString )
+                    thefile.write(dataString)
+                    thefile.write("\n")
+                    dataString = "The ProMotion test routing was successful!!!"
+                    print( dataString )
+                    thefile.write(dataString)
+                    thefile.write("\n")
+                    dataString = "============================================"
+                    print( dataString )
+                    thefile.write(dataString)
+                    thefile.write("\n")
                 else:
-                    print( "ERROR: Euler Angle data storage/playback failed!!!" )
+                    dataString = "ERROR: Euler Angle data storage/playback failed!!!"
+                    print( dataString )
+                    thefile.write(dataString)
+                    thefile.write("\n")
             else:
-                print( "ERROR: Quaternion data storage/playback failed!!!" )
+                dataString = "ERROR: Quaternion data storage/playback failed!!!"
+                print( dataString )
+                thefile.write(dataString)
+                thefile.write("\n")
         else:
-            print( "ERROR: EEPROM Read-Back Test Failed!!!" )
-
+            dataString = "ERROR: EEPROM Read-Back Test Failed!!!"
+            print( dataString )
+            thefile.write(dataString)
+            thefile.write("\n")
 
         self.comm.switchStreamingInterface(False)
-        print( "Exiting..." )
+        dataString = "Exiting..."
+        print( dataString )
+        thefile.write(dataString)
+        thefile.write("\n")
+
         return
 
 
