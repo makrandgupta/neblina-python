@@ -11,6 +11,7 @@ import serial.tools.list_ports
 import slip
 import neblina as neb
 import neblinacomm as nebcomm
+import neblinasim as sim
 import sys
 import time
 
@@ -26,7 +27,7 @@ class StreamMenu(cmd.Cmd):
         self.prompt = '>>'
         self.intro = "Welcome to the Neblina Streaming Menu!"
         
-        # Check if config file exitst
+        # Check if config file exists
         if(not os.path.exists(self.configFileName)):
             self.setCOMPortName()
 
@@ -38,7 +39,7 @@ class StreamMenu(cmd.Cmd):
         sc = None
         while sc is None:
             try:
-                sc = serial.Serial(port=comPortName,baudrate=230400)
+                sc = serial.Serial(port=comPortName,baudrate=500000, timeout=1.5)
             except serial.serialutil.SerialException as se:
                 if 'Device or resource busy:' in se.__str__():
                     print('Opening COM port is taking a little while, please stand by...')
@@ -47,8 +48,17 @@ class StreamMenu(cmd.Cmd):
                 time.sleep(1)
         
         self.comm = nebcomm.NeblinaComm(sc)
+        self.comm.sc.flushInput()
         # Make the module stream towards the UART instead of the default BLE
         self.comm.switchStreamingInterface(True)
+        self.comm.motionStopStreams()
+
+    # If the user exits with Ctrl-C, try switching the interface back to BLE
+    def cmdloop(self):
+        try:
+            cmd.Cmd.cmdloop(self)
+        except KeyboardInterrupt as e:
+            self.comm.switchStreamingInterface(False)
 
     ## Command definitions ##
     def do_hist(self, args):
@@ -136,15 +146,38 @@ class StreamMenu(cmd.Cmd):
     def do_setCOMPort(self, args):
         self.setCOMPortName()
 
+    def do_motionState(self, args):
+        states = self.comm.motionGetStates()
+        print("Distance: {0}\nForce:{1}\nEuler:{2}\nQuaternion:{3}\nIMUData:{4}\nMotion:{5}\nSteps:{6}\nMAGData:{7}\nSitStand:{8}"\
+        .format(states[0], states[1], states[2], states[3],\
+                states[4], states[5], states[6], states[7], states[8])\
+        )
+
     def do_getBatteryLevel(self, args):
         batteryLevel = self.comm.getBatteryLevel()
         print('Battery Level: {0}%'.format(batteryLevel))
+
+    def do_getTemperature(self, args):
+        temp = self.comm.getTemperature()
+        print('Board Temperature: {0} degrees (Celsius)'.format(temp))
 
     def do_streamEuler(self, args):
         self.comm.motionStream(neb.MotCmd_EulerAngle)
 
     def do_streamIMU(self, args):
         self.comm.motionStream(neb.MotCmd_IMU_Data)
+
+    def do_streamMAG(self, args):
+        self.comm.motionStream(neb.MotCmd_MAG_Data)
+
+    def do_streamRotation(self, args):
+        self.comm.motionStream(neb.MotCmd_RotationInfo)
+
+    def do_streamPedometer(self, args):
+        self.comm.motionStream(neb.MotCmd_Pedometer)
+
+    def do_streamGesture(self, args):
+        self.comm.motionStream(neb.MotCmd_FingerGesture)
 
     def do_stopStreams(self, args):
         self.comm.motionStopStreams()
@@ -173,16 +206,49 @@ class StreamMenu(cmd.Cmd):
             return
         self.comm.motionSetAccFullScale(factor)
 
+    def do_flashState(self, args):
+        state = self.comm.flashGetState()
+        print('State: {0}'.format(state))
+        sessions = self.comm.flashGetSessions()
+        print('Num of sessions: {0}'.format(sessions))
+
+    def do_flashSessionInfo(self, args):
+        if(len(args) <= 0):
+            sessionID = 65535
+        elif(len(args) > 0):
+            sessionID = int(args)
+        info = self.comm.flashGetSessionInfo(sessionID)
+        if(info == None):
+            print('Session {0} does not exist on the flash'\
+                .format(sessionID))
+        else:
+            print( "Session %d: %d packets (%d bytes)"\
+            %(info[0], info[1]/18, info[1]) )
+
     def do_flashErase(self, args):
         self.comm.flashErase()
         print('Flash erase has completed successfully!')
 
-    def do_flashRecord(self, args):        
+    def do_flashRecordIMU(self, args):
         if(len(args) <= 0):
             numSamples = 1000
         else:
             numSamples = int(args)
-        self.comm.flashRecord(numSamples)
+        self.comm.flashRecord(numSamples, neb.MotCmd_IMU_Data)
+
+    def do_flashRecordEuler(self, args):
+        if(len(args) <= 0):
+            numSamples = 1000
+        else:
+            numSamples = int(args)
+        self.comm.flashRecord(numSamples, neb.MotCmd_EulerAngle)
+
+    def do_flashRecordQuaternion(self, args):
+        if(len(args) <= 0):
+            numSamples = 1000
+        else:
+            numSamples = int(args)
+        self.comm.flashRecord(numSamples, neb.MotCmd_Quaternion)
 
     def do_flashPlayback(self, args):
         if(len(args) <= 0):
@@ -190,6 +256,81 @@ class StreamMenu(cmd.Cmd):
         elif(len(args) > 0):
             mySessionID = int(args)
         self.comm.flashPlayback(mySessionID)
+
+    def do_versions(self, args):
+        versionPacket = self.comm.debugFWVersions()
+        print(versionPacket.data)
+
+    def do_testProMotion(self, args):
+        print( "Started the test routine for the ProMotion board..." )
+        print( "==================================================================================" )
+        print( "Test#1: Checking communication with the LSM9DS1 chip by getting the temperature..." )
+        print( "==================================================================================" )
+        temp = self.comm.getTemperature()
+        print('Board Temperature: {0} degrees (Celsius)'.format(temp))
+        print( "Test#1 was successful!" )
+        print(" ")
+        print( "=================================================================================================" )
+        print ( "Test#2: Checking communication between Nordic and KL26 chips by getting the firmware versions..." )
+        print( "=================================================================================================" )
+        versionPacket = self.comm.debugFWVersions()
+        print(versionPacket.data)
+        if (versionPacket.data.bleFWVersion[0]==255):
+            print ( "The Nordic firmware is still unknown. ")
+            print ( "Try running the script again after 20 seconds to make sure that Nordic sends its firmware version!" )
+            print ( "If the problem persists, there is a communication problem between Nordic and KL26 chips..." )
+            self.comm.switchStreamingInterface(False)
+            return -1
+        print( "Test#2 was successful!" )
+        print(" ")
+        print( "==========================================================================" )
+        print ( "Test#3: Checking the EEPROM by issuing a write command followed by a read" )
+        print( "==========================================================================" )
+        dataString = "UnitTest"
+        dataString = dataString.encode('utf-8')
+        self.comm.EEPROMWrite(0, dataString)
+        dataBytes = self.comm.EEPROMRead(0)
+        if (dataBytes==dataString):
+            print( "Test#3 was successful!" )
+            print(" ")
+            print( "==============================================" )
+            print( "Test#4: Flash Recorder Test on Quaternion Data" )
+            print( "==============================================" )
+            print( "Recording 1000 Quaternion packets now..." )
+            self.comm.flashRecord(1000, neb.MotCmd_Quaternion)
+            print( "Playing back 1000 Quaternion packets now..." )
+            num = self.comm.flashPlayback(65535)
+            if (num==1000):
+                print( "Test#4 was successful!" )
+                print(" ")
+                print( "===============================================" )
+                print( "Test#5: Flash Recorder Test on Euler Angle Data" )
+                print( "===============================================" )
+                print( "Recording 1000 Euler Angle now..." )
+                self.comm.flashRecord(1000, neb.MotCmd_EulerAngle)
+                print( "Playing back 1000 Euler Angle packets now..." )
+                num = self.comm.flashPlayback(65535)
+                if (num==1000):
+                    print( "Test#5 was successful!" )
+                    print(" ")
+                    print( "=====================================================================================" )
+                    print( "Test#6: Checking the communication with the PMIC chip by getting the battery level..." )
+                    print( "=====================================================================================" )
+                    batteryLevel = self.comm.getBatteryLevel()
+                    print('Battery Level: {0}%'.format(batteryLevel))
+                    print(" ")
+                    print( "============================================" )
+                    print( "The ProMotion test routing was successful!!!" )
+                    print( "============================================" )
+                else:
+                    print( "ERROR: Euler Angle data storage/playback failed!!!" )
+            else:
+                print( "ERROR: Quaternion data storage/playback failed!!!" )
+        else:
+            print( "ERROR: EEPROM Read-Back Test Failed!!!" )
+
+
+
 
     ## Override methods in Cmd object ##
     def preloop(self):
