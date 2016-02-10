@@ -817,7 +817,6 @@ MotionResponses = {
     MotCmd_ExtForce                 : ExternalForceData,      # streaming the external force
     MotCmd_SetFusionType            : BlankData,              # setting the Fusion type to either 6-axis or 9-axis
     MotCmd_TrajectoryRecStartStop   : TrajectoryDistanceData, # start recording orientation trajectory
-    # MotCmd_TrajectoryRecStop      : TrajectoryDistanceData, # stop recording orientation trajectory
     MotCmd_TrajectoryInfo           : TrajectoryDistanceData, # calculating the distance from a pre-recorded orientation trajectory
     MotCmd_Pedometer                : PedometerData,          # streaming pedometer data
     MotCmd_MAG_Data                 : MAGData,                # streaming magnetometer data

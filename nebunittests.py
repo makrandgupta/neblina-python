@@ -160,13 +160,13 @@ class ut_NeblinaPackets(unittest.TestCase):
         print("\n*** Testing Pedometer Decoding ***")
         packets, errorList = self.buildPacketListFromSLIP("SampleData/PedometerStream.bin")
         # Make sure the beginning garbage packet was not recorded
-        self.assertEqual(len(packets), 6)
+        self.assertEqual(len(packets), 7)
         # self.assertEqual(type(errorList[0]), NotImplementedError)
         # Check pedometer data decoding
-        self.assertEqual(packets[4].data.timestamp, 19057720)
-        self.assertEqual(packets[4].data.stepCount, 4)
-        self.assertEqual(packets[4].data.stepsPerMinute, 104)
-        self.assertEqual(packets[4].data.walkingDirection, -180.0)
+        self.assertEqual(packets[5].data.timestamp, 19057720)
+        self.assertEqual(packets[5].data.stepCount, 4)
+        self.assertEqual(packets[5].data.stepsPerMinute, 104)
+        self.assertEqual(packets[5].data.walkingDirection, -180.0)
 
     def testDecodeQuat(self):
         print("\n*** Testing Quaternion Stream Decoding ***")
@@ -265,8 +265,8 @@ class ut_NeblinaPackets(unittest.TestCase):
         commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine, neb.MotCmd_EulerAngle, False)
         commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine, neb.MotCmd_ExtForce, True)
         commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine, neb.MotCmd_ExtForce, False)
-        commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine, neb.MotCmd_TrajectoryDistance, True)
-        commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine, neb.MotCmd_TrajectoryDistance, False)
+        commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine, neb.MotCmd_TrajectoryInfo, True)
+        commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine, neb.MotCmd_TrajectoryInfo, False)
         commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine, neb.MotCmd_Pedometer, True)
         commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine, neb.MotCmd_Pedometer, False)
         commandPacket = neb.NebCommandPacket(neb.Subsys_MotionEngine, neb.MotCmd_MAG_Data, True)
