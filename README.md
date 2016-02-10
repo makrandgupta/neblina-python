@@ -1,6 +1,8 @@
 [![Build Status](https://travis-ci.org/Motsai/neblina-python.svg)](https://travis-ci.org/Motsai/neblina-python)
 # Neblina Python Scripts
-![ProMotion Board](http://d2r8jqmejizzox.cloudfront.net/642057-1694090-374x281-Neblinapic.jpg)
+![Python](https://www.python.org/static/community_logos/python-logo-master-v3-TM.png)
+![ProMotion Board](http://i.imgur.com/FvKbWka.jpg)
+
 
 Python scripts that interact with and simulate the behaviour of the Neblina Motion Capture module.
 # Requirements
