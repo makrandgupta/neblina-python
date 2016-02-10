@@ -14,6 +14,7 @@ script:
 - ./runNeblinaDataTests.sh
 
 notifications:
+  slack: motsai:uH6mGa8ZK2RfCrFBncRZmGaX
   email:
     on_success: [change] # default: change
     on_failure: [always] # default: always
