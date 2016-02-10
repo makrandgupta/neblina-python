@@ -25,11 +25,25 @@ git submodule init
 git submodule update
 ```
 
+Make sure to add the directory of the cloned repository as well as its referenced submodules to your Python path:
+
+**On Windows**:
+![Path](http://i.imgur.com/ftOUSVX.png?1)
+
+**On Linux** 
+```
+export PYTHONPATH="${PYTHONPATH}:/path/to/the/repo/neblina-python"
+export PYTHONPATH="${PYTHONPATH}:/path/to/the/repo/neblina-python/pyslip"
+```
+**Note**: it is recommended to add the lines to the .bashrc to not have to execute the command every time you open a shell:
+
+# Run the example shell menu
 Connect the Neblina module to your computer through the Serial COM port. On the [ProMotion](http://promotion.motsai.com/) board, there is a serial USB-COM already provided. Once the module is connected, take note of the COM port name. On Windows, the name would be COMx. On Linux, it would be /dev/ttyACMx.
 
 Execute the interaction shell (Linux):
 ```
-PYTHONPATH=./pyslip/ python3 streammenu.py
+cd examples
+python3 streammenu.py
 ```
 
 On the execution of the shell script, the program will ask you for the name of the COM port to connect to. Type the name of the COM port associated with the module and press 'Enter'.
