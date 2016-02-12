@@ -71,9 +71,11 @@ class ut_IntegrationTests(unittest.TestCase):
                 time.sleep(1)
         
         self.comm = nebcomm.NeblinaComm(sc)
+        self.comm.sc.flushInput()
+
         # Make the module stream towards the UART instead of the default BLE
         self.comm.switchStreamingInterface(True)
-        # self.setupHasAlreadyRun = True
+        self.comm.motionStopStreams()
 
     def tearDown(self):
         self.comm.sc.close()
@@ -86,7 +88,15 @@ class ut_IntegrationTests(unittest.TestCase):
         self.comm.motionStream(neb.MotCmd_IMU_Data, 100)
 
     def testVersion(self):
-        self.comm.debugFWVersions()
+        versionPacket = self.comm.debugFWVersions()
+        self.assertNotEqual(versionPacket.[2][0], 255)
+
+    def testMEMSComm(self):
+        temp = self.comm.getTemperature()
+        dataString = 'Board Temperature: {0} degrees (Celsius)'.format(temp)
+
+    def testPMICComm(self):
+        batteryLevel = self.comm.getBatteryLevel()
 
     def testMotionEngine(self):
         testInputVectorPacketList = self.csvVectorsToList('./SampleData/motEngineInputs.csv')
