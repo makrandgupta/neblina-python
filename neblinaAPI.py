@@ -373,7 +373,8 @@ class NeblinaComm(object):
         self.sendCommand(neb.Subsys_LED, neb.LEDCmd_SetVal, ledValueTupleList=ledValues)
 
     def setLED(self, ledIndex, ledValue):
-        self.sendCommand(neb.Subsys_LED, neb.LEDCmd_SetVal, ledValueTupleList=(ledIndex,ledValue) )
+        ledValues = [(ledIndex,ledValue)]
+        self.sendCommand(neb.Subsys_LED, neb.LEDCmd_SetVal, ledValueTupleList=ledValues )
 
     def debugFWVersions(self):
         self.sendCommand(neb.Subsys_Debug, neb.DebugCmd_FWVersions)

@@ -215,6 +215,18 @@ class StreamMenu(cmd.Cmd):
             return
         self.comm.motionSetAccFullScale(factor)
 
+    def do_setled(self, args):
+        arguments = args.split(' ')
+        if len(arguments) != 2:
+            print('setled <ledNumber> <value>')
+            return
+        ledIndex = int(arguments[0])
+        ledValue = int(arguments[1])
+        if(ledIndex < 0 or ledIndex > 1):
+            print('Only led indices 0 or 1 are valid')
+            return
+        self.comm.setLED(ledIndex, ledValue)
+
     def do_flashState(self, args):
         state = self.comm.flashGetState()
         print('State: {0}'.format(state))
