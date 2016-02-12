@@ -315,7 +315,7 @@ class NeblinaComm(object):
             neb.Subsys_Storage, neb.StorageCmd_Record)
         print('The acknowledge packet is received, and session %d is closed successfully' % sessionID)
 
-    def flashPlayback(self, pbSessionID):
+    def flashPlayback(self, pbSessionID, destinationFileName=None):
         self.sendCommand(neb.Subsys_Storage, neb.StorageCmd_Playback, True, sessionID=pbSessionID)
         print('Sent the start playback command, waiting for response...')
         #wait for confirmation
@@ -329,9 +329,11 @@ class NeblinaComm(object):
             print('Playback routine started from session number %d' % pbSessionID);
             packetList = self.storePacketsUntil(neb.PacketType_RegularResponse, neb.Subsys_Storage, neb.StorageCmd_Playback)
             print('Finished playback from session number %d!' % pbSessionID)
-            thefile = open('QData', 'w')
-            for item in packetList:
-                thefile.write("%s\n" % item.stringEncode())
+            if(destinationFileName != None):
+                thefile = open(destinationFileName, 'w')
+                for item in packetList:
+                    thefile.write("%s\n" % item.stringEncode())
+                thefile.close()
             return len(packetList)
 
     def flashGetSessions(self):
