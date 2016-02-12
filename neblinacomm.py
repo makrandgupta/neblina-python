@@ -384,17 +384,21 @@ class NeblinaComm(object):
                 versionPacket.data.bleFWVersion,
                 versionPacket.data.deviceID)
 
+    def debugAPIRelease(self):
+        versionTuple = self.debugFWVersions()
+        return versionTuple[0]
+
     def debugMCUfwVersion(self):
-        return versionPacket.data.mcuFWVersion
+        versionTuple = self.debugFWVersions()
+        return versionTuple[1]
 
     def debugBLEfwVersion(self):
-        return versionPacket.data.bleFWVersion
+        versionTuple = self.debugFWVersions()
+        return versionTuple[2]
 
     def debugDeviceID(self):
-        return versionPacket.data.deviceID
-    
-    def debugAPIRelease(self):
-        return versionPacket.data.apiRelease
+        versionTuple = self.debugFWVersions()
+        return versionTuple[3]
     
     def debugUnitTestEnable(self, enable=True):
         self.sendCommand(neb.Subsys_Debug, neb.DebugCmd_StartUnitTestMotion, enable)
