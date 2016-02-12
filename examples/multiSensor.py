@@ -5,7 +5,7 @@ import serial
 import serial.tools.list_ports
 import slip
 import neblina as neb
-import neblinacomm as nebcomm
+import neblinaAPI as nebapi
 import sys
 import time
 
@@ -16,7 +16,7 @@ def main():
     for portName in devicePortNames:
         try:
             sc = serial.Serial(port=portName, baudrate=230400)
-            comm = nebcomm.NeblinaComm(sc)
+            comm = nebapi.NeblinaComm(sc)
             # Make the module stream towards the UART instead of the default BLE
             comm.switchStreamingInterface(True)
             nebBoards.append(comm)

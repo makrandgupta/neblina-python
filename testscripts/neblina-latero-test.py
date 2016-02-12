@@ -4,7 +4,7 @@ import array
 import struct
 import time
 import serial
-import neblinacomm as nebCom
+import neblinaAPI as nebapi
 #this code works with python 3.4
 
 LATERO_ADR = ('192.168.87.98', 8900)

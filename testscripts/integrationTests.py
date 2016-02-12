@@ -1,6 +1,6 @@
 import unittest
 import neblina as neb
-import neblinacomm as nebcomm
+import neblinaAPI as nebapi
 import slip
 import binascii
 import struct
@@ -70,7 +70,7 @@ class ut_IntegrationTests(unittest.TestCase):
                     print('se: {0}'.format(se))
                 time.sleep(1)
         
-        self.comm = nebcomm.NeblinaComm(sc)
+        self.comm = nebapi.NeblinaComm(sc)
         self.comm.sc.flushInput()
 
         # Make the module stream towards the UART instead of the default BLE
@@ -89,6 +89,7 @@ class ut_IntegrationTests(unittest.TestCase):
 
     def testVersion(self):
         versions = self.comm.debugFWVersions()
+        # print(versions)
         # self.assertNotEqual(versions[2][0], 255)
 
     def testMEMSComm(self):
