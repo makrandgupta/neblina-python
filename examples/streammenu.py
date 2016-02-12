@@ -264,8 +264,19 @@ class StreamMenu(cmd.Cmd):
         self.comm.flashPlayback(mySessionID)
 
     def do_versions(self, args):
-        versionPacket = self.comm.debugFWVersions()
-        print(versionPacket.data)
+        versions = self.comm.debugFWVersions()
+        apiRelease = versions[0]
+        mcuFWVersion = versions[1]
+        bleFWVersion = versions[2]
+        deviceID = versions[3]
+        print( "API Release: {0}\n\
+        MCU Version: {1}.{2}.{3}\n\
+        BLE Version: {4}.{5}.{6}\n\
+        Device ID: {7}".format(apiRelease,\
+            mcuFWVersion[0], mcuFWVersion[1], mcuFWVersion[2],\
+            bleFWVersion[0], bleFWVersion[1], bleFWVersion[2],\
+            binascii.hexlify(deviceID))
+        )
 
     ## Override methods in Cmd object ##
     def preloop(self):

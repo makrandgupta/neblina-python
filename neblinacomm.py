@@ -375,9 +375,25 @@ class NeblinaComm(object):
 
     def debugFWVersions(self):
         self.sendCommand(neb.Subsys_Debug, neb.DebugCmd_FWVersions)
-        packet = self.waitForPacket(neb.PacketType_RegularResponse, neb.Subsys_Debug, neb.DebugCmd_FWVersions)
-        return packet
+        versionPacket = self.waitForPacket(neb.PacketType_RegularResponse, 
+            neb.Subsys_Debug, neb.DebugCmd_FWVersions)
+        return (versionPacket.data.apiRelease,
+                versionPacket.data.mcuFWVersion,
+                versionPacket.data.bleFWVersion,
+                versionPacket.data.deviceID)
 
+    def debugMCUfwVersion(self):
+        return versionPacket.data.mcuFWVersion
+
+    def debugBLEfwVersion(self):
+        return versionPacket.data.bleFWVersion
+
+    def debugDeviceID(self):
+        return versionPacket.data.deviceID
+    
+    def debugAPIRelease(self):
+        return versionPacket.data.apiRelease
+    
     def debugUnitTestEnable(self, enable=True):
         self.sendCommand(neb.Subsys_Debug, neb.DebugCmd_StartUnitTestMotion, enable)
         self.waitForAck(neb.Subsys_Debug, neb.DebugCmd_StartUnitTestMotion)
