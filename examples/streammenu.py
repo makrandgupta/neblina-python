@@ -167,6 +167,9 @@ class StreamMenu(cmd.Cmd):
     def do_streamIMU(self, args):
         self.comm.motionStream(neb.MotCmd_IMU_Data)
 
+    def do_streamQuat(self, args):
+        self.comm.motionStream(neb.MotCmd_Quaternion)
+
     def do_streamMAG(self, args):
         self.comm.motionStream(neb.MotCmd_MAG_Data)
 
