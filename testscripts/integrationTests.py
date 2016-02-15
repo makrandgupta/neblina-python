@@ -86,6 +86,7 @@ class ut_IntegrationTests(unittest.TestCase):
 
     def testStreamIMU(self):
         self.comm.motionStream(neb.MotCmd_IMU_Data, 100)
+        self.comm.switchStreamingInterface(True) # switch the interface back to BLE when all the tests have been completed!
 
     def testVersion(self):
         versions = self.comm.debugFWVersions()
