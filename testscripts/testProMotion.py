@@ -63,6 +63,8 @@ class ut_ProMotionTests(unittest.TestCase):
 
     def testEEPROM(self):
         print('"Checking the EEPROM by issuing a write command followed by a read"')
+        dataString = "UnitTest"
+        dataString = dataString.encode()
         self.comm.EEPROMWrite(0, dataString)
         dataBytes = self.comm.EEPROMRead(0)
         self.assertEqual(dataBytes, dataString)
