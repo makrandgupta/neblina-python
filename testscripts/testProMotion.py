@@ -6,15 +6,14 @@
 from __future__ import print_function
 import os
 import cmd
-import binascii
+import time
+
 import serial
 import serial.tools.list_ports
-import slip
+
 import neblina as neb
-import neblinacomm as nebcomm
-import neblinasim as sim
-import sys
-import time
+import neblinaAPI as nebcomm
+import binascii
 
 
 class TestProMotion(cmd.Cmd):
@@ -64,7 +63,26 @@ class TestProMotion(cmd.Cmd):
         print( dataString )
         thefile.write(dataString)
         thefile.write("\n")
-        dataString = "Test#1: Checking communication with the LSM9DS1 chip by getting the temperature..."
+
+        dataString = "Test#1: Loopback test with KL26 by sending 1000 empty packets..."
+        print( dataString )
+        thefile.write(dataString)
+        thefile.write("\n")
+        dataString = "================================================================"
+        print( dataString )
+        thefile.write(dataString)
+        thefile.write("\n")
+        for x in range(1, 1001):
+            print('Loopback test packet %d\r' % (x), end="", flush=True)
+            self.comm.sendCommand(neb.Subsys_Debug, neb.DebugCmd_SetInterface, True)
+            self.comm.waitForAck(neb.Subsys_Debug, neb.DebugCmd_SetInterface)
+        print("")
+        dataString = "Test#1 Passed!!!"
+        print( dataString )
+        thefile.write(dataString)
+        thefile.write("\n\n")
+        print(" ")
+        dataString = "Test#2: Checking communication with the LSM9DS1 chip by getting the temperature..."
         print( dataString )
         thefile.write(dataString)
         thefile.write("\n")
@@ -78,7 +96,7 @@ class TestProMotion(cmd.Cmd):
         thefile.write(dataString)
         thefile.write("\n")
 
-        dataString =  "Test#1 Passed!!!"
+        dataString =  "Test#2 Passed!!!"
         print( dataString )
         thefile.write(dataString)
         thefile.write("\n\n")
@@ -87,7 +105,7 @@ class TestProMotion(cmd.Cmd):
         print( dataString )
         thefile.write(dataString)
         thefile.write("\n")
-        dataString = "Test#2: Checking communication between Nordic and KL26 chips by getting the firmware versions..."
+        dataString = "Test#3: Checking communication between Nordic and KL26 chips by getting the firmware versions..."
         print( dataString )
         thefile.write(dataString)
         thefile.write("\n")
@@ -95,9 +113,20 @@ class TestProMotion(cmd.Cmd):
         print( dataString )
         thefile.write(dataString)
         thefile.write("\n")
-        versionPacket = self.comm.debugFWVersions()
-        print(versionPacket.data)
-        if (versionPacket.data.bleFWVersion[0]==255):
+        versions = self.comm.debugFWVersions()
+        apiRelease = versions[0]
+        mcuFWVersion = versions[1]
+        bleFWVersion = versions[2]
+        deviceID = versions[3]
+        print( "API Release: {0}\n\
+        MCU Version: {1}.{2}.{3}\n\
+        BLE Version: {4}.{5}.{6}\n\
+        Device ID: {7}".format(apiRelease,\
+            mcuFWVersion[0], mcuFWVersion[1], mcuFWVersion[2],\
+            bleFWVersion[0], bleFWVersion[1], bleFWVersion[2],\
+            binascii.hexlify(deviceID)))
+        # print(versions)
+        if (bleFWVersion[0]==255):
             dataString = "The Nordic firmware is still unknown."
             print( dataString )
             thefile.write(dataString)
@@ -116,7 +145,7 @@ class TestProMotion(cmd.Cmd):
             thefile.write(dataString)
             thefile.write("\n")
             return
-        dataString = "Test#2 Passed!!!"
+        dataString = "Test#3 Passed!!!"
         print( dataString )
         thefile.write(dataString)
         thefile.write("\n\n")
@@ -125,7 +154,7 @@ class TestProMotion(cmd.Cmd):
         print( dataString )
         thefile.write(dataString)
         thefile.write("\n")
-        dataString = "Test#3: Checking the EEPROM by issuing a write command followed by a read"
+        dataString = "Test#4: Checking the EEPROM by issuing a write command followed by a read"
         print( dataString )
         thefile.write(dataString)
         thefile.write("\n")
@@ -138,7 +167,7 @@ class TestProMotion(cmd.Cmd):
         self.comm.EEPROMWrite(0, dataString)
         dataBytes = self.comm.EEPROMRead(0)
         if (dataBytes==dataString):
-            dataString = "Test#3 Passed!!!"
+            dataString = "Test#4 Passed!!!"
             print( dataString )
             thefile.write(dataString)
             thefile.write("\n\n")
@@ -147,7 +176,7 @@ class TestProMotion(cmd.Cmd):
             print( dataString )
             thefile.write(dataString)
             thefile.write("\n")
-            dataString = "Test#4: Flash Recorder Test on Quaternion Data"
+            dataString = "Test#5: Flash Recorder Test on Quaternion Data"
             print( dataString )
             thefile.write(dataString)
             thefile.write("\n")
@@ -166,7 +195,7 @@ class TestProMotion(cmd.Cmd):
             thefile.write("\n")
             num = self.comm.flashPlayback(65535)
             if (num==1000):
-                dataString = "Test#4 Passed!!!"
+                dataString = "Test#5 Passed!!!"
                 print( dataString )
                 thefile.write(dataString)
                 thefile.write("\n\n")
@@ -175,7 +204,7 @@ class TestProMotion(cmd.Cmd):
                 print( dataString )
                 thefile.write(dataString)
                 thefile.write("\n")
-                dataString = "Test#5: Flash Recorder Test on Euler Angle Data"
+                dataString = "Test#6: Flash Recorder Test on Euler Angle Data"
                 print( dataString )
                 thefile.write(dataString)
                 thefile.write("\n")
@@ -195,7 +224,7 @@ class TestProMotion(cmd.Cmd):
 
                 num = self.comm.flashPlayback(65535)
                 if (num==1000):
-                    dataString = "Test#5 Passed!!!"
+                    dataString = "Test#6 Passed!!!"
                     print( dataString )
                     thefile.write(dataString)
                     thefile.write("\n\n")
@@ -204,7 +233,7 @@ class TestProMotion(cmd.Cmd):
                     print( dataString )
                     thefile.write(dataString)
                     thefile.write("\n")
-                    dataString = "Test#6: Checking the communication with the PMIC chip by getting the battery level..."
+                    dataString = "Test#7: Checking the communication with the PMIC chip by getting the battery level..."
                     print( dataString )
                     thefile.write(dataString)
                     thefile.write("\n")
