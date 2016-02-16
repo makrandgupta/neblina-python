@@ -59,7 +59,7 @@ class TestProMotion(cmd.Cmd):
         print(dataString)
         thefile.write(dataString)
         thefile.write("\n")
-        dataString = "=================================================================================="
+        dataString = "================================================================"
         print( dataString )
         thefile.write(dataString)
         thefile.write("\n")
@@ -145,6 +145,7 @@ class TestProMotion(cmd.Cmd):
             thefile.write(dataString)
             thefile.write("\n")
             return
+        return
         dataString = "Test#3 Passed!!!"
         print( dataString )
         thefile.write(dataString)
