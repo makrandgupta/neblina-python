@@ -94,11 +94,19 @@ class ut_IntegrationTests(unittest.TestCase):
         # self.assertNotEqual(versions[2][0], 255)
 
     def testMEMSComm(self):
+        print('Checking communication with the LSM9DS1 chip by getting the temperature...')
         temp = self.comm.getTemperature()
         dataString = 'Board Temperature: {0} degrees (Celsius)'.format(temp)
 
     def testPMICComm(self):
         batteryLevel = self.comm.getBatteryLevel()
+
+    def testUARTPCLoopbackComm(self):
+        #dataString = "Test#1: Loopback test with KL26 by sending 1000 empty packets..."
+        for x in range(1, 1001):
+            print('Loopback test packet %d\r' % (x), end="", flush=True)
+            self.comm.sendCommand(neb.Subsys_Debug, neb.DebugCmd_SetInterface, True)
+            self.comm.waitForAck(neb.Subsys_Debug, neb.DebugCmd_SetInterface)
 
     def testMotionEngine(self):
         testInputVectorPacketList = self.csvVectorsToList('./SampleData/motEngineInputs.csv')
@@ -116,3 +124,8 @@ class ut_IntegrationTests(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main(verbosity=2) # run all tests
     print (unittest.TextTestResult)
+    thefile = open('ProMotionTestLog.txt', 'w')
+    thefile.write(unittest.TextTestResult)
+    thefile.close()
+
+
