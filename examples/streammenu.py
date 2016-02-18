@@ -173,6 +173,9 @@ class StreamMenu(cmd.Cmd):
     def do_streamMAG(self, args):
         self.comm.motionStream(neb.MotCmd_MAG_Data)
 
+    def do_streamForce(self, args):
+        self.comm.motionStream(neb.MotCmd_ExtForce)
+
     def do_streamRotation(self, args):
         self.comm.motionStream(neb.MotCmd_RotationInfo)
 
