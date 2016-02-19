@@ -88,6 +88,15 @@ class ut_ProMotionTests(unittest.TestCase):
         dataString = 'Battery Level: {0}%'.format(batteryLevel)
 
 if __name__ == '__main__':
+    print('======================')
     print('ProMotion Test Routine')
+    print('======================')
+    print('Initializing...')
+    time.sleep(1)
+    print('.')
+    time.sleep(1)
+    print('.')
+    time.sleep(1)
+    print('.')
     unittest.main() # run all tests
     print (unittest.TextTestResult)

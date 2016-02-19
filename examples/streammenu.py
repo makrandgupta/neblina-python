@@ -49,6 +49,13 @@ class StreamMenu(cmd.Cmd):
         
         self.comm = nebapi.NeblinaComm(sc)
         self.comm.sc.flushInput()
+        print("Setting up the connection...")
+        time.sleep(1)
+        print('.')
+        time.sleep(1)
+        print('.')
+        time.sleep(1)
+        print('.')
         # Make the module stream towards the UART instead of the default BLE
         self.comm.switchStreamingInterface(True)
         self.comm.motionStopStreams()

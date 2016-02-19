@@ -122,6 +122,13 @@ class ut_IntegrationTests(unittest.TestCase):
         self.comm.debugUnitTestEnable(False)
 
 if __name__ == "__main__":
+    print('Initializing...')
+    time.sleep(1)
+    print('.')
+    time.sleep(1)
+    print('.')
+    time.sleep(1)
+    print('.')
     unittest.main(verbosity=2) # run all tests
     print (unittest.TextTestResult)
     thefile = open('ProMotionTestLog.txt', 'w')
