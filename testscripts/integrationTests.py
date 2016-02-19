@@ -90,8 +90,8 @@ class ut_IntegrationTests(unittest.TestCase):
 
     def testVersion(self):
         versions = self.comm.debugFWVersions()
-        # print(versions)
-        # self.assertNotEqual(versions[2][0], 255)
+        print(versions)
+        self.assertNotEqual(versions[2][0], 255)
 
     def testMEMSComm(self):
         print('Checking communication with the LSM9DS1 chip by getting the temperature...')
