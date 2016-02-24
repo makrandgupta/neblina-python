@@ -399,13 +399,19 @@ class TemperatureData(object):
     """docstring for TemperatureData"""
     def __init__(self, dataString):
         # timestamp = 0
-        timestamp, \
+        self.timestamp, \
         self.temperature,\
         garbage = struct.unpack( Neblina_Temperature_fmt, dataString )
         self.temperature = self.temperature/100
 
+    def encode(self):
+        garbage = ('\000'*10).encode('utf-8')
+        packetString = struct.pack(Neblina_Temperature_fmt, self.timestamp,\
+        self.temperature, garbage)
+        return packetString('utf-8')
+
     def __str__(self):
-        return "Temperature: {0}%".format(self.temperature)
+        return "{0}us: Temperature: {1}%".format(self.timestamp, self.temperature)
 
 
 
