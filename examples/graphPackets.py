@@ -1,6 +1,9 @@
-import pyqtgraph as pg
 import neblinaAPI as nebapi
 import neblina as neb
+
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import numpy as np
 
 # parser = argparse.ArgumentParser(description='Graph a file of packets.')
 
@@ -18,7 +21,7 @@ magPacketList = []
 rotationPacketList = []
 timestamps = [[],[],[]]
 
-with open('flashSession0.bin', "rb") as f:
+with open('flashSession1.bin1.bin', "rb") as f:
     packetBytes = f.read(20)
     print(packetBytes)
     if(len(packetBytes) == 0): 
@@ -45,44 +48,51 @@ with open('flashSession0.bin', "rb") as f:
 # print(rotationPacketList)
 # print(imuPacketList)
 # print(magPacketList)
-for packet in tempPacketList:
-    print(packet)
-for packet in magPacketList:
-    print(packet)
+
+# for packet in tempPacketList:
+#     print(packet)
+# for packet in magPacketList:
+#     print(packet)
+
+# magDataLists = [[],[],[]]
+# magXYZ = [packet.data.mag for packet in magPacketList]
+# magTimestamps = [packet.data.timestamp for packet in magPacketList]
+# magDataLists[0] = [ magData[0] for magData in magXYZ ]
+# magDataLists[1] = [ magData[1] for magData in magXYZ ]
+# magDataLists[2] = [ magData[2] for magData in magXYZ ]
+# print(len(magTimestamps))
+# print(len(magDataLists[0]))
+# plt.title('Magnetometer readings')
+# plt.plot(magTimestamps, magDataLists[0], color='blue', lw=2, label='X')
+# plt.plot(magTimestamps, magDataLists[1], color='green', lw=2, label='Y')
+# plt.plot(magTimestamps, magDataLists[2], color='red', lw=2, label='Z')
+# red_patch = mpatches.Patch(color='blue', label='Mag X')
+# blue_patch = mpatches.Patch(color='green', label='Mag Y')
+# green_patch = mpatches.Patch(color='red', label='Mag Z')
+# plt.legend(handles=[red_patch, blue_patch, green_patch])
 
 
-accelData = []
-gyroData = []
-magData = []
-# timestamps 	= [packet.header.timestamp for packet in packetList]
-# magData 	= [packet.data.mag for packet in magPacketList]
-# accelData 	= [packet.data.accel for packet in imuPacketList]
-# imuData 	= 
-# rotations 	= [packet.data.rotationCount]
-# tempData 	= [packet.data.temperature for packet in tempPacketList]
+# plt.xlabel('Timestamp (milliseconds)')
+# plt.ylabel('Tesla (T)')
+# plt.grid(True)
+# plt.show()
 
-
-# # Populate the initial IMU data list
-# for elem in (packet for idx,packet in enumerate(imuPacketList) ):
-#     # For all three axis
-#     for idx,axisSample in enumerate(elem.data.accel):
-#         # Gyro and Accel have same num of axis
-#         accelData[idx].append(axisSample)
-#         gyroData[idx].append(axisSample)
-
-# # Populate the initial IMU data list
-# for elem in (packet for idx,packet in enumerate(magPacketList) ):
-#     # For all three axis
-#     for idx,axisSample in enumerate(elem.data.accel):
-#         # Gyro and Accel have same num of axis
-#         accelData[idx].append(axisSample)
-#         gyroData[idx].append(axisSample)
-
-
-# pw = pg.plot(timestamps, yVals, pen='r')  # plot x vs y in red
-# pw.plot(xVals, yVals2, pen='b')
-
-# win = pg.GraphicsWindow()  # Automatically generates grids with multiple items
-# win.addPlot(timestamps, row=0, col=0)
-
-# pg.show(imageData)  # imageData must be a numpy array with 2 to 4 dimensions
+accelDataLists = [[],[],[]]
+accelXYZ = [packet.data.accel for packet in imuPacketList]
+gyroXYZ = [packet.data.gyro for packet in imuPacketList]
+imuTimestamps = [packet.data.timestamp for packet in imuPacketList]
+accelDataLists[0] = [ accelData[0] for accelData in accelXYZ ]
+accelDataLists[1] = [ accelData[1] for accelData in accelXYZ ]
+accelDataLists[2] = [ accelData[2] for accelData in accelXYZ ]
+plt.title('Accelerometer readings')
+plt.plot(imuTimestamps, accelDataLists[0], color='blue', lw=2, label='X')
+plt.plot(imuTimestamps, accelDataLists[1], color='green', lw=2, label='Y')
+plt.plot(imuTimestamps, accelDataLists[2], color='red', lw=2, label='Z')
+red_patch = mpatches.Patch(color='blue', label='Accel X')
+blue_patch = mpatches.Patch(color='green', label='Accel Y')
+green_patch = mpatches.Patch(color='red', label='Accel Z')
+plt.legend(handles=[red_patch, blue_patch, green_patch])
+plt.xlabel('Timestamp (milliseconds)')
+plt.ylabel('Acceleration (g)')
+plt.grid(True)
+plt.show()
