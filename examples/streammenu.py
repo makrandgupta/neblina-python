@@ -288,6 +288,14 @@ class StreamMenu(cmd.Cmd):
             mySessionID = int(args)
         self.comm.flashPlayback(mySessionID)
 
+    def do_downloadSessionToFile(self, args):
+        if(len(args) <= 0):
+            mySessionID = 65535
+        elif(len(args) > 0):
+            mySessionID = int(args)
+        fileName = 'flashSession{0}.bin'.format(mySessionID)
+        self.comm.flashPlayback(mySessionID, fileName)
+
     def do_versions(self, args):
         versions = self.comm.debugFWVersions()
         apiRelease = versions[0]
