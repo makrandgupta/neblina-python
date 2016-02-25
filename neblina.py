@@ -406,9 +406,13 @@ class TemperatureData(object):
 
     def encode(self):
         garbage = ('\000'*10).encode('utf-8')
+        print('temp = {0}'.format(self.temperature))
+        print('type temp = {0}'.format(type(self.temperature)))
+        print('timestamp = {0}'.format(self.timestamp))
+        print('type timestamp = {0}'.format(type(self.timestamp)))
         packetString = struct.pack(Neblina_Temperature_fmt, self.timestamp,\
-        self.temperature, garbage)
-        return packetString('utf-8')
+        int(self.temperature*100), garbage)
+        return packetString
 
     def __str__(self):
         return "{0}us: Temperature: {1}%".format(self.timestamp, self.temperature)
@@ -668,12 +672,12 @@ class RotationData(object):
     def __init__(self, dataString):
         self.timestamp,self.rotationCount,\
         self.rpm,\
-        garbage = struct.unpack( Neblina_RotationInfo_fmt, dataString )
+        self.garbage = struct.unpack( Neblina_RotationInfo_fmt, dataString )
 
     def encode(self):
         garbage = ('\000'*6).encode('utf-8')
         packetString = struct.pack(Neblina_RotationInfo_fmt, self.timestamp,\
-        self.rotationCount, self.rpm, garbage)
+        self.rotationCount, self.rpm, self.garbage)
         return packetString
 
     def __str__(self):
@@ -1050,6 +1054,8 @@ class NebResponsePacket(object):
             dataString = packetString[self.headerLength:self.headerLength+packetLength]
 
             # Perform CRC of data bytes
+            # print('header:{0}'.format(self.header))
+            # print('data:{0}'.format(binascii.hexlify(packetString)))
             if(checkCRC):
                 calculatedCRC = genNebCRC8(bytearray(packetString))
                 if (calculatedCRC != self.header.crc):

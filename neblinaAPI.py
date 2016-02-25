@@ -20,7 +20,48 @@ class NeblinaComm(object):
         packet = neb.NebResponsePacket(consoleBytes)
         return packet
 
+    # Store all packets until a particular packet and discard that packet
     def storePacketsUntil(self, packetType, subSystem, command):
+        packetList = []
+        packetCounter = 0
+        packet = None
+        #print('waiting and got: {0}'.format(packet))
+        while( packet == None or \
+                packet.header.packetType != packetType or \
+                packet.header.subSystem != subSystem or \
+                packet.header.command != command):
+            try:
+                if (packet != None and \
+                    packet.header.subSystem != neb.Subsys_Debug):
+                    packetList.append(packet)
+                    print('Received {0} packets \r'.format(len(packetList)) , end="", flush=True)
+                packet = self.receivePacket()
+                if packet.header.command == neb.MotCmd_RotationInfo:
+                    print(packet)
+                # print('waiting and got: {0}'.format(packet.data))
+            except NotImplementedError as nie:
+                packet = None
+                print('Dropped bad packet')
+                print(nie)
+                continue
+            except KeyError as ke:
+                packet = None
+                print("Tried creating a packet with an invalid subsystem or command")
+                print(ke)
+            except neb.CRCError as crce:
+                packet = None
+                print('CRCError')
+                print(crce)
+                continue
+            except Exception as e:
+                packet = None
+                print(type(e))
+                continue
+        print('\nTotal IMU Packets Read: {0}'.format(len(packetList)))
+        return packetList
+
+    # Store all packets until a particular packet and keep that packet at the end of the list
+    def storePacketsUntilInclusive(self, packetType, subSystem, command):
         packetList = []
         packetCounter = 0
         packet = None
@@ -55,6 +96,8 @@ class NeblinaComm(object):
                 print(type(e))
                 continue
         print('\nTotal IMU Packets Read: {0}'.format(len(packetList)))
+        packetList.append(packet)
+        print('Last packet: {0}'.format(packet))
         return packetList
 
     # Helper Functions
@@ -330,9 +373,12 @@ class NeblinaComm(object):
             packetList = self.storePacketsUntil(neb.PacketType_RegularResponse, neb.Subsys_Storage, neb.StorageCmd_Playback)
             print('Finished playback from session number %d!' % pbSessionID)
             if(destinationFileName != None):
-                thefile = open(destinationFileName, 'w')
+                destinationFileName += '{0}.bin'.format(pbSessionID)
+                print(pbSessionID)
+                thefile = open(destinationFileName, 'wb')
                 for item in packetList:
-                    thefile.write("%s\n" % item.stringEncode())
+                    packetEncoding = item.stringEncode()
+                    thefile.write(packetEncoding)
                 thefile.close()
             return len(packetList)
 
