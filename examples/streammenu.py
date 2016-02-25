@@ -293,7 +293,7 @@ class StreamMenu(cmd.Cmd):
             mySessionID = 65535
         elif(len(args) > 0):
             mySessionID = int(args)
-        fileName = 'flashSession{0}.bin'.format(mySessionID)
+        fileName = 'flashSession'
         self.comm.flashPlayback(mySessionID, fileName)
 
     def do_versions(self, args):
