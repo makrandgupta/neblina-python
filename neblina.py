@@ -669,11 +669,12 @@ class RotationData(object):
         self.timestamp,self.rotationCount,\
         self.rpm,\
         garbage = struct.unpack( Neblina_RotationInfo_fmt, dataString )
+        self.rpm = self.rpm/10.0
 
     def encode(self):
         garbage = ('\000'*6).encode('utf-8')
         packetString = struct.pack(Neblina_RotationInfo_fmt, self.timestamp,\
-        self.rotationCount, self.rpm, garbage)
+        self.rotationCount, int(self.rpm*10), garbage)
         return packetString
 
     def __str__(self):
