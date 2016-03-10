@@ -9,16 +9,17 @@ import binascii
 import serial
 import serial.tools.list_ports
 import slip
-import neblina as neb
-import neblinaAPI as nebapi
-import neblinasim as sim
 import sys
 import time
+
+from neblina import *
+import neblinaAPI as nebapi
+import neblinasim as sim
 
 
 class StreamMenu(cmd.Cmd):
     """docstring for StreamMenu"""
-    
+
     def __init__(self):
         cmd.Cmd.__init__(self)
 
@@ -26,7 +27,7 @@ class StreamMenu(cmd.Cmd):
         self.configFileName = 'streamconfig.txt'
         self.prompt = '>>'
         self.intro = "Welcome to the Neblina Streaming Menu!"
-        
+
         # Check if config file exists
         if(not os.path.exists(self.configFileName)):
             self.setCOMPortName()
@@ -34,7 +35,7 @@ class StreamMenu(cmd.Cmd):
         # Read the config file to get the name
         with open(self.configFileName, 'r') as configFile:
                 comPortName = configFile.readline()
-        
+
         # Try to open the serial COM port
         sc = None
         while sc is None:
@@ -46,7 +47,7 @@ class StreamMenu(cmd.Cmd):
                 else:
                     print('se: {0}'.format(se))
                 time.sleep(1)
-        
+
         self.comm = nebapi.NeblinaComm(sc)
         self.comm.sc.flushInput()
         print("Setting up the connection...")
@@ -57,7 +58,7 @@ class StreamMenu(cmd.Cmd):
         time.sleep(1)
         print('.')
         # Make the module stream towards the UART instead of the default BLE
-        self.comm.switchStreamingInterface(True)
+        self.comm.setStreamingInterface(Interface.UART)
         self.comm.motionStopStreams()
 
     # If the user exits with Ctrl-C, try switching the interface back to BLE
@@ -65,7 +66,7 @@ class StreamMenu(cmd.Cmd):
         try:
             cmd.Cmd.cmdloop(self)
         except KeyboardInterrupt as e:
-            self.comm.switchStreamingInterface(False)
+            self.comm.setStreamingInterface(Interface.BLE)
 
     ## Command definitions ##
     def do_hist(self, args):
@@ -75,7 +76,7 @@ class StreamMenu(cmd.Cmd):
     def do_exit(self, args):
         """Exits from the console"""
         # Make the module stream back towards its default interface (BLE)
-        self.comm.switchStreamingInterface(False)
+        self.comm.setStreamingInterface(Interface.BLE)
         return -1
 
     ## Command definitions to support Cmd object functionality ##
@@ -103,7 +104,7 @@ class StreamMenu(cmd.Cmd):
             print('{0} not in the available COM ports'.format(port))
             port = input('Select the COM port to use:' + '\n'.join(portList[0]) + '\n' + \
                 self.bigLine + self.prompt)
-        
+
         # Write it to the config file
         configFile = open(self.configFileName, 'w')
         configFile.write(port)
@@ -124,7 +125,7 @@ class StreamMenu(cmd.Cmd):
         if writePageNumber < 0 or writePageNumber > 255:
             print('Page number must be between 0 and 255 inclusively')
             return
-        
+
         self.comm.EEPROMWrite(writePageNumber, writeBytes)
 
         print('Write to page #{0} of dataBytes {1} was successful.'\
@@ -338,11 +339,11 @@ class StreamMenu(cmd.Cmd):
         """
         return stop
 
-    def emptyline(self):    
+    def emptyline(self):
         """Do nothing on empty input line"""
         pass
 
-    def default(self, line):       
+    def default(self, line):
         """Called on an input line when the command prefix is not recognized.
            In that case we execute the line as Python code.
         """
@@ -354,4 +355,4 @@ class StreamMenu(cmd.Cmd):
 
 if __name__ == '__main__':
     console = StreamMenu()
-    console . cmdloop() 
+    console . cmdloop()

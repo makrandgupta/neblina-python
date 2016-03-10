@@ -4,10 +4,11 @@ import binascii
 import serial
 import serial.tools.list_ports
 import slip
-import neblina as neb
-import neblinaAPI as nebapi
 import sys
 import time
+
+from neblina import *
+import neblinaAPI as nebapi
 
 def main():
 
@@ -17,8 +18,7 @@ def main():
         try:
             sc = serial.Serial(port=portName, baudrate=230400)
             comm = nebapi.NeblinaComm(sc)
-            # Make the module stream towards the UART instead of the default BLE
-            comm.switchStreamingInterface(True)
+            comm.setStreamingInterface(Interface.UART)
             nebBoards.append(comm)
         except serial.serialutil.SerialException as se:
             if 'Device or resource busy:' in se.__str__():
@@ -32,7 +32,7 @@ def main():
 
     # Switch back to BLE interface
     for comm in nebBoards:
-        comm.switchStreamingInterface(False)
+        comm.setStreamingInterface(Interface.BLE)
         comm.sc.close()
 
 if __name__ == '__main__':
