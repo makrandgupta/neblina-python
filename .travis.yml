@@ -15,8 +15,8 @@ script:
 
 notifications:
   slack: motsai:uH6mGa8ZK2RfCrFBncRZmGaX
-  	on_success: change
-  	on_failure: always
+    on_success:change
+    on_failure:always
   email:
-    on_success: change
-    on_failure: always
+    on_success:change
+    on_failure:always
