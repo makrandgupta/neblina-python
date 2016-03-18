@@ -32,6 +32,7 @@ import binascii
 import serial
 import serial.tools.list_ports
 import time
+import logging
 
 from neblina import *
 from neblinaAPI import NeblinaAPI
@@ -376,5 +377,6 @@ class StreamMenu(cmd.Cmd):
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO, format='%(message)s')
     console = StreamMenu()
     console . cmdloop()

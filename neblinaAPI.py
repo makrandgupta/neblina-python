@@ -201,7 +201,7 @@ class NeblinaAPI(object):
                 packet = self.receivePacket()
                 if(packet.header.subSystem == SubSystem.Motion and \
                     packet.header.command == streamingType):
-                    logging.debug(packet.data)
+                    logging.info(packet.data)
                 elif(packet.header.subSystem!=SubSystem.Debug):
                     logging.warning('Unexpected packet: {0}'.format(packet))
                 if(numPackets != None):
