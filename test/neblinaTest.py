@@ -31,8 +31,8 @@ import unittest
 import logging
 import time
 
-from unit import neblinaUnitTests
-from integration import neblinaIntegrationTests
+from test.unit import neblinaUnitTests
+from test.integration import neblinaIntegrationTests
 
 ###################################################################################
 
