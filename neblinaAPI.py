@@ -211,9 +211,7 @@ class NeblinaAPI(object):
                 logging.error("NotImplementedError : " + str(nie))
             # In the event of Ctrl-C
             except KeyboardInterrupt as ki:
-                # self.sendCommand(SubSystem.Motion, streamingType, False)
-                exit()
-                # return
+                break
             except CRCError as e:
                 logging.error("CRCError : " + str(e))
             except TimeoutError as te:
