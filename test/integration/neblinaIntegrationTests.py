@@ -27,7 +27,7 @@
 
 import unittest
 
-from integration import apiIntegrationTest
+from test.integration import apiIntegrationTest, promotionIntegrationTest
 
 ###################################################################################
 
@@ -35,6 +35,7 @@ from integration import apiIntegrationTest
 def getSuite(comPort):
     suite = unittest.TestSuite()
     suite.addTest(apiIntegrationTest.getSuite(comPort))
+    suite.addTest(promotionIntegrationTest.getSuite(comPort))
     return suite
 
 
