@@ -74,7 +74,7 @@ def testIntegration(port):
     print( "--------------------------------------" )
     time.sleep(0.1)         # Prevent previous print to overlap test
     suite = unittest.TestSuite()
-    suite.addTest( neblinaIntegrationTests.getSuite() )
+    suite.addTest( neblinaIntegrationTests.getSuite(port) )
     unittest.TextTestRunner( verbosity = 2 ).run( suite )
 
 ###################################################################################

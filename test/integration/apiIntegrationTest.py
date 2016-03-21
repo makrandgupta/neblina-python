@@ -26,7 +26,6 @@
 ###################################################################################
 
 import unittest
-import os
 import serial
 import serial.tools.list_ports
 import time
@@ -41,14 +40,16 @@ import neblinaTestUtilities
 ###################################################################################
 
 
-def getSuite():
-    return unittest.TestLoader().loadTestsFromTestCase(apiIntegrationTest)
+def getSuite(comPort):
+    ApiIntegrationTest.comPort = comPort
+    return unittest.TestLoader().loadTestsFromTestCase(ApiIntegrationTest)
 
 ###################################################################################
 
 
-class apiIntegrationTest(unittest.TestCase):
+class ApiIntegrationTest(unittest.TestCase):
     setupHasAlreadyRun = False
+    comPort = None
 
     def csvVectorsToList(self, csvFileName):
         testVectorPacketList = []
@@ -63,42 +64,15 @@ class apiIntegrationTest(unittest.TestCase):
             testVectorPacketList.append(vectorBytes)
         return testVectorPacketList
 
-    def setCOMPortName(self):
-        self.bigLine = '-------------------------------------------------------------------\n'
-        self.prompt = '>>'
-        portList = [port[0] for port in serial.tools.list_ports.comports()]
-        port = input('Select the COM port to use:' + '\n'.join(portList) + '\n' +  \
-            self.bigLine + self.prompt)
-        while(port not in portList):
-            logging.warning('{0} not in the available COM ports'.format(port))
-            port = input('Select the COM port to use:' + '\n'.join(portList[0]) + '\n' + \
-                self.bigLine + self.prompt)
-
-        # Write it to the config file
-        configFile = open(self.configFileName, 'w')
-        configFile.write(port)
-        configFile.close()
-
     def setUp(self):
         # Give it a break between each test
         time.sleep(1)
-
-        # if(self.setupHasAlreadyRun == False):
-        self.configFileName = 'streamconfig.txt'
-
-        # Check if config file exists
-        if(not os.path.exists(self.configFileName)):
-            self.setCOMPortName()
-
-        # Read the config file to get the name
-        with open(self.configFileName, 'r') as configFile:
-                comPortName = configFile.readline()
 
         # Try to open the serial COM port
         sc = None
         while sc is None:
             try:
-                sc = serial.Serial(port=comPortName,baudrate=500000)
+                sc = serial.Serial(port=self.comPort,baudrate=500000)
             except serial.serialutil.SerialException as se:
                 if 'Device or resource busy:' in se.__str__():
                     logging.info('Opening COM port is taking a little while, please stand by...')
