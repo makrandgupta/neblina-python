@@ -1,1121 +1,233 @@
 #!/usr/bin/env python
-# Neblina Data Structures
-# (C) 2015 Motsai Research Inc.
-# Author: Alexandre Courtemanche (a.courtemanche@motsai.com)
+###################################################################################
+#
+# Copyright (c)     2010-2016   Motsai
+#
+# The MIT License (MIT)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+###################################################################################
 
-import struct
-import binascii
-from itertools import zip_longest
 
-# Control Byte Masks
-Subsys_BitMask              =   0x1F
-PacketType_BitMask          =   0xE0
-PacketType_BitPosition      =   5
+class BitMask:
+    SubSystem = 0x1F
+    PacketType = 0xE0
 
-# Packet Type codes
-PacketType_RegularResponse  =   0x00
-PacketType_Ack              =   0x01
-PacketType_Command          =   0x02
-PacketType_ErrorLogResp     =   0x04
-PacketType_ErrorLogCmd      =   0x06
+###################################################################################
 
-# Subsystem codes
-Subsys_Debug                =   0x00
-Subsys_MotionEngine         =   0x01
-Subsys_PowerManagement      =   0x02
-Subsys_DigitalIO            =   0x03
-Subsys_LED                  =   0x04
-Subsys_ADC                  =   0x05
-Subsys_DAC                  =   0x06
-Subsys_I2C                  =   0x07
-Subsys_SPI                  =   0x08
-Subsys_FirmwareManagement   =   0x09
-Subsys_Crypto               =   0x0A
-Subsys_Storage              =   0x0B
-Subsys_EEPROM               =   0x0C
 
-PacketTypeStrings = {
-    PacketType_RegularResponse      : "RegularResponse",
-    PacketType_Ack                  : "Acknowledge",
-    PacketType_Command              : "Command",
-    PacketType_ErrorLogResp         : "Error Response",
-    PacketType_ErrorLogCmd          : "Error Command"
+class BitPosition:
+    PacketType = 5
+
+###################################################################################
+
+
+class Interface:
+    BLE = 0x00
+    UART = 0x01
+
+###################################################################################
+
+
+class PacketType:
+    RegularResponse = 0x00
+    Ack = 0x01
+    Command = 0x02
+    ErrorLogResp = 0x04
+    ErrorLogCmd = 0x06
+
+    class String:
+        RegularResponse = "RegularResponse"
+        Ack = "Acknowledge"
+        Command = "Command"
+        ErrorLogResp = "Error Response"
+        ErrorLogCmd = "Error Command"
+
+###################################################################################
+
+
+class SubSystem:
+    Debug = 0x00
+    Motion = 0x01
+    Power = 0x02
+    DigitalIO = 0x03
+    LED = 0x04
+    ADC = 0x05
+    DAC = 0x06
+    I2C = 0x07
+    SPI = 0x08
+    Firmware = 0x09
+    Crypto = 0x0A
+    Storage = 0x0B
+    EEPROM = 0x0C
+
+###################################################################################
+
+
+class Commands:
+
+    class Debug:
+        SetInterface = 0x01
+        MotAndFlashRecState = 0x02
+        StartUnitTestMotion = 0x03
+        UnitTestMotionData = 0x04
+        FWVersions = 0x05
+
+    class Power:
+        GetBatteryLevel = 0x00
+        GetTemperature = 0x01
+
+    class Motion:
+        Downsample = 0x01  # Downsampling factor definition
+        MotionState = 0x02  # streaming Motion State
+        IMU = 0x03  # streaming the 6-axis IMU data
+        Quaternion = 0x04  # streaming the quaternion data
+        EulerAngle = 0x05  # streaming the Euler angles
+        ExtForce = 0x06  # streaming the external force
+        SetFusionType = 0x07  # setting the Fusion type to either 6-axis or 9-axis
+        TrajectoryRecStartStop = 0x08  # start recording orientation trajectory
+        TrajectoryInfo = 0x09  # calculating the distance from a pre-recorded orientation trajectory
+        Pedometer = 0x0A  # streaming pedometer data
+        MAG = 0x0B  # streaming magnetometer data
+        SittingStanding = 0x0C  # streaming sitting standing
+        AccRange = 0x0E  # set accelerometer range
+        DisableStreaming = 0x0F  # disable everything that is currently being streamed
+        ResetTimeStamp = 0x10  # Reset timestamp
+        FingerGesture = 0x11  # Finger Gesture command
+        RotationInfo = 0x12  # Rotation info in roll: number of rotations and speed in rpm
+
+    class Storage:
+        EraseAll = 0x01  # Full-erase for the on-chip NOR flash memory
+        Record = 0x02  # Either start a new recording session, or close the currently open one
+        Playback = 0x03  # Open a previously recorded session for playback or close currently opened and being played
+        NumSessions = 0x04  # Get Number of sessions currently on the flash storage
+        SessionInfo = 0x05  # Get information associated with a particular session
+
+    class EEPROM:
+        Read = 0x01  # Read a page
+        Write = 0x02  # Write to a page
+
+    class DigitalIO:
+        SetConfig = 0x01
+        GetConfig = 0x02
+        SetValue = 0x03
+        GetValue = 0x04
+        NotifySet = 0x05
+        NotifyEvent = 0x06
+
+    class Firmware:
+        Main = 0x01
+        BLE = 0x02
+
+    class LED:
+        SetVal = 0x01
+        GetVal = 0x02
+        Config = 0x03
+
+CommandStrings = {
+    (SubSystem.Debug, Commands.Debug.SetInterface): 'Set Interface',
+    (SubSystem.Debug, Commands.Debug.MotAndFlashRecState): 'Check Motion and Flash Recorder States',
+    (SubSystem.Debug, Commands.Debug.StartUnitTestMotion): 'Enable/Disable Unit Test Motion',
+    (SubSystem.Debug, Commands.Debug.UnitTestMotionData): 'Unit Test Data',
+    (SubSystem.Debug, Commands.Debug.FWVersions): 'Firmware Versions',
+    (SubSystem.Motion, Commands.Motion.Downsample): 'Downsample',
+    (SubSystem.Motion, Commands.Motion.MotionState): 'MotionState',
+    (SubSystem.Motion, Commands.Motion.IMU): 'IMU Data',
+    (SubSystem.Motion, Commands.Motion.Quaternion): 'Quaternion',
+    (SubSystem.Motion, Commands.Motion.EulerAngle): 'Euler Angle',
+    (SubSystem.Motion, Commands.Motion.ExtForce): 'ExtForce',
+    (SubSystem.Motion, Commands.Motion.SetFusionType): 'SetFusionType',
+    (SubSystem.Motion, Commands.Motion.TrajectoryRecStartStop): 'Trajectory Record Start',
+    (SubSystem.Motion, Commands.Motion.TrajectoryInfo): 'Trajectory Distance',
+    (SubSystem.Motion, Commands.Motion.Pedometer): 'Pedometer',
+    (SubSystem.Motion, Commands.Motion.MAG): 'MAG Data',
+    (SubSystem.Motion, Commands.Motion.SittingStanding): 'Sitting-Standing',
+    (SubSystem.Motion, Commands.Motion.AccRange): 'AccRange',
+    (SubSystem.Motion, Commands.Motion.DisableStreaming): 'Disable Streaming',
+    (SubSystem.Motion, Commands.Motion.ResetTimeStamp): 'Reset Timestamp',
+    (SubSystem.Motion, Commands.Motion.FingerGesture): 'Finger Gesture',
+    (SubSystem.Motion, Commands.Motion.RotationInfo): 'Rotation Info',
+    (SubSystem.Power, Commands.Power.GetBatteryLevel): 'Battery Level',
+    (SubSystem.Power, Commands.Power.GetTemperature): 'Board Temperature',
+    (SubSystem.DigitalIO, Commands.DigitalIO.SetConfig): 'Set Config',
+    (SubSystem.DigitalIO, Commands.DigitalIO.GetConfig): 'Get Config',
+    (SubSystem.DigitalIO, Commands.DigitalIO.SetValue): 'Set Value',
+    (SubSystem.DigitalIO, Commands.DigitalIO.GetValue): 'Get Value',
+    (SubSystem.DigitalIO, Commands.DigitalIO.NotifySet): 'Notify Set',
+    (SubSystem.DigitalIO, Commands.DigitalIO.NotifyEvent): 'Notify Event',
+    (SubSystem.LED, Commands.LED.SetVal): 'LED Set Value',
+    (SubSystem.LED, Commands.LED.GetVal): 'LED Read Value',
+    (SubSystem.LED, Commands.LED.Config): 'LED Config',
+    (SubSystem.ADC, 0): 'ADC Command',
+    (SubSystem.DAC, 0): 'DAC Command',
+    (SubSystem.I2C, 0): 'I2C Command',
+    (SubSystem.SPI, 0): 'SPI Command',
+    (SubSystem.Firmware, Commands.Firmware.Main): 'Main Firmware',
+    (SubSystem.Firmware, Commands.Firmware.BLE): 'Nordic Firmware',
+    (SubSystem.Crypto, 0): 'Crypto Command',
+    (SubSystem.Storage, Commands.Storage.EraseAll): 'Erase All',
+    (SubSystem.Storage, Commands.Storage.Record): 'Record',
+    (SubSystem.Storage, Commands.Storage.Playback): 'Playback',
+    (SubSystem.Storage, Commands.Storage.NumSessions): 'Num Sessions',
+    (SubSystem.Storage, Commands.Storage.SessionInfo): 'Session ID',
+    (SubSystem.EEPROM, Commands.EEPROM.Read): 'Read',
+    (SubSystem.EEPROM, Commands.EEPROM.Write): 'Write',
 }
-
-# Debug Commands
-DebugCmd_SetInterface           =   0x01
-DebugCmd_MotAndFlashRecState    =   0x02
-DebugCmd_StartUnitTestMotion    =   0x03
-DebugCmd_UnitTestMotionData     =   0x04
-DebugCmd_FWVersions             =   0x05
-
-# Power Management commands
-PowCmd_GetBatteryLevel      =   0x00
-PowCmd_GetTemperature       =   0x01
-
-# Motion engine commands
-MotCmd_Downsample               =   0x01 # Downsampling factor definition
-MotCmd_MotionState              =   0x02 # streaming Motion State
-MotCmd_IMU_Data                 =   0x03 # streaming the 6-axis IMU data
-MotCmd_Quaternion               =   0x04 # streaming the quaternion data
-MotCmd_EulerAngle               =   0x05 # streaming the Euler angles
-MotCmd_ExtForce                 =   0x06 # streaming the external force
-MotCmd_SetFusionType            =   0x07 # setting the Fusion type to either 6-axis or 9-axis
-MotCmd_TrajectoryRecStartStop   =   0x08 # start recording orientation trajectory
-# MotCmd_TrajectoryRecStop      =   0x09 # stop recording orientation trajectory
-MotCmd_TrajectoryInfo           =   0x09 # calculating the distance from a pre-recorded orientation trajectory
-MotCmd_Pedometer                =   0x0A # streaming pedometer data
-MotCmd_MAG_Data                 =   0x0B # streaming magnetometer data
-MotCmd_SittingStanding          =   0x0C # streaming sitting standing
-MotCmd_AccRange                 =   0x0E # set accelerometer range
-MotCmd_DisableStreaming         =   0x0F # disable everything that is currently being streamed
-MotCmd_ResetTimeStamp           =   0x10 # Reset timestamp
-MotCmd_FingerGesture            =   0x11 # Finger Gesture command
-MotCmd_RotationInfo             =   0x12 # Rotation info in roll: number of rotations and speed in rpm
-
-# Storage commands
-StorageCmd_EraseAll         =   0x01 # Full-erase for the on-chip NOR flash memory
-StorageCmd_Record           =   0x02 # Either start a new recording session, or close the currently open one
-StorageCmd_Playback         =   0x03 # Either open a previously recorded session for playback or close the one that is currently open and being played
-StorageCmd_NumSessions      =   0x04 # Get Number of sessions currently on the flash storage
-StorageCmd_SessionInfo      =   0x05 # Get information associated with a particular session
-
-# EEPROM Command
-EEPROMCmd_Read              =   0x01 # Read a page
-EEPROMCmd_Write             =   0x02 # Write to a page
-
-# Digital IO Commands
-DigitalIOCmd_SetConfig      =   0x01
-DigitalIOCmd_GetConfig      =   0x02
-DigitalIOCmd_SetValue       =   0x03
-DigitalIOCmd_GetValue       =   0x04
-DigitalIOCmd_NotifySet      =   0x05
-DigitalIOCmd_NotifyEvent    =   0x06
-
-# Firmware Information Commands
-FirmwareManagementCmd_Main  =   0x01
-FirmwareManagementCmd_BLE   =   0x02
-
-# LED Information Commands
-LEDCmd_SetVal               =   0x01
-LEDCmd_GetVal               =   0x02
-LEDCmd_Config               =   0x03
+###################################################################################
 
 # Dictionary containing the string descriptors of each command
-CommandStrings = {
-    (Subsys_Debug, DebugCmd_SetInterface)                   :   'Set Interface',
-    (Subsys_Debug, DebugCmd_MotAndFlashRecState)            :   'Check Motion and Flash Recorder States',
-    (Subsys_Debug, DebugCmd_StartUnitTestMotion)            :   'Enable/Disable Unit Test Motion',
-    (Subsys_Debug, DebugCmd_UnitTestMotionData)             :   'Unit Test Data',
-    (Subsys_Debug, DebugCmd_FWVersions)                     :   'Firmware Versions',
-    (Subsys_MotionEngine, MotCmd_Downsample)                :   'Downsample',
-    (Subsys_MotionEngine, MotCmd_MotionState)               :   'MotionState',
-    (Subsys_MotionEngine, MotCmd_IMU_Data)                  :   'IMU Data',
-    (Subsys_MotionEngine, MotCmd_Quaternion)                :   'Quaternion',
-    (Subsys_MotionEngine, MotCmd_EulerAngle)                :   'Euler Angle',
-    (Subsys_MotionEngine, MotCmd_ExtForce)                  :   'ExtForce',
-    (Subsys_MotionEngine, MotCmd_SetFusionType)             :   'SetFusionType',
-    (Subsys_MotionEngine, MotCmd_TrajectoryRecStartStop)    :   'Trajectory Record Start',
-    # (Subsys_MotionEngine, MotCmd_TrajectoryRecStop)         :   'Trajectory Record Stop',
-    (Subsys_MotionEngine, MotCmd_TrajectoryInfo)        :   'Trajectory Distance',
-    (Subsys_MotionEngine, MotCmd_Pedometer)                 :   'Pedometer',
-    (Subsys_MotionEngine, MotCmd_MAG_Data)                  :   'MAG Data',
-    (Subsys_MotionEngine, MotCmd_SittingStanding)           :   'Sitting-Standing',
-    (Subsys_MotionEngine, MotCmd_AccRange)                  :   'AccRange',
-    (Subsys_MotionEngine, MotCmd_DisableStreaming)          :   'Disable Streaming',
-    (Subsys_MotionEngine, MotCmd_ResetTimeStamp)            :   'Reset Timestamp',
-    (Subsys_MotionEngine, MotCmd_FingerGesture)             :   'Finger Gesture',
-    (Subsys_MotionEngine, MotCmd_RotationInfo)              :   'Rotation Info',
-    (Subsys_PowerManagement, PowCmd_GetBatteryLevel)        :   'Battery Level',
-    (Subsys_PowerManagement, PowCmd_GetTemperature)         :   'Board Temperature',
-    (Subsys_DigitalIO, DigitalIOCmd_SetConfig)              :   'Set Config',
-    (Subsys_DigitalIO, DigitalIOCmd_GetConfig)              :   'Get Config',
-    (Subsys_DigitalIO, DigitalIOCmd_SetValue)               :   'Set Value',
-    (Subsys_DigitalIO, DigitalIOCmd_GetValue)               :   'Get Value',
-    (Subsys_DigitalIO, DigitalIOCmd_NotifySet)              :   'Notify Set',
-    (Subsys_DigitalIO, DigitalIOCmd_NotifyEvent)            :   'Notify Event',
-    (Subsys_LED, LEDCmd_SetVal)                             :   'LED Set Value',
-    (Subsys_LED, LEDCmd_GetVal)                             :   'LED Read Value',
-    (Subsys_LED, LEDCmd_Config)                             :   'LED Config',
-    (Subsys_ADC, 0)                                         :   'ADC Command',
-    (Subsys_DAC, 0)                                         :   'DAC Command',
-    (Subsys_I2C, 0)                                         :   'I2C Command',
-    (Subsys_SPI, 0)                                         :   'SPI Command',
-    (Subsys_FirmwareManagement, FirmwareManagementCmd_Main) :   'Main Firmware',
-    (Subsys_FirmwareManagement, FirmwareManagementCmd_BLE)  :   'Nordic Firmware',
-    (Subsys_Crypto, 0)                                      :   'Crypto Command',
-    (Subsys_Storage, StorageCmd_EraseAll)                   :   'Erase All',
-    (Subsys_Storage, StorageCmd_Record)                     :   'Record',
-    (Subsys_Storage, StorageCmd_Playback)                   :   'Playback',
-    (Subsys_Storage, StorageCmd_NumSessions)                :   'Num Sessions',
-    (Subsys_Storage, StorageCmd_SessionInfo)                :   'Session ID',
-    (Subsys_EEPROM, EEPROMCmd_Read)                         :   'Read',
-    (Subsys_EEPROM, EEPROMCmd_Write)                        :   'Write',
-}
 
-Neblina_CommandPacketData_fmt = "<I B 11s" # Timestamp (unused for now), enable/disable
-class NebCommandData(object):
-    """docstring for NebCommandData"""
-    def __init__(self, enable):
-        self.enable = enable
-        self.timestamp = 0 # Not really used for now
-
-    def encode(self):
-        garbage = ('\000'*11).encode('utf-8')
-        commandDataString = struct.pack(Neblina_CommandPacketData_fmt,\
-            self.timestamp, self.enable, garbage)
-        return commandDataString
-
-    def __str__(self):
-        return "enable: {0}".format(self.enable)
-
-class BlankData(object):
-    """docstring for BlankData
-        This object is for packet data 
-        containing no meaningful info in it.
-    """
-    def __init__(self, dataString):
-        self.blankBytes = struct.unpack( "16s", dataString )
-    def __str__(self):
-        return '{0}'.format(self.blankBytes)
-
-Neblina_FlashSession_fmt = "<I B H 9s" # Timestamp, open/close, session ID
-class NebFlashPlaybackCommandData(object):
-    """docstring for MotionStateData"""
-    def __init__(self, openClose, sessionID):
-        self.openClose = openClose
-        self.sessionID = sessionID
-    def encode(self):
-        garbage = ('\000'*9).encode('utf-8')
-        timestamp = 0
-        if self.openClose == 1:
-            pass
-        openCloseVal = 1 if self.openClose else 0
-        commandDataString = struct.pack(Neblina_FlashSession_fmt,\
-            timestamp, openCloseVal, self.sessionID, garbage)
-        return commandDataString
-    def __str__(self):
-        openCloseString = 'open' if self.openClose else 'close'
-        return "Flash Command Session {0}: {1}"\
-        .format(self.sessionID, openCloseString)
-
-Neblina_FlashSessionInfo_fmt = "<I H 10s" # Timestamp, session ID
-class NebFlashSessionInfoCommandData(object):
-    """docstring for MotionStateData"""
-    def __init__(self, sessionID):
-        self.sessionID = sessionID
-    def encode(self):
-        garbage = ('\000'*10).encode('utf-8')
-        timestamp = 0
-        commandDataString = struct.pack(Neblina_FlashSessionInfo_fmt,\
-            timestamp, self.sessionID, garbage)
-        return commandDataString
-    def __str__(self):
-        return "Flash Command Info Session {0}"\
-        .format(self.sessionID)
-
-# Special 26 byte packet
-Neblina_UnitTestMotionCommandData_fmt = "<I 3h 3h 3h" # Timestamp, accel, gyro, mag
-class NebUnitTestMotionDataCommandData(object):
-    """docstring for NebUnitTestMotionDataCommandData"""
-    def __init__(self, timestamp, accel, gyro, mag):
-        self.timestamp = timestamp
-        self.accel = accel
-        self.gyro = gyro
-        self.mag = mag
-    def encode(self):
-        commandDataString = struct.pack(Neblina_UnitTestMotionCommandData_fmt,\
-            self.timestamp, self.accel[0], self.accel[1], self.accel[2],\
-            self.gyro[0], self.gyro[1], self.gyro[2],\
-            self.mag[0], self.mag[1], self.mag[2])
-        return commandDataString
-
-Neblina_AccRangeCommandPacketData_fmt = "<I H 10s" # Timestamp (unused for now), downsample factor
-class NebAccRangeCommandData(NebCommandData):
-    """docstring for NebAccRangeCommandData"""
-    rangeCodes = {2:0x00, 4:0x01, 8:0x02, 16:0x03}
-
-    def encode(self):
-        garbage = ('\000'*10).encode('utf-8')
-        rangeCode = NebAccRangeCommandData.rangeCodes[self.enable]
-        commandDataString = struct.pack(Neblina_AccRangeCommandPacketData_fmt,\
-            self.timestamp, rangeCode, garbage)
-        return commandDataString
-
-Neblina_DownsampleCommandPacketData_fmt = "<I H 10s" # Timestamp (unused for now), downsample factor
-class NebDownsampleCommandData(NebCommandData):
-    """docstring for NebDownsampleCommandData"""
-
-    def encode(self):
-        garbage = ('\000'*10).encode('utf-8')
-        commandDataString = struct.pack(Neblina_DownsampleCommandPacketData_fmt,\
-            self.timestamp, self.enable, garbage)
-        return commandDataString
-
-Neblina_SetLEDData_fmt = "<B {0}s {1}s" # Number of LEDs, LED Index/Value, LED Index/Value, LED Index/Value (...) 
-class NebSetLEDCommandData(object):
-    """docstring for NebEEPROMCommandData"""
-    def __init__(self, ledValueTupleList):
-        if(len(ledValueTupleList) > 7):
-            raise InvalidPacketFormatError("The packet can't hold more than 7 LED Values")
-        self.ledValues = ledValueTupleList
-
-    def encode(self):
-        numLEDs = len(self.ledValues)
-        bytesPerLED = 2
-        maxLEDbytes = 14
-
-        # Extract the values of LEDs
-        ledValueBytes = b''
-        for ledTuple in self.ledValues:
-            ledValueBytes += struct.pack('>BB', \
-                ledTuple[0], ledTuple[1])
-
-        # numGarbageBytes = len(ledValueBytes)+1
-        numGarbageBytes = (maxLEDbytes-len(ledValueBytes))+1
-        garbage = b'00'*numGarbageBytes
-
-        stringFormat = Neblina_SetLEDData_fmt.format(numLEDs*bytesPerLED,\
-         numGarbageBytes)
-        commandDataString = struct.pack(\
-            stringFormat, numLEDs, ledValueBytes, garbage)
-        return commandDataString
-
-Neblina_GetLEDData_fmt = "<B {0}s {1}s" # Number of LEDs, Index, Index, (...) 
-class NebGetLEDCommandData(object):
-    """docstring for NebEEPROMCommandData"""
-    def __init__(self, ledIndices):
-        if(len(ledIndices) > 7):
-            raise InvalidPacketFormatError("You can't request more than 7 LED Values")
-        self.ledIndices = ledIndices
-
-    def encode(self):
-        numLEDs = len(self.ledIndices)
-        maxLEDbytes = 7
-
-        # Extract the values of LEDs
-        ledIndexBytes = b''
-        for ledIndex in self.ledIndices:
-            ledIndexBytes += struct.pack('>B', ledIndex)
-
-        # numGarbageBytes = len(ledIndexBytes)+1
-        numGarbageBytes = (maxLEDbytes-len(ledIndexBytes))+8
-        garbage = b'00'*numGarbageBytes
-
-        stringFormat = Neblina_GetLEDData_fmt.format(numLEDs,\
-         numGarbageBytes)
-        commandDataString = struct.pack(\
-            stringFormat, numLEDs, ledIndexBytes, garbage)
-        return commandDataString
-
-Neblina_EEPROMCommandPacketData_fmt = "<H 8s 6s" # Page number, 8 bytes R/W Data
-class NebEEPROMCommandData(object):
-    """docstring for NebEEPROMCommandData"""
-    def __init__(self, readWrite, pageNumber, dataBytes=b'00'*8):
-        self.readWrite = readWrite # read = False, write = True
-        self.pageNumber = pageNumber
-        self.dataBytes = dataBytes
-
-    def encode(self):
-        garbage = b'00'*6
-        commandDataString = struct.pack(Neblina_EEPROMCommandPacketData_fmt,\
-            self.pageNumber, self.dataBytes, garbage)
-        return commandDataString
-
-Neblina_MotionAndFlash_fmt = "<I 4s B 7s" # Timestamp (unused for now), downsample factor
-class MotAndFlashRecStateData(object):
-    """docstring for NebMotAndFlashRecStateData"""
-
-    recorderStatusStrings = {
-        0:"Off",
-        1:"Recording",
-        2:"Playback",
-    }
-
-    def __init__(self, dataString):
-        self.timestamp, \
-        motionEngineStatusBytes,\
-        self.recorderStatus,\
-        garbage = struct.unpack( Neblina_MotionAndFlash_fmt, dataString )
-
-        # Extract motion engine state
-        self.distance = ((motionEngineStatusBytes[0]  & 0x01) == 1)
-        self.force = (((motionEngineStatusBytes[0] & 0x02 ) >> 1) == 1)
-        self.euler = (((motionEngineStatusBytes[0] & 0x04 ) >> 2) == 1)
-        self.quaternion = (((motionEngineStatusBytes[0] & 0x08 ) >> 3) == 1)
-        self.imuData = (((motionEngineStatusBytes[0] & 0x10 ) >> 4) == 1)
-        self.motion = (((motionEngineStatusBytes[0] & 0x20 ) >> 5) == 1)
-        self.steps = (((motionEngineStatusBytes[0] & 0x40 ) >> 6) == 1)
-        self.magData = (((motionEngineStatusBytes[0] & 0x80 ) >> 7) == 1)
-        self.sitStand = ((motionEngineStatusBytes[1] & 0x01) == 1)
-
-    def __str__(self):
-        return "Distance: {0}, Force:{1}, Euler:{2}, Quaternion:{3}, IMUData:{4}, Motion:{5}, Steps:{6}, MAGData:{7}, SitStand:{8}, RecorderStatus:{9}"\
-        .format(self.distance, self.force, self.euler, self.quaternion,\
-                            self.imuData, self.motion, self.steps, self.magData,\
-                            self.sitStand,\
-                            MotAndFlashRecStateData.recorderStatusStrings[self.recorderStatus])
-
-Neblina_EEPROMRead_fmt = "<H 8s 6s" # Page number, 8 bytes Read Data
-class EEPROMReadData(object):
-    """docstring for EEPROMData"""
-    def __init__(self, dataString):
-        self.pageNumber, \
-        self.dataBytes,\
-        garbage = struct.unpack( Neblina_EEPROMRead_fmt, dataString )
-
-    def __str__(self):
-        return "Page# {0} Data Bytes:{1} ".format(self.pageNumber, self.dataBytes)
-
-Neblina_LEDGetVal_fmt = "<B {0}s {1}s" # Number of LEDs, Index/Value, Index/Value, (...)
-class LEDGetValData(object):
-    """docstring for LEDGetValData"""
-    def __init__(self, dataString):
-        numLEDs = int(dataString[0])
-        numLEDBytes = numLEDs*2
-        numGarbageBytes = (15-numLEDBytes)
-        stringFormat = Neblina_LEDGetVal_fmt.format(numLEDBytes, numGarbageBytes)
-        numLEDs, ledBytes, garbage = struct.unpack( stringFormat, dataString )
-        self.ledTupleList = list(grouper(ledBytes, 2))
-
-    def __str__(self):
-        return "LED Values: {0}".format(self.ledTupleList)
-
-Neblina_BatteryLevel_fmt = "<I H 10s" # Battery Level (%)
-class BatteryLevelData(object):
-    """docstring for BatteryLevelData"""
-    def __init__(self, dataString):
-        # timestamp = 0
-        timestamp, \
-        self.batteryLevel,\
-        garbage = struct.unpack( Neblina_BatteryLevel_fmt, dataString )
-        self.batteryLevel = self.batteryLevel/10
-
-    def __str__(self):
-        return "batteryLevel: {0}%".format(self.batteryLevel)
-
-Neblina_Temperature_fmt = "<I h 10s" # Temperature x100 in Celsius
-class TemperatureData(object):
-    """docstring for TemperatureData"""
-    def __init__(self, dataString):
-        # timestamp = 0
-        self.timestamp, \
-        self.temperature,\
-        garbage = struct.unpack( Neblina_Temperature_fmt, dataString )
-        self.temperature = self.temperature/100
-
-    def encode(self):
-        garbage = ('\000'*10).encode('utf-8')
-        packetString = struct.pack(Neblina_Temperature_fmt, self.timestamp,\
-        self.temperature, garbage)
-        return packetString('utf-8')
-
-    def __str__(self):
-        return "{0}us: Temperature: {1}%".format(self.timestamp, self.temperature)
-
-
-
-# Neblina_FlashSession_fmt = "<I B H 9s" # Timestamp, open/close, session ID
-class FlashSessionData(object):
-    """docstring for FlashSessionData"""
-    def __init__(self, dataString):
-        timestamp,\
-        openCloseByte,\
-        self.sessionID,\
-        garbage = struct.unpack( Neblina_FlashSession_fmt, dataString )
-        # open = True, close = False
-        self.openClose = (openCloseByte == 1)
-    def __str__(self):
-        openCloseString = 'open' if self.openClose else 'close'
-        return "Session {0}: {1}"\
-        .format(self.sessionID, openCloseString)
-
-Neblina_FlashSessionInfo_fmt = "<I H 10s" # Timestamp, session ID
-class FlashSessionInfoData(object):
-    """docstring for FlashSessionInfoData"""
-    def __init__(self, dataString):
-        self.sessionLength,\
-        self.sessionID,\
-        garbage = struct.unpack( Neblina_FlashSessionInfo_fmt, dataString )
-    def __str__(self):
-        return "Session {0}: {1} bytes"\
-        .format(self.sessionID, self.sessionLength)
-
-Neblina_FlashNumSessions_fmt = "<I H 10s" # Reserved, number of sessions
-class FlashNumSessionsData(object):
-    """docstring for FlashNumSessionsData"""
-    def __init__(self, dataString):
-        reserved,\
-        self.numSessions,\
-        garbage = struct.unpack( Neblina_FlashNumSessions_fmt, dataString )
-    def __str__(self):
-        return "Number of sessions: {0}"\
-        .format(self.numSessions)
-
-Neblina_FWVersions_fmt = "<B 3B 3B 8s B" # API Release, MCU Major/Minor/Build, BLE Major/Minor/Build, Device ID
-class FWVersionsData(object):
-    """docstring for FWVersionsData"""
-    def __init__(self, dataString):
-        self.mcuFWVersion = [0]*3
-        self.bleFWVersion = [0]*3
-        self.apiRelease,\
-        self.mcuFWVersion[0],self.mcuFWVersion[1],self.mcuFWVersion[2],\
-        self.bleFWVersion[0],self.bleFWVersion[1],self.bleFWVersion[2],\
-        self.deviceID,\
-        garbage = struct.unpack( Neblina_FWVersions_fmt, dataString )
-    def __str__(self):
-        return "API Release: {0}\n\
-        MCU Version: {1}.{2}.{3}\n\
-        BLE Version: {4}.{5}.{6}\n\
-        Device ID: {7}".format(self.apiRelease,\
-            self.mcuFWVersion[0], self.mcuFWVersion[1], self.mcuFWVersion[2],\
-            self.bleFWVersion[0], self.bleFWVersion[1], self.bleFWVersion[2],\
-            binascii.hexlify(self.deviceID))
-
-# Special 70 byte packet
-Neblina_UnitTestMotionData_fmt = "<B 3h 3h 3h 4h 3h 3h 3h H B I I h B I I"
-# motion, imu+mag, quaternion, euler, force, error, motion track, motion track progress, timestamp, stepCount, walkingDirection, sitStand
-class UnitTestMotionData(object):
-    motionStrings = {
-        0: "No Change",
-        1: "Stops Moving",
-        2: "Starts Moving",
-    }
-    """docstring for NebUnitTestMotionDataCommandData"""
-    def __init__(self, dataString):
-        self.accel = [0]*3
-        self.gyro = [0]*3
-        self.mag = [0]*3
-        self.quaternions = [0]*4
-        self.eulerAngleErrors = [0]*3
-        self.externalForces = [0]*3
-        self.startStop,\
-        self.accel[0], self.accel[1], self.accel[2],\
-        self.gyro[0], self.gyro[1], self.gyro[2],\
-        self.mag[0], self.mag[1], self.mag[2],\
-        self.quaternions[0], self.quaternions[1],\
-        self.quaternions[2], self.quaternions[3],\
-        self.yaw, self.pitch, self.roll,\
-        self.externalForces[0],\
-        self.externalForces[1],\
-        self.externalForces[2],\
-        self.eulerAngleErrors[0],\
-        self.eulerAngleErrors[1],\
-        self.eulerAngleErrors[2],\
-        self.motionTrack, self.motionTrackProgress,\
-        self.timestamp, self.stepCount,\
-        self.walkingDirection,\
-        self.sitStand, self.sitTime, self.standTime,\
-        = struct.unpack(Neblina_UnitTestMotionData_fmt, dataString)        
-
-    def __str__(self):
-        return "Motion: {0} \n\
-        accelxyz:({1},{2},{3}) gyroxyz:({4},{5},{6}) \
-        magxyz: ({7}, {8}, {9}),\n\
-        quat0:{10} quat1:{11} quat2:{12} quat3:{13} \n\
-        yaw/pitch/roll:({14},{15},{16})) \n\
-        externalForces(x,y,z):({17},{18},{19}) \n\
-        eulerAngleErrors(x,y,z):({20},{21},{22}) \n\
-        motionTrackCounter: {24} \
-        motionTrackProgress: {25} \n\
-        timestamp: {26} \n\
-        steps: {27} \
-        direction: {28} \n\
-        sitStand: {29}, sitTime:{30}, standTime:{31}"\
-        .format(Neblina_UnitTestMotionData_fmt,\
-        UnitTestMotionData.motionStrings[self.startStop],\
-        self.startStop,\
-        self.accel[0], self.accel[1], self.accel[2],\
-        self.gyro[0], self.gyro[1], self.gyro[2],\
-        self.mag[0], self.mag[1], self.mag[2],\
-        self.quaternions[0], self.quaternions[1],\
-        self.quaternions[2], self.quaternions[3],\
-        self.yaw, self.pitch, self.roll,\
-        self.externalForces[0],\
-        self.externalForces[1],\
-        self.externalForces[2],\
-        self.eulerAngleErrors[0],\
-        self.eulerAngleErrors[1],\
-        self.eulerAngleErrors[2],\
-        self.motionTrack, self.motionTrackProgress,\
-        self.timestamp, self.stepCount,\
-        self.walkingDirection,\
-        self.sitStand, self.sitTime, self.standTime)
-
-    def encode(self):
-        packetBytes = struct.pack(Neblina_UnitTestMotionData_fmt,\
-            self.startStop,\
-            self.accel[0], self.accel[1], self.accel[2],\
-            self.gyro[0], self.gyro[1], self.gyro[2],\
-            self.mag[0], self.mag[1], self.mag[2],\
-            self.quaternions[0], self.quaternions[1],\
-            self.quaternions[2], self.quaternions[3],\
-            self.yaw, self.pitch, self.roll,\
-            self.externalForces[0],\
-            self.externalForces[1],\
-            self.externalForces[2],\
-            self.eulerAngleErrors[0],\
-            self.eulerAngleErrors[1],\
-            self.eulerAngleErrors[2],\
-            self.motionTrack, self.motionTrackProgress,\
-            self.timestamp, self.stepCount,\
-            self.walkingDirection,\
-            self.sitStand, self.sitTime, self.standTime)
-        return packetBytes
-
-Neblina_MotionState_fmt = "<I B 11s" # Timestamp, start/stop
-class MotionStateData(object):
-    """docstring for MotionStateData"""
-    def __init__(self, dataString):
-        self.timestamp,\
-        startStopByte,\
-        garbage = struct.unpack( Neblina_MotionState_fmt, dataString )
-        self.startStop = (startStopByte == 0)
-    def __str__(self):
-        return "{0}us: startStop:{1})"\
-        .format(self.timestamp,self.startStop)
-
-Neblina_ExternalForce_fmt = "<I 3h 6s" # Timestamp, External force xyz
-class ExternalForceData(object):
-    """docstring for ExternalForceData"""
-    def __init__(self, dataString):
-        self.externalForces = [0]*3
-        self.timestamp,\
-        self.externalForces[0],\
-        self.externalForces[1],\
-        self.externalForces[2],\
-        garbage = struct.unpack( Neblina_ExternalForce_fmt, dataString )
-
-    def __str__(self):
-        return "{0}us: externalForces(x,y,z):({1},{2},{3})"\
-        .format(self.timestamp,self.externalForces[0],\
-            self.externalForces[1], self.externalForces[2])
-
-Neblina_TrajectoryDistance_fmt = "<I 3h H B 3s" # Timestamp, Euler angle errors, repeat count, percentage of completion
-class TrajectoryDistanceData(object):
-    """docstring for TrajectoryDistance"""
-    def __init__(self, dataString):
-        self.eulerAngleErrors = [0]*3
-        self.timestamp,\
-        self.eulerAngleErrors[0],\
-        self.eulerAngleErrors[1],\
-        self.eulerAngleErrors[2],\
-        self.count,\
-        self.progress,\
-        garbage = struct.unpack( Neblina_TrajectoryDistance_fmt, dataString )
-
-    def __str__(self):
-        return "{0}us: eulerAngleErrors(yaw,pitch,roll):({1},{2},{3}), count:{4}, progress:{5}%"\
-        .format(self.timestamp,self.eulerAngleErrors[0],\
-            self.eulerAngleErrors[1], self.eulerAngleErrors[2], self.count, self.progress)
-
-Neblina_Pedometer_fmt = "<I H B h 7s" # Timestamp, stepCount, stepsPerMinute, walking direction 
-class PedometerData(object):
-    """docstring for PedometerData"""
-    def __init__(self, dataString):
-        self.timestamp,self.stepCount,\
-        self.stepsPerMinute,\
-        self.walkingDirection,\
-        garbage = struct.unpack( Neblina_Pedometer_fmt, dataString )
-        self.walkingDirection /= 10.0
-
-    def encode(self):
-        garbage = ('\000'*7).encode('utf-8')
-        packetString = struct.pack(Neblina_Pedometer_fmt, self.timestamp,\
-        self.stepCount, self.stepsPerMinute, int(self.walkingDirection*10), garbage)
-        return packetString
-
-    def __str__(self):
-        return "{0}us: stepCount:{1}, stepsPerMinute:{2}, walkingDirection:{3}"\
-        .format(self.timestamp, self.stepCount,\
-        self.stepsPerMinute, self.walkingDirection)
-
-Neblina_FingerGesture_fmt = "<I B 11s" # Timestamp, rotationCount, rpm speed
-class FingerGestureData(object):
-    """docstring for RotationData"""
-    def __init__(self, dataString):
-        self.timestamp,self.gesture,\
-        garbage = struct.unpack( Neblina_FingerGesture_fmt, dataString )
-
-    def encode(self):
-        garbage = ('\000'*11).encode('utf-8')
-        packetString = struct.pack(Neblina_FingerGesture_fmt, self.timestamp,\
-        self.gesture, garbage)
-        return packetString
-
-    def __str__(self):
-        if self.gesture==0:
-            return "{0}us: Gesture:Swiped Left".format(self.timestamp)
-        elif self.gesture==1:
-            return "{0}us: Gesture:Swiped Right".format(self.timestamp)
-        elif self.gesture==2:
-            return "{0}us: Gesture:Swiped Up".format(self.timestamp)
-        elif self.gesture==3:
-            return "{0}us: Gesture:Swiped Down".format(self.timestamp)
-        elif self.gesture==4:
-            return "{0}us: Gesture:Flipped Left".format(self.timestamp)
-        elif self.gesture==5:
-            return "{0}us: Gesture:Flipped Right".format(self.timestamp)
-        elif self.gesture==6:
-            return "{0}us: Gesture:Double Tap".format(self.timestamp)
-        else:
-            return "{0}us: Gesture:None ".format(self.timestamp)
-
-
-Neblina_RotationInfo_fmt = "<I I H 6s" # Timestamp, rotationCount, rpm speed
-class RotationData(object):
-    """docstring for RotationData"""
-    def __init__(self, dataString):
-        self.timestamp,self.rotationCount,\
-        self.rpm,\
-        garbage = struct.unpack( Neblina_RotationInfo_fmt, dataString )
-        self.rpm = self.rpm/10.0
-
-    def encode(self):
-        garbage = ('\000'*6).encode('utf-8')
-        packetString = struct.pack(Neblina_RotationInfo_fmt, self.timestamp,\
-        self.rotationCount, int(self.rpm*10), garbage)
-        return packetString
-
-    def __str__(self):
-        return "{0}us: rotationCount:{1}, rpm:{2}"\
-        .format(self.timestamp, self.rotationCount,\
-        self.rpm)
-
-
-Neblina_Quat_t_fmt = "<I 4h 4s"
-class QuaternionData(object):
-    """docstring for QuaternionData"""
-    def __init__(self, dataString):
-        self.quaternions = [0]*4
-        self.timestamp,\
-        self.quaternions[0],\
-        self.quaternions[1],\
-        self.quaternions[2],\
-        self.quaternions[3],\
-        garbage = struct.unpack( Neblina_Quat_t_fmt, dataString )
-
-    def encode(self):
-        garbage = ('\000'*4).encode('utf-8')
-        packetString = struct.pack(Neblina_Quat_t_fmt, self.timestamp,\
-        self.quaternions[0], self.quaternions[1],\
-        self.quaternions[2], self.quaternions[3], garbage)
-        return packetString
-    
-    def __str__(self):
-        return "{0}us: quat0:{1} quat1:{2} quat2:{3} quat3:{4}".format(\
-            self.timestamp, self.quaternions[0], self.quaternions[1],\
-            self.quaternions[2], self.quaternions[3])
-
-Neblina_IMU_fmt = "<I 3h 3h" # timestamp xyz xyz
-class IMUData(object):
-    """docstring for IMUData"""
-    def __init__(self, dataString):
-        self.accel = [0]*3
-        self.gyro = [0]*3
-        self.timestamp, \
-        self.accel[0], self.accel[1], self.accel[2],\
-        self.gyro[0], self.gyro[1], self.gyro[2]\
-         = struct.unpack( Neblina_IMU_fmt, dataString )
-
-    def encode(self):
-        packetString = struct.pack( Neblina_IMU_fmt, \
-        self.timestamp, self.accel[0], self.accel[1], self.accel[2],\
-        self.gyro[0], self.gyro[1], self.gyro[2])
-        return packetString
-
-    def __str__(self):
-        return "{0}us: accelxyz:({1},{2},{3}) gyroxyz:({4},{5},{6})"\
-        .format(self.timestamp,
-                self.accel[0], self.accel[1], self.accel[2],
-                self.gyro[0], self.gyro[1], self.gyro[2])
-
-Neblina_MAG_fmt = "<I 3h 3h" # timestamp xyz xyz
-class MAGData(object):
-    """docstring for MAGData"""
-    def __init__(self, dataString):
-        self.mag = [0]*3
-        self.accel = [0]*3
-        self.timestamp, \
-        self.mag[0], self.mag[1], self.mag[2],\
-        self.accel[0], self.accel[1], self.accel[2]\
-         = struct.unpack( Neblina_MAG_fmt, dataString )
-
-    def encode(self):
-        packetString = struct.pack( Neblina_MAG_fmt, \
-        self.timestamp, self.mag[0], self.mag[1], self.mag[2],\
-        self.accel[0], self.accel[1], self.accel[2])
-        return packetString
-    
-    def __str__(self):
-        return "{0}us: accelxyz:({1},{2},{3}) magxyz:({4},{5},{6})"\
-        .format(self.timestamp,
-                self.accel[0], self.accel[1], self.accel[2],
-                self.mag[0], self.mag[1], self.mag[2])
-
-Neblina_Euler_fmt = "<I 4h 4s" # timestamp yaw, pitch, roll, demo heading
-class EulerAngleData(object):
-    """docstring for EulerAngleData"""
-    def __init__(self, dataString):
-        self.timestamp, self.yaw, self.pitch, self.roll, self.demoHeading,\
-            garbage = struct.unpack( Neblina_Euler_fmt, dataString )
-        self.yaw = self.yaw/10.0
-        self.pitch = self.pitch/10.0
-        self.roll = self.roll/10.0
-        self.demoHeading = self.demoHeading/10.0
-
-    def encode(self):
-        garbage = ('\000'*4).encode('utf-8')
-        packetString = struct.pack(Neblina_Euler_fmt, self.timestamp,\
-         int(self.yaw*10), int(self.pitch*10), int(self.roll*10), int(self.demoHeading*10), garbage)
-        return packetString
-        
-    def __str__(self):
-        return "{0}us: yaw/pitch/roll:({1},{2},{3}))"\
-        .format(self.timestamp,self.yaw, self.pitch, self.roll)
-
-
-# Dictionaries containing the data constructors for response packets
-# BlankData means a response data object does not need to be implemented
-# -------------------------------------------------------------------
-PlaceholderDataConstructors = {
-    0   :   BlankData,
-    1   :   BlankData,
-    2   :   BlankData,
-    3   :   BlankData,
-    4   :   BlankData,
-    5   :   BlankData,
-    6   :   BlankData,
-    7   :   BlankData,
-    8   :   BlankData,
-    9   :   BlankData,
-    10   :   BlankData,
-}
-
-DebugResponses = {
-    0                               : BlankData,
-    DebugCmd_SetInterface           : BlankData,
-    DebugCmd_MotAndFlashRecState    : MotAndFlashRecStateData,
-    DebugCmd_StartUnitTestMotion    : BlankData,
-    DebugCmd_UnitTestMotionData     : UnitTestMotionData,
-    DebugCmd_FWVersions             : FWVersionsData
-
-}
-
-StorageResponses = {
-    StorageCmd_EraseAll         : BlankData,
-    StorageCmd_Record           : FlashSessionData,
-    StorageCmd_Playback         : FlashSessionData,
-    StorageCmd_NumSessions      : FlashNumSessionsData,
-    StorageCmd_SessionInfo      : FlashSessionInfoData,
-}
-
-PowerManagementResponses = {
-    PowCmd_GetBatteryLevel      : BatteryLevelData,
-    PowCmd_GetTemperature       : TemperatureData,
-}
-
-MotionResponses = {
-    MotCmd_Downsample               : BlankData,              # Downsampling factor definition
-    MotCmd_MotionState              : MotionStateData,        # streaming Motion State
-    MotCmd_IMU_Data                 : IMUData,                # streaming the 6-axis IMU data
-    MotCmd_Quaternion               : QuaternionData,         # streaming the quaternion data
-    MotCmd_EulerAngle               : EulerAngleData,         # streaming the Euler angles
-    MotCmd_ExtForce                 : ExternalForceData,      # streaming the external force
-    MotCmd_SetFusionType            : BlankData,              # setting the Fusion type to either 6-axis or 9-axis
-    MotCmd_TrajectoryRecStartStop   : TrajectoryDistanceData, # start recording orientation trajectory
-    MotCmd_TrajectoryInfo           : TrajectoryDistanceData, # calculating the distance from a pre-recorded orientation trajectory
-    MotCmd_Pedometer                : PedometerData,          # streaming pedometer data
-    MotCmd_MAG_Data                 : MAGData,                # streaming magnetometer data
-    MotCmd_SittingStanding          : BlankData,              # streaming sitting standing
-    MotCmd_AccRange                 : BlankData,              # set accelerometer range
-    MotCmd_DisableStreaming         : BlankData,              # disable everything that is currently being streamed
-    MotCmd_ResetTimeStamp           : BlankData,
-    MotCmd_FingerGesture            : FingerGestureData,       # streaming finger gesture data
-    MotCmd_RotationInfo             : RotationData            # streaming rotation info data
-}
-
-EEPROMResponses = {
-    EEPROMCmd_Read              : EEPROMReadData,
-    EEPROMCmd_Write             : EEPROMReadData,
-}
-
-LEDResponses = {
-    LEDCmd_SetVal               : BlankData,
-    LEDCmd_GetVal               : LEDGetValData,
-    # LEDCmd_Config               : LED
-}
-
-# Dictionary containing the dictionary of data object constructors
-ResponsePacketDataConstructors = {
-    Subsys_Debug                :   DebugResponses,
-    Subsys_MotionEngine         :   MotionResponses,
-    Subsys_PowerManagement      :   PowerManagementResponses,
-    Subsys_DigitalIO            :   PlaceholderDataConstructors,
-    Subsys_LED                  :   LEDResponses,
-    Subsys_ADC                  :   PlaceholderDataConstructors,
-    Subsys_DAC                  :   PlaceholderDataConstructors,
-    Subsys_I2C                  :   PlaceholderDataConstructors,
-    Subsys_SPI                  :   PlaceholderDataConstructors,
-    Subsys_FirmwareManagement   :   PlaceholderDataConstructors,
-    Subsys_Crypto               :   PlaceholderDataConstructors,
-    Subsys_Storage              :   StorageResponses,
-    Subsys_EEPROM               :   EEPROMResponses,
-}
-# -------------------------------------------------------------------
-
-
-# Header = 4 bytes
-Neblina_PacketHeader_fmt = "<4B"
-class NebHeader(object):
-    """ docstring for NebHeader
-        The header section consists of four bytes.
-        Byte 0: Control Byte (PKT_TYPE/SUB)
-        Byte 1: Data length
-        Byte 2: CRC
-        Byte 3: Command type
-
-        The Control Byte contains the Packet type code and the subsystem code
-        CtrlByte(7:5) = PacketType
-        CtrlByte(4:0) = Subsytem Code
-    """
-    def __init__(self, subSystem, packetType, commandType, crc=255, length = 16 ):
-        self.subSystem = subSystem
-        self.length = length
-        self.crc = crc
-        self.command = commandType
-        self.packetType = packetType
-
-    def encode(self):
-        packedCtrlByte = self.subSystem
-        if self.packetType:
-            packedCtrlByte |= (self.packetType << PacketType_BitPosition)
-        headerStringCode = struct.pack(Neblina_PacketHeader_fmt,\
-        packedCtrlByte, self.length, self.crc, self.command)
-        return headerStringCode
-
-    def __str__(self):
-        stringFormat = "packetType = {0}, subSystem = {1}, packetLength = {2}, crc = {3}, command = {4}"
-        commandString = CommandStrings[(self.subSystem, self.command)]
-        stringDescriptor = stringFormat.format(PacketTypeStrings[self.packetType], \
-             self.subSystem, self.length,self.crc, commandString)
-        return stringDescriptor
-
-# Data = 16 bytes
-NeblinaPacket_fmt = "<4s 16s"
-class NebCommandPacket(object):
-    """docstring for NebCommandPacket"""
-    def __init__(self, subSystem, commandType, enable=True, **kwargs):
-        # Logic for determining which type of command packet it is based on the header
-        if(subSystem == Subsys_Debug and commandType == DebugCmd_UnitTestMotionData):
-            self.data = NebUnitTestMotionDataCommandData(kwargs['timestamp'],\
-             kwargs['accel'], kwargs['gyro'], kwargs['mag'])
-        elif(subSystem == Subsys_MotionEngine and commandType == MotCmd_Downsample):
-            self.data = NebDownsampleCommandData(enable)
-        elif(subSystem == Subsys_MotionEngine and commandType == MotCmd_AccRange):
-            self.data = NebAccRangeCommandData(enable)
-        elif(subSystem == Subsys_Storage and commandType == StorageCmd_Playback ):
-            self.data = NebFlashPlaybackCommandData(enable, kwargs['sessionID'])
-        elif(subSystem == Subsys_Storage and commandType == StorageCmd_SessionInfo):
-            self.data = NebFlashSessionInfoCommandData(kwargs['sessionID'])
-        elif(subSystem == Subsys_EEPROM):
-            if( commandType == EEPROMCmd_Read):
-                self.data = NebEEPROMCommandData(False, kwargs['pageNumber'])
-            elif( commandType == EEPROMCmd_Write ):
-                self.data = NebEEPROMCommandData(True, kwargs['pageNumber'], kwargs['dataBytes'])
-        elif(subSystem == Subsys_LED and commandType == LEDCmd_SetVal):
-            self.data = NebSetLEDCommandData(kwargs['ledValueTupleList'])
-        elif(subSystem == Subsys_LED and commandType == LEDCmd_GetVal):
-            self.data = NebGetLEDCommandData(kwargs['ledIndices'])
-        else:
-            self.data = NebCommandData(enable)
-        self.header = NebHeader(subSystem, PacketType_Command, commandType, length=len(self.data.encode()))
-        # Perform CRC calculation
-        self.header.crc = crc8(bytearray(self.header.encode() + self.data.encode()))
-
-    def stringEncode(self):
-        headerStringCode = self.header.encode()
-        dataStringCode = self.data.encode()
-        return headerStringCode+dataStringCode
-
-    def __str__(self):
-        stringFormat = "header = [{0}] data = [{1}]"
-        stringDescriptor = stringFormat.format(self.header, self.data)
-        return stringDescriptor
-
-class NebResponsePacket(object):
-    """docstring for NebResponsePacket"""
-
-    @classmethod
-    def createMAGResponsePacket(cls, timestamp, mag, accel):
-        dataString = struct.pack( Neblina_MAG_fmt, \
-        timestamp, int(mag[0]), int(mag[1]), int(mag[2]),\
-        int(accel[0]), int(accel[1]), int(accel[2]))
-        data = MAGData(dataString)
-        # Perform CRC of data bytes
-        header = NebHeader(Subsys_MotionEngine, False, MotCmd_MAG_Data, len(dataString))
-        responsePacket = NebResponsePacket(packetString=None, header=header, data=data, checkCRC=False)
-        responsePacket.header.crc = genNebCRC8(bytearray(responsePacket.stringEncode()))
-        return responsePacket
-
-    @classmethod
-    def createIMUResponsePacket(cls, timestamp, accel, gyro):
-        dataString = struct.pack( Neblina_IMU_fmt, \
-        timestamp, int(accel[0]), int(accel[1]), int(accel[2]),\
-        int(gyro[0]), int(gyro[1]), int(gyro[2]))
-        data = IMUData(dataString)
-        # Perform CRC of data bytes
-        header = NebHeader(Subsys_MotionEngine, False, MotCmd_IMU_Data, len(dataString))
-        responsePacket = NebResponsePacket(packetString=None, header=header, data=data, checkCRC=False)
-        responsePacket.header.crc = genNebCRC8(bytearray(responsePacket.stringEncode()))
-        return responsePacket
-
-    @classmethod
-    def createEulerAngleResponsePacket(cls, timestamp, yaw, pitch, roll, demoHeading = 0.0):
-        # Multiply the euler angle values by 10 to emulate the firmware behavior
-        yaw = int(yaw*10)
-        pitch = int(pitch*10)
-        roll = int(roll*10)
-        demoHeading = int(demoHeading*10)
-        garbage = '\000\000\000\000'.encode('utf-8')
-        dataString = struct.pack( Neblina_Euler_fmt, int(timestamp), yaw, pitch, roll, demoHeading, garbage )
-        data = EulerAngleData(dataString)
-        # Perform CRC of data bytes
-        header = NebHeader(Subsys_MotionEngine, False, MotCmd_EulerAngle, len(dataString))
-        responsePacket = NebResponsePacket(packetString=None, header=header, data=data, checkCRC=False)
-        responsePacket.header.crc = genNebCRC8(bytearray(responsePacket.stringEncode()))
-        return responsePacket
-
-    @classmethod
-    def createPedometerResponsePacket(cls, timestamp, stepCount, stepsPerMinute, walkingDirection):
-        # Multiply the walking direction value by 10 to emulate the firmware behavior
-        walkingDirection = int(walkingDirection*10)
-        garbage = ('\000'*7).encode('utf-8')
-        dataString = struct.pack( Neblina_Pedometer_fmt, timestamp, stepCount,\
-         stepsPerMinute, walkingDirection, garbage )
-        data = PedometerData(dataString)
-        # Perform CRC of data bytes
-        crc = crc8(bytearray(dataString))
-        header = NebHeader(Subsys_MotionEngine, False, MotCmd_Pedometer, crc, len(dataString))
-        responsePacket = NebResponsePacket(packetString=None, header=header, data=data, checkCRC=False)
-        responsePacket.header.crc = genNebCRC8(bytearray(responsePacket.stringEncode()))
-        return responsePacket
-
-    @classmethod
-    def createRotationResponsePacket(cls, timestamp, rotationCount, rpm):
-        garbage = ('\000'*6).encode('utf-8')
-        dataString = struct.pack( Neblina_RotationInfo_fmt, timestamp, rotationCount,\
-         rpm, garbage )
-        data = RotationData(dataString)
-        # Perform CRC of data bytes
-        crc = crc8(bytearray(dataString))
-        header = NebHeader(Subsys_MotionEngine, False, MotCmd_RotationInfo, crc, len(dataString))
-        responsePacket = NebResponsePacket(packetString=None, header=header, data=data, checkCRC=False)
-        responsePacket.header.crc = genNebCRC8(bytearray(responsePacket.stringEncode()))
-        return responsePacket
-
-    def __init__(self, packetString=None, header=None, data=None, checkCRC=True):
-        if (packetString != None):
-            # Sanity check
-            packetStringLength = len(packetString)
-            if(packetStringLength < 5):
-                raise InvalidPacketFormatError(\
-                    'Impossible packet, must have a packet of at least 5 bytes but got {0}'\
-                    .format(packetStringLength))
-
-            # The string can either be bytes or an actual string
-            # Force it to a string if that is the case.
-            if (type(packetString) == str):
-                packetString = packetString.encode('iso-8859-1')
-
-            # Extract the header information
-            self.headerLength = 4
-            headerString = packetString[:self.headerLength]
-            ctrlByte, packetLength, crc, command \
-            =  struct.unpack(Neblina_PacketHeader_fmt, headerString)
-            
-            # Extract the value from the subsystem byte            
-            subSystem = ctrlByte & Subsys_BitMask
-
-            # Check if the response byte is an acknowledge
-            packetTypeCode = ctrlByte & PacketType_BitMask
-            packetType = packetTypeCode >> PacketType_BitPosition
-
-            # See if the packet is a response or a command packet
-            if(packetType == PacketType_Command):
-                raise InvalidPacketFormatError('Cannot create a response packet with the string of a command packet.')
-
-            self.header = NebHeader( subSystem, packetType, command, crc, packetLength )
-
-            # Extract the data substring
-            dataString = packetString[self.headerLength:self.headerLength+packetLength]
-
-            # Perform CRC of data bytes
-            if(checkCRC):
-                calculatedCRC = genNebCRC8(bytearray(packetString))
-                if (calculatedCRC != self.header.crc):
-                    raise CRCError(calculatedCRC, self.header.crc)
-
-            # Build the data object based on the subsystem and command.
-            self.data = ResponsePacketDataConstructors[subSystem][self.header.command](dataString)
-
-        elif(header != None and data != None):
-            self.header = header
-            self.data = data
-
-    def stringEncode(self):
-        headerStringCode = self.header.encode()
-        dataStringCode = self.data.encode()
-        return headerStringCode+dataStringCode
-
-    def __str__(self):
-        stringFormat = "header = [{0}] data = [{1}]"
-        stringDescriptor = stringFormat.format(self.header, self.data)
-        return stringDescriptor
-
-class CRCError(Exception):
-    """docstring for CRCError"""
-    def __init__(self, expected, actual):
-        self.expected = expected
-        self.actual = actual
-    def __str__(self):
-        return 'Invalid CRC. expected {0} but got {1}'\
-            .format(hex(self.expected), hex(self.actual))
-
-class InvalidPacketFormatError(Exception):
-    """docstring for InvalidPacketFormatError"""
-    def __init__(self, error):
-        self.errorString = error
-    def __str__(self):
-        return self.errorString
-
-# http://stackoverflow.com/questions/434287/what-is-the-most-pythonic-way-to-iterate-over-a-list-in-chunks
-def grouper(iterable, n, fillvalue=None):
-    args = [iter(iterable)] * n
-    return zip_longest(*args, fillvalue=fillvalue)
-
-def crc8(bytes):
-    crc = 0
-    for byte in bytes:
-        ee = (crc) ^ (byte)
-        ff = (ee) ^ (ee>>4) ^ (ee>>7)
-        crc = ((ff<<1)%256) ^ ((ff<<4) % 256)
-    return crc
-
-# Special CRC routine that skips the expected position of the CRC calculation
-# in a Neblina packet
-def genNebCRC8(packetBytes):
-    crc = 0
-    # The CRC should be placed as the third byte in the packet
-    crc_backup = packetBytes[2]
-    packetBytes[2] = 255
-    ii = 0
-    while ii < len(packetBytes):
-       ee = (crc) ^ (packetBytes[ii])
-       ff = (ee) ^ (ee>>4) ^ (ee>>7)
-       crc = ((ff<<1)%256) ^ ((ff<<4) % 256)
-       ii += 1
-    packetBytes[2] = crc_backup
-    return crc
-
-
+###################################################################################
+
+
+class Formatting:
+
+    class Data:
+        Blank = "16s"  # Blank 16 bytes
+        MotionAndFlash = "<I 4s B 7s"  # Timestamp (unused for now), downsample factor
+        EEPROMRead = "<H 8s 6s"  # Page number, 8 bytes Read Data
+        LEDGetVal = "<B {0}s {1}s"  # Number of LEDs, LED Index x LEDs, LED Value x LEDs
+        BatteryLevel = "<I H 10s"  # Battery Level (%)
+        Temperature = "<I h 10s"  # Temperature x100 in Celsius
+        FlashNumSessions = "<I H 10s"  # Reserved, number of sessions
+        FWVersions = "<B 3B 3B 8s B"  # API Release, MCU Major/Minor/Build, BLE Major/Minor/Build, Device ID
+        UnitTestMotion = "<B 3h 3h 3h 4h 3h 3h 3h H B I I h B I I"
+        MotionState = "<I B 11s"  # Timestamp, start/stop
+        ExternalForce = "<I 3h 6s"  # Timestamp, External force xyz
+        TrajectoryDistance = "<I 3h H B 3s"  # Timestamp, Euler angle errors, repeat count, completion percentage
+        Pedometer = "<I H B h 7s"  # Timestamp, stepCount, stepsPerMinute, walking direction
+        FingerGesture = "<I B 11s"  # Timestamp, rotationCount
+        RotationInfo = "<I I H 6s"  # Timestamp, rotationCount, rpm speed
+        Quaternion = "<I 4h 4s"  # Timestamp, quaternion
+        IMU = "<I 3h 3h"  # Timestamp, accelerometer(xyz), gyroscope(xyz)
+        MAG = "<I 3h 3h"  # Timestamp, magnetometer(xyz), accelerometer(xyz)
+        Euler = "<I 4h 4s"  # Timestamp, Euler angle (yaw,pitch,roll,heading)
+
+    class CommandData:
+        Header = "<4B"
+        Command = "<I B 11s"  # Timestamp (unused for now), enable/disable, garbage
+        FlashSession = "<I B H 9s"  # Timestamp, open/close, session ID
+        FlashSessionInfo = "<I H 10s"  # Timestamp, session ID
+        UnitTestMotion = "<I 3h 3h 3h"  # Timestamp, accel, gyro, mag
+        AccRange = "<I H 10s"  # Timestamp (unused for now), downsample factor
+        Downsample = "<I H 10s"  # Timestamp (unused for now), downsample factor
+        GetLED = "<B {0}s {1}s"  # Number of LEDs, LED Index x LEDs, LED Value x LEDs
+        SetLED = "<B {0}s {1}s"  # Number of LEDs, LED Index x LEDs, LED Value x LEDs
+        EEPROM = "<H 8s 6s"  # Page number, 8 bytes R/W Data

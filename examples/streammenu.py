@@ -1,6 +1,29 @@
-# Neblina streaming data utility
-# (C) 2015 Motsai Research Inc.
-# Author: Alexandre Courtemanche (a.courtemanche@motsai.com)
+#!/usr/bin/env python
+###################################################################################
+#
+# Copyright (c)     2010-2016   Motsai
+#
+# The MIT License (MIT)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+###################################################################################
 
 from __future__ import print_function
 import os
@@ -8,17 +31,18 @@ import cmd
 import binascii
 import serial
 import serial.tools.list_ports
-import slip
-import neblina as neb
-import neblinaAPI as nebapi
-import neblinasim as sim
-import sys
 import time
+import logging
+
+from neblina import *
+from neblinaAPI import NeblinaAPI
+
+###################################################################################
 
 
 class StreamMenu(cmd.Cmd):
     """docstring for StreamMenu"""
-    
+
     def __init__(self):
         cmd.Cmd.__init__(self)
 
@@ -26,28 +50,28 @@ class StreamMenu(cmd.Cmd):
         self.configFileName = 'streamconfig.txt'
         self.prompt = '>>'
         self.intro = "Welcome to the Neblina Streaming Menu!"
-        
+
         # Check if config file exists
-        if(not os.path.exists(self.configFileName)):
+        if not os.path.exists(self.configFileName):
             self.setCOMPortName()
 
         # Read the config file to get the name
         with open(self.configFileName, 'r') as configFile:
                 comPortName = configFile.readline()
-        
+
         # Try to open the serial COM port
         sc = None
         while sc is None:
             try:
-                sc = serial.Serial(port=comPortName,baudrate=500000, timeout=1.5)
+                sc = serial.Serial(port=comPortName, baudrate=500000, timeout=1.5)
             except serial.serialutil.SerialException as se:
                 if 'Device or resource busy:' in se.__str__():
                     print('Opening COM port is taking a little while, please stand by...')
                 else:
                     print('se: {0}'.format(se))
                 time.sleep(1)
-        
-        self.comm = nebapi.NeblinaComm(sc)
+
+        self.comm = NeblinaAPI(sc)
         self.comm.sc.flushInput()
         print("Setting up the connection...")
         time.sleep(1)
@@ -57,15 +81,15 @@ class StreamMenu(cmd.Cmd):
         time.sleep(1)
         print('.')
         # Make the module stream towards the UART instead of the default BLE
-        self.comm.switchStreamingInterface(True)
+        self.comm.setStreamingInterface(Interface.UART)
         self.comm.motionStopStreams()
 
     # If the user exits with Ctrl-C, try switching the interface back to BLE
-    def cmdloop(self):
+    def cmdloop(self, intro=None):
         try:
             cmd.Cmd.cmdloop(self)
         except KeyboardInterrupt as e:
-            self.comm.switchStreamingInterface(False)
+            self.comm.setStreamingInterface(Interface.BLE)
 
     ## Command definitions ##
     def do_hist(self, args):
@@ -75,7 +99,7 @@ class StreamMenu(cmd.Cmd):
     def do_exit(self, args):
         """Exits from the console"""
         # Make the module stream back towards its default interface (BLE)
-        self.comm.switchStreamingInterface(False)
+        self.comm.setStreamingInterface(Interface.BLE)
         return -1
 
     ## Command definitions to support Cmd object functionality ##
@@ -103,7 +127,7 @@ class StreamMenu(cmd.Cmd):
             print('{0} not in the available COM ports'.format(port))
             port = input('Select the COM port to use:' + '\n'.join(portList[0]) + '\n' + \
                 self.bigLine + self.prompt)
-        
+
         # Write it to the config file
         configFile = open(self.configFileName, 'w')
         configFile.write(port)
@@ -124,7 +148,7 @@ class StreamMenu(cmd.Cmd):
         if writePageNumber < 0 or writePageNumber > 255:
             print('Page number must be between 0 and 255 inclusively')
             return
-        
+
         self.comm.EEPROMWrite(writePageNumber, writeBytes)
 
         print('Write to page #{0} of dataBytes {1} was successful.'\
@@ -169,34 +193,34 @@ class StreamMenu(cmd.Cmd):
         print('Board Temperature: {0} degrees (Celsius)'.format(temp))
 
     def do_streamEuler(self, args):
-        self.comm.motionStream(neb.MotCmd_EulerAngle)
+        self.comm.motionStream(Commands.Motion.EulerAngle)
 
     def do_streamIMU(self, args):
-        self.comm.motionStream(neb.MotCmd_IMU_Data)
+        self.comm.motionStream(Commands.Motion.IMU)
 
     def do_streamQuat(self, args):
-        self.comm.motionStream(neb.MotCmd_Quaternion)
+        self.comm.motionStream(Commands.Motion.Quaternion)
 
     def do_streamMAG(self, args):
-        self.comm.motionStream(neb.MotCmd_MAG_Data)
+        self.comm.motionStream(Commands.Motion.MAG)
 
     def do_streamForce(self, args):
-        self.comm.motionStream(neb.MotCmd_ExtForce)
+        self.comm.motionStream(Commands.Motion.ExtForce)
 
     def do_streamRotation(self, args):
-        self.comm.motionStream(neb.MotCmd_RotationInfo)
+        self.comm.motionStream(Commands.Motion.RotationInfo)
 
     def do_streamPedometer(self, args):
-        self.comm.motionStream(neb.MotCmd_Pedometer)
+        self.comm.motionStream(Commands.Motion.Pedometer)
 
     def do_streamGesture(self, args):
-        self.comm.motionStream(neb.MotCmd_FingerGesture)
+        self.comm.motionStream(Commands.Motion.FingerGesture)
 
     def do_streamTrajectory(self, args):
-        self.comm.sendCommand(neb.Subsys_MotionEngine, neb.MotCmd_TrajectoryRecStartStop, True) # start recording a reference orientation trajectory
-        packet = self.comm.waitForAck(neb.Subsys_MotionEngine, neb.MotCmd_TrajectoryRecStartStop)
+        self.comm.sendCommand(SubSystem.Motion, Commands.Motion.TrajectoryRecStartStop, True) # start recording a reference orientation trajectory
+        packet = self.comm.waitForAck(SubSystem.Motion, Commands.Motion.TrajectoryRecStartStop)
         print("Recording a reference trajectory...")
-        self.comm.motionStream(neb.MotCmd_TrajectoryInfo)
+        self.comm.motionStream(Commands.Motion.TrajectoryInfo)
 
     def do_stopStreams(self, args):
         self.comm.motionStopStreams()
@@ -265,21 +289,21 @@ class StreamMenu(cmd.Cmd):
             numSamples = 1000
         else:
             numSamples = int(args)
-        self.comm.flashRecord(numSamples, neb.MotCmd_IMU_Data)
+        self.comm.flashRecord(numSamples, Commands.Motion.IMU)
 
     def do_flashRecordEuler(self, args):
         if(len(args) <= 0):
             numSamples = 1000
         else:
             numSamples = int(args)
-        self.comm.flashRecord(numSamples, neb.MotCmd_EulerAngle)
+        self.comm.flashRecord(numSamples, Commands.Motion.EulerAngle)
 
     def do_flashRecordQuaternion(self, args):
         if(len(args) <= 0):
             numSamples = 1000
         else:
             numSamples = int(args)
-        self.comm.flashRecord(numSamples, neb.MotCmd_Quaternion)
+        self.comm.flashRecord(numSamples, Commands.Motion.Quaternion)
 
     def do_flashPlayback(self, args):
         if(len(args) <= 0):
@@ -338,11 +362,11 @@ class StreamMenu(cmd.Cmd):
         """
         return stop
 
-    def emptyline(self):    
+    def emptyline(self):
         """Do nothing on empty input line"""
         pass
 
-    def default(self, line):       
+    def default(self, line):
         """Called on an input line when the command prefix is not recognized.
            In that case we execute the line as Python code.
         """
@@ -353,5 +377,6 @@ class StreamMenu(cmd.Cmd):
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO, format='%(message)s')
     console = StreamMenu()
-    console . cmdloop() 
+    console . cmdloop()

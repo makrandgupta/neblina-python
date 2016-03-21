@@ -1,12 +1,13 @@
 # Neblina Protocol Simulated output
 # (C) 2015 Motsai Research Inc.
 
-import neblina as neb
 import binascii
 import json
 import random
 import math
 import os
+
+from neblinaResponsePacket import NebResponsePacket as nebResponsePacket
 
 usPerSecond = 1000000
 
@@ -24,7 +25,7 @@ def main():
     spinning += createSpinningObjectPacketList(samplingFrequency, 0.0, 0.5, 0.0, startTimestamp)
     startTimestamp = spinning[-1].data.timestamp + int(1/samplingFrequency)
     spinning += createSpinningObjectPacketList(samplingFrequency, 0.0, 0.0, 0.5, startTimestamp)
-    
+
     walking = createWalkingPathPacketList( 100, 40.0, 5.0, 3, -44.0 )
     imuData = createRandomIMUDataPacketList( 50, 300 )
 
@@ -102,7 +103,7 @@ def createWalkingPathPacketList(numSteps, averageSPM=61.0, maxDegreesDeviation=2
                 angleVariation = maxDegreesDeviation
             elif ( angleVariation < -maxDegreesDeviation ):
                 angleVariation = -maxDegreesDeviation
-        
+
         # Update new walking direction
         walkingDirection = walkingDirection+angleVariation
         # Make sure the direction stays within -180 and +180
@@ -110,7 +111,7 @@ def createWalkingPathPacketList(numSteps, averageSPM=61.0, maxDegreesDeviation=2
             walkingDirection -= 360
         elif ( walkingDirection < -180.0 ):
             walkingDirection += 360
-        
+
         # Choose a new timestamp
         secondsPerStep = 60.0/averageSPM
         timeDelta = random.gauss(secondsPerStep, 0.05)
@@ -122,7 +123,7 @@ def createWalkingPathPacketList(numSteps, averageSPM=61.0, maxDegreesDeviation=2
         stepsPerMinute = int(60.0/timeDelta)
 
         # Build the packet object
-        packet = neb.NebResponsePacket.createPedometerResponsePacket(\
+        packet = nebResponsePacket.createPedometerResponsePacket(\
         timestamp, ii, stepsPerMinute, walkingDirection)
         packetList.append(packet)
 
@@ -142,7 +143,7 @@ def createSpinningObjectPacketList(samplingFrequency = 50.0,\
     # Figure out the longest rotation without it being 0 dps
     # Remove the non-moving elements
     movingRotationsList = [x for x in degreesPerSecond if x != 0.0]
-    
+
     # If it isn't moving, create a dummy packet list
     if len(movingRotationsList) == 0:
         time = range(0, 100)
@@ -161,10 +162,10 @@ def createSpinningObjectPacketList(samplingFrequency = 50.0,\
         # Simulate the heading 'demo mode' activated
         demoDegrees =   round((((1.5*degreesPerSecond[0]*samplingPeriod*n) + 180 )% 360 ) - 180, 2 )
         timestamp =  ( n*samplingPeriod*usPerSecond ) + startTimestamp
-        packet = neb.NebResponsePacket.createEulerAngleResponsePacket(\
+        packet = nebResponsePacket.createEulerAngleResponsePacket(\
             timestamp, yawDegrees, pitchDegrees, rollDegrees, demoDegrees)
         packetList.append( packet )
-    
+
     return packetList
 
 
@@ -184,7 +185,7 @@ def createRandomIMUDataPacketList(samplingFrequency = 50.0, numSamples = 300, fr
         gyro[2] = maxIMUValue*math.cos( (2*math.pi*freq*n)/samplingFrequency+(9*math.pi/15)  ) + random.gauss(0,maxIMUValue/10)
         timestamp += int( (1.0/samplingFrequency)*usPerSecond )
 
-        packet = neb.NebResponsePacket.createIMUResponsePacket(timestamp, accel, gyro)
+        packet = nebResponsePacket.createIMUResponsePacket(timestamp, accel, gyro)
         packetList.append( packet )
 
     return packetList
@@ -205,7 +206,7 @@ def createRandomMAGDataPacketList(samplingFrequency = 50.0, numSamples = 300, fr
         accel[2] = maxMAGValue*math.cos( (2*math.pi*freq*n)/samplingFrequency+(9*math.pi/15)  ) + random.gauss(0,maxMAGValue/20)
         timestamp += int( (1.0/samplingFrequency)*usPerSecond )
 
-        packet = neb.NebResponsePacket.createMAGResponsePacket(timestamp, mag, accel)
+        packet = nebResponsePacket.createMAGResponsePacket(timestamp, mag, accel)
         packetList.append( packet )
 
     return packetList

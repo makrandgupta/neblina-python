@@ -1,1 +1,1 @@
-PYTHONPATH=./:./pyslip/ python3 testscripts/nebunittests.py 
+PYTHONPATH=./:./pyslip/ python3 test/neblinaTest.py -u
