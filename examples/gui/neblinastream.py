@@ -64,7 +64,6 @@ class PlottingData(object):
 
         if(streamBLE):
             packet = ble.getNeblinaPacket()
-            if (packet.header.subSytem == Subsys_MotionEngine):
         else:
             self.imuPackets = sim.createRandomIMUDataPacketList(
                 self.samplingFrequency, self.numIMUSamples, 0.5)
