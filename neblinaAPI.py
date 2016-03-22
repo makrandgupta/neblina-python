@@ -26,11 +26,6 @@
 ###################################################################################
 
 import sys
-import os
-import cmd
-import binascii
-import serial
-import slip
 import logging
 
 from neblina import *

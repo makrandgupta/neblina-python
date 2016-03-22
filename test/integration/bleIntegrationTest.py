@@ -31,6 +31,7 @@ import unittest
 
 from neblina import *
 from neblinaAPI import NeblinaAPI
+from test import neblinaTestUtilities
 
 ###################################################################################
 
@@ -62,19 +63,20 @@ class BLEIntegrationTest(unittest.TestCase):
     def tearDown(self):
         self.api.close(self.deviceAddress)
 
-    # def testStreamEuler(self):
-    #     self.api.motionStream(Commands.Motion.EulerAngle, 100)
-    #
-    # def testStreamIMU(self):
-    #     self.api.motionStream(Commands.Motion.IMU, 100)
+    def testStreamEuler(self):
+        self.api.motionStream(Commands.Motion.EulerAngle, 100)
+
+    def testStreamIMU(self):
+        self.api.motionStream(Commands.Motion.IMU, 100)
 
     def testMEMSComm(self):
         logging.debug('Checking communication with the LSM9DS1 chip by getting the temperature...')
         temp = self.api.getTemperature()
         logging.info("Board Temperature: {0} degrees (Celsius)".format(temp))
-    #
-    # def testPMICComm(self):
-    #     batteryLevel = self.api.getBatteryLevel()
+
+    def testPMICComm(self):
+        batteryLevel = self.api.getBatteryLevel()
+        logging.info("Board Battery: {0}\%".format(batteryLevel))
     #
     # def testUARTPCLoopbackComm(self):
     #     #dataString = "Test#1: Loopback test with KL26 by sending 1000 empty packets..."
@@ -84,15 +86,18 @@ class BLEIntegrationTest(unittest.TestCase):
     #         self.api.waitForAck(SubSystem.Debug, Commands.Debug.SetInterface)
     #
     # def testMotionEngine(self):
-    #     testInputVectorPacketList = self.csvVectorsToList('motEngineInputs.csv')
-    #     testOutputVectorPacketList = self.csvVectorsToList('motEngineOutputs.csv')
+    #     testInputVectorPacketList = neblinaTestUtilities.csvVectorsToList('motEngineInputs.csv')
+    #     testOutputVectorPacketList = neblinaTestUtilities.csvVectorsToList('motEngineOutputs.csv')
     #     self.api.debugUnitTestEnable(True)
+    #     time.sleep(1)
     #     for idx,packetBytes in enumerate(testInputVectorPacketList):
     #         # logging.debug('Sending {0} to stream'.format(binascii.hexlify(packetBytes)))
-    #         self.api.comslip.sendPacketToStream(self.api.sc, packetBytes)
-    #         packet = self.api.waitForPacket(PacketType.RegularResponse, \
-    #                                         SubSystem.Debug, Commands.Debug.UnitTestMotionData)
+    #         packet = self.api.debugUnitTestSendBytes(packetBytes)
+    #         # self.api.comslip.sendPacketToStream(self.api.sc, packetBytes)
+    #         # packet = self.api.waitForPacket(PacketType.RegularResponse, \
+    #         #                                 SubSystem.Debug, Commands.Debug.UnitTestMotionData)
     #         self.assertEqual(testOutputVectorPacketList[idx], packet.stringEncode())
-    #         logging.debug('Sent %d testVectors out of %d\r' % (idx,len(testInputVectorPacketList)) , end="", flush=True)
+    #         print("Sent %d testVectors out of %d\r" % (idx, len(testInputVectorPacketList)), end="", flush=True)
+    #     print("\r")
     #     self.api.debugUnitTestEnable(False)
 

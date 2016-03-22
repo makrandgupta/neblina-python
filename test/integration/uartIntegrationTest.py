@@ -51,19 +51,6 @@ class UARTIntegrationTest(unittest.TestCase):
     setupHasAlreadyRun = False
     comPort = None
 
-    def csvVectorsToList(self, csvFileName):
-        testVectorPacketList = []
-        filepath = neblinaTestUtilities.getDataFilepath(csvFileName)
-        with open(filepath, newline='') as testVectorFile:
-            testVectorReader = csv.reader(testVectorFile)
-            # Remove the empty rows
-            testVectors = [row for row in testVectorReader if len(row) != 0]
-        for vector in testVectors:
-            vectorInts = [int(packetByte) for packetByte in vector]
-            vectorBytes = (array.array('B', vectorInts).tobytes())
-            testVectorPacketList.append(vectorBytes)
-        return testVectorPacketList
-
     def setUp(self):
         if not self.comPort:
             raise unittest.SkipTest("No COM port specified.")
@@ -74,7 +61,7 @@ class UARTIntegrationTest(unittest.TestCase):
         self.api = NeblinaAPI(Interface.UART)
         self.api.open(self.comPort)
         if not self.api.isOpened(self.comPort):
-            self.fail("Unable to connect to BLE device.")
+            self.fail("Unable to connect to COM port.")
 
     def tearDown(self):
         self.api.close()
@@ -97,6 +84,7 @@ class UARTIntegrationTest(unittest.TestCase):
 
     def testPMICComm(self):
         batteryLevel = self.api.getBatteryLevel()
+        logging.info("Board Battery: {0}\%".format(batteryLevel))
 
     def testUARTPCLoopbackComm(self):
         #dataString = "Test#1: Loopback test with KL26 by sending 1000 empty packets..."
@@ -106,8 +94,8 @@ class UARTIntegrationTest(unittest.TestCase):
             self.api.waitForAck(SubSystem.Debug, Commands.Debug.SetInterface)
 
     def testMotionEngine(self):
-        testInputVectorPacketList = self.csvVectorsToList('motEngineInputs.csv')
-        testOutputVectorPacketList = self.csvVectorsToList('motEngineOutputs.csv')
+        testInputVectorPacketList = neblinaTestUtilities.csvVectorsToList('motEngineInputs.csv')
+        testOutputVectorPacketList = neblinaTestUtilities.csvVectorsToList('motEngineOutputs.csv')
         self.api.debugUnitTestEnable(True)
         for idx,packetBytes in enumerate(testInputVectorPacketList):
             # logging.debug('Sending {0} to stream'.format(binascii.hexlify(packetBytes)))
