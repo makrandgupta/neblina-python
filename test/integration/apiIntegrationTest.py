@@ -65,31 +65,16 @@ class ApiIntegrationTest(unittest.TestCase):
         return testVectorPacketList
 
     def setUp(self):
+        if not self.comPort:
+            raise unittest.SkipTest("No COM port specified.")
+
         # Give it a break between each test
         time.sleep(1)
 
-        # Try to open the serial COM port
-        sc = None
-        while sc is None:
-            try:
-                sc = serial.Serial(port=self.comPort,baudrate=500000)
-            except serial.serialutil.SerialException as se:
-                if 'Device or resource busy:' in se.__str__():
-                    logging.info('Opening COM port is taking a little while, please stand by...')
-                else:
-                    logging.error('se: {0}'.format(se))
-                time.sleep(1)
-
-        self.api = NeblinaAPI(sc)
-        self.api.sc.flushInput()
-
-        self.api.setStreamingInterface(Interface.UART)
-        self.api.stopAllStreams()
+        self.api = NeblinaAPI(Interface.UART, self.comPort)
 
     def tearDown(self):
-        self.api.setStreamingInterface(Interface.BLE)
-        self.api.sc.close()
-        logging.info('Closed COM Port')
+        self.api.close()
 
     def testStreamEuler(self):
         self.api.motionStream(Commands.Motion.EulerAngle, 100)
@@ -105,7 +90,7 @@ class ApiIntegrationTest(unittest.TestCase):
     def testMEMSComm(self):
         logging.debug('Checking communication with the LSM9DS1 chip by getting the temperature...')
         temp = self.api.getTemperature()
-        dataString = 'Board Temperature: {0} degrees (Celsius)'.format(temp)
+        logging.info("Board Temperature: {0} degrees (Celsius)".format(temp))
 
     def testPMICComm(self):
         batteryLevel = self.api.getBatteryLevel()
@@ -113,7 +98,7 @@ class ApiIntegrationTest(unittest.TestCase):
     def testUARTPCLoopbackComm(self):
         #dataString = "Test#1: Loopback test with KL26 by sending 1000 empty packets..."
         for x in range(1, 1001):
-            logging.debug('Loopback test packet %d\r' % (x), end="", flush=True)
+            #logging.debug('Loopback test packet %d\r' % (x), end="", flush=True)
             self.api.sendCommand(SubSystem.Debug, Commands.Debug.SetInterface, True)
             self.api.waitForAck(SubSystem.Debug, Commands.Debug.SetInterface)
 
@@ -123,10 +108,11 @@ class ApiIntegrationTest(unittest.TestCase):
         self.api.debugUnitTestEnable(True)
         for idx,packetBytes in enumerate(testInputVectorPacketList):
             # logging.debug('Sending {0} to stream'.format(binascii.hexlify(packetBytes)))
-            self.api.comslip.sendPacketToStream(self.api.sc, packetBytes)
-            packet = self.api.waitForPacket(PacketType.RegularResponse, \
-                                            SubSystem.Debug, Commands.Debug.UnitTestMotionData)
+            packet = self.api.debugUnitTestSendBytes(packetBytes)
+            # self.api.comslip.sendPacketToStream(self.api.sc, packetBytes)
+            # packet = self.api.waitForPacket(PacketType.RegularResponse, \
+            #                                 SubSystem.Debug, Commands.Debug.UnitTestMotionData)
             self.assertEqual(testOutputVectorPacketList[idx], packet.stringEncode())
-            logging.debug('Sent %d testVectors out of %d\r' % (idx,len(testInputVectorPacketList)) , end="", flush=True)
+            #logging.debug("Sent %d testVectors out of %d\r".format(idx, len(testInputVectorPacketList)), end="", flush=True)
         self.api.debugUnitTestEnable(False)
 

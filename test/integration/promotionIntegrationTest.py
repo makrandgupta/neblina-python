@@ -50,30 +50,16 @@ class ProMotionIntegrationTest(unittest.TestCase):
     comPort = None
 
     def setUp(self):
+        if not self.comPort:
+            raise unittest.SkipTest("No COM port specified.")
+
         # Give it a break between each test
         time.sleep(1)
 
-        # Try to open the serial COM port
-        sc = None
-        while sc is None:
-            try:
-                sc = serial.Serial(port=self.comPort,baudrate=500000, timeout=1.5)
-            except serial.serialutil.SerialException as se:
-                if 'Device or resource busy:' in se.__str__():
-                    logging.info('Opening COM port is taking a little while, please stand by...')
-                else:
-                    logging.info('se: {0}'.format(se))
-                time.sleep(1)
-
-        self.api = NeblinaAPI(sc)
-        self.api.sc.flushInput()
-        # Make the module stream towards the UART instead of the default BLE
-        self.api.setStreamingInterface(Interface.UART)
-        self.api.motionStopStreams()
+        self.api = NeblinaAPI(Interface.UART, self.comPort)
 
     def tearDown(self):
-        self.api.sc.close()
-        logging.info('Closed COM Port')
+        self.api.close()
 
     def testEEPROM(self):
         logging.debug('"Checking the EEPROM by issuing a write command followed by a read"')

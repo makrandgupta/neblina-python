@@ -25,20 +25,23 @@
 #
 ###################################################################################
 
-import unittest
-
-from test.integration import apiIntegrationTest, bleIntegrationTest, promotionIntegrationTest
+from neblina import *
 
 ###################################################################################
 
 
-def getSuite(comPort, deviceAddress):
-    suite = unittest.TestSuite()
+class NeblinaAPIBase(object):
+    """
+        NeblinaAPIBase serves as a base interface to Neblina communication protocol.
+    """
+    def __init__(self):
+        pass
 
-    suite.addTest(apiIntegrationTest.getSuite(comPort))
-    suite.addTest(promotionIntegrationTest.getSuite(comPort))
-    suite.addTest(bleIntegrationTest.getSuite(deviceAddress))
+    def close(self):
+        raise NotImplementedError("close not override in child.")
 
-    return suite
+    def sendCommand(self, packet):
+        raise NotImplementedError("sendCommand not override in child.")
 
-
+    def receivePacket(self):
+        raise NotImplementedError("receivePacket not override in child.")
