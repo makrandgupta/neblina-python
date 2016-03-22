@@ -115,7 +115,10 @@ class NeblinaAPI(object):
 
     # Helper Functions
     def waitForAck(self, subSystem, command):
-        ackPacket = self.waitForPacket(PacketType.Ack, subSystem, command)
+        if self.interface == Interface.BLE:
+            ackPacket = NebResponsePacket.createEmptyResponsePacket(subSystem, command)
+        elif self.interface == Interface.UART:
+            ackPacket = self.waitForPacket(PacketType.Ack, subSystem, command)
         return ackPacket
 
     def waitForPacket(self, packetType, subSystem, command):

@@ -54,23 +54,24 @@ class BLEIntegrationTest(unittest.TestCase):
         # Give it a break between each test
         time.sleep(1)
 
-        self.api = NeblinaAPI(Interface.BLE, self.deviceAddress)
-        if not self.api.isConnected():
+        self.api = NeblinaAPI(Interface.BLE)
+        self.api.open(self.deviceAddress)
+        if not self.api.isOpened():
             self.fail("Unable to connect to BLE device.")
 
     def tearDown(self):
-        self.api.close()
+        self.api.close(self.deviceAddress)
 
-    def testStreamEuler(self):
-        self.api.motionStream(Commands.Motion.EulerAngle, 100)
-
-    def testStreamIMU(self):
-        self.api.motionStream(Commands.Motion.IMU, 100)
+    # def testStreamEuler(self):
+    #     self.api.motionStream(Commands.Motion.EulerAngle, 100)
+    #
+    # def testStreamIMU(self):
+    #     self.api.motionStream(Commands.Motion.IMU, 100)
 
     def testMEMSComm(self):
         logging.debug('Checking communication with the LSM9DS1 chip by getting the temperature...')
         temp = self.api.getTemperature()
-        dataString = 'Board Temperature: {0} degrees (Celsius)'.format(temp)
+        logging.info("Board Temperature: {0} degrees (Celsius)".format(temp))
     #
     # def testPMICComm(self):
     #     batteryLevel = self.api.getBatteryLevel()

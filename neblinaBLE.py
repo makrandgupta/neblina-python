@@ -101,10 +101,12 @@ class NeblinaBLE(NeblinaAPIBase):
         super(NeblinaBLE, self).__init__()
         self.devices = []
 
-    def close(self):
-        self.disconnectAll()
+    def close(self, deviceAddress=None):
+        logging.info("Disconnected from BLE device : " + deviceAddress)
+        device = self.getDevice(deviceAddress)
+        device.disconnect()
 
-    def connect(self, deviceAddress):
+    def open(self, deviceAddress):
         device = NeblinaDevice(deviceAddress)
         if device.connected:
             logging.info("Successfully connected to BLE device : " + deviceAddress)
@@ -112,14 +114,9 @@ class NeblinaBLE(NeblinaAPIBase):
         else:
             logging.warning("Unable to connect to BLE Device : " + deviceAddress)
 
-    def disconnect(self, deviceAddress):
-        logging.info("Disconnected from BLE device : " + deviceAddress)
-        device = self.getDevice(deviceAddress)
-        device.disconnect()
-
-    def disconnectAll(self):
+    def closeAll(self):
         for device in self.devices:
-            self.disconnect(device.address)
+            self.close(device.address)
 
     def getDevice(self, deviceAddress=None):
         if deviceAddress:
@@ -135,9 +132,9 @@ class NeblinaBLE(NeblinaAPIBase):
             logging.warning("No device is connected.")
             return None
 
-    def isConnected(self):
-        device = self.getDevice()
-        return (device and device.connected)
+    def isOpened(self, deviceAddress=None):
+        device = self.getDevice(deviceAddress)
+        return device and device.connected
 
     def sendCommand(self, packetString):
         device = self.getDevice()
