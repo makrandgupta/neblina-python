@@ -56,8 +56,8 @@ class NeblinaAPI(object):
         packet = NebResponsePacket(consoleBytes)
         return packet
 
-    # Store all packets until a particular packet and discard that packet
-    def storePacketsUntil(self, packetType, subSystem, command):
+    # Store all packets until a particular packet and save or discard that last packet
+    def storePacketsUntil(self, packetType, subSystem, command, saveLastPacket=False):
         packetList = []
         packetCounter = 0
         packet = None
@@ -94,46 +94,8 @@ class NeblinaAPI(object):
                 continue
 
         logging.info('\nTotal IMU Packets Read: {0}'.format(len(packetList)))
-        return packetList
-
-    # Store all packets until a particular packet and keep that packet at the end of the list
-    def storePacketsUntilInclusive(self, packetType, subSystem, command):
-        packetList = []
-        packetCounter = 0
-        packet = None
-        #print('waiting and got: {0}'.format(packet))
-        while( packet == None or \
-                packet.header.packetType != packetType or \
-                packet.header.subSystem != subSystem or \
-                packet.header.command != command):
-            try:
-                if (packet != None and \
-                    packet.header.subSystem != neb.Subsys_Debug):
-                    packetList.append(packet)
-                    print('Received {0} packets \r'.format(len(packetList)) , end="", flush=True)
-                packet = self.receivePacket()
-                # print('waiting and got: {0}'.format(packet.data))
-            except NotImplementedError as nie:
-                packet = None
-                print('Dropped bad packet')
-                print(nie)
-                continue
-            except KeyError as ke:
-                packet = None
-                print("Tried creating a packet with an invalid subsystem or command")
-                print(ke)
-            except neb.CRCError as crce:
-                packet = None
-                print('CRCError')
-                print(crce)
-                continue
-            except Exception as e:
-                packet = None
-                print(type(e))
-                continue
-        print('\nTotal IMU Packets Read: {0}'.format(len(packetList)))
-        packetList.append(packet)
-        print('Last packet: {0}'.format(packet))
+        if(saveLastPacket):
+            packetList.append(packet)
         return packetList
 
     # Helper Functions
