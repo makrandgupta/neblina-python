@@ -118,5 +118,5 @@ def main( argv ):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.WARN, format='%(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(message)s')
     main( sys.argv[1:])

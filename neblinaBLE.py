@@ -33,7 +33,8 @@ except ImportError:
     print("Unable to locate bluepy. It is a required module to use neblinaBLE API.")
 
 from neblina import *
-from neblinaCommandPacket import NebCommandPacket
+from neblinaAPIBase import NeblinaAPIBase
+from neblinaResponsePacket import NebResponsePacket
 
 ###################################################################################
 
@@ -60,32 +61,65 @@ class NeblinaDevice(object):
     def __init__(self, address):
         self.address = address
         self.connected = False
+        self.connect(self.address)
 
-        try:
-            self.peripheral = Peripheral(self.address, "random")
+    def connect(self, deviceAddress):
+        connected = False
+        peripheral = None
+        count = 0
+        while(not connected and count < 5):
+            count += 1
+            try:
+                peripheral = Peripheral(deviceAddress, "random")
+                connected = True
+                break
+            except BTLEException as e:
+                logging.warning("Unable to connect to BLE device, retrying in 1 second.")
+            time.sleep(1)
+
+        if connected:
+            self.peripheral = peripheral
             self.peripheral.setDelegate(NeblinaDelegate())
             self.connected = True
-        except BTLEException as e:
-            logging.warning("BTLEException : " + str(e))
+            self.service = self.peripheral.getServiceByUUID(NeblinaServiceUUID)
+            self.writeCh = self.service.getCharacteristics(NeblinaCtrlServiceUUID)[0]
+            self.readCh = self.service.getCharacteristics(NeblinaDataServiceUUID)[0]
 
+    def disconnect(self):
+        if self.connected:
+            self.peripheral.disconnect()
 
 ###################################################################################
 
 
-class NeblinaBLE(object):
+class NeblinaBLE(NeblinaAPIBase):
     """
         NeblinaBLE is the Neblina Bluetooth Low Energy (BLE) Application Program Interface (API)
     """
 
     def __init__(self):
+        super(NeblinaBLE, self).__init__()
         self.devices = []
+
+    def close(self):
+        self.disconnectAll()
 
     def connect(self, deviceAddress):
         device = NeblinaDevice(deviceAddress)
         if device.connected:
+            logging.info("Successfully connected to BLE device : " + deviceAddress)
             self.devices.append(device)
         else:
             logging.warning("Unable to connect to BLE Device : " + deviceAddress)
+
+    def disconnect(self, deviceAddress):
+        logging.info("Disconnected from BLE device : " + deviceAddress)
+        device = self.getDevice(deviceAddress)
+        device.disconnect()
+
+    def disconnectAll(self):
+        for device in self.devices:
+            self.disconnect(device.address)
 
     def getDevice(self, deviceAddress=None):
         if deviceAddress:
@@ -101,7 +135,20 @@ class NeblinaBLE(object):
             logging.warning("No device is connected.")
             return None
 
-    def getEulerAngle(self, device=None):
-        if device:
-            command = NebCommandPacket(SubSystem.Motion, Commands.Motion.EulerAngle, True)
-            device.write(command.stringEncode())
+    def isConnected(self):
+        device = self.getDevice()
+        return (device and device.connected)
+
+    def sendCommand(self, packetString):
+        device = self.getDevice()
+        if device and device.connected:
+            device.writeCh.write(packetString)
+
+    def receivePacket(self):
+        device = self.getDevice()
+        if device and device.connected:
+            bytes = device.readCh.read()
+            packet = NebResponsePacket(bytes)
+            return packet
+        return None
+

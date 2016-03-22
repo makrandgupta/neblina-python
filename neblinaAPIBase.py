@@ -40,6 +40,12 @@ class NeblinaAPIBase(object):
     def close(self):
         raise NotImplementedError("close not override in child.")
 
+    def open(self, port):
+        raise NotImplementedError("open not override in child.")
+
+    def isOpened(self, port=None):
+        raise NotImplementedError("isOpened not override in child.")
+
     def sendCommand(self, packet):
         raise NotImplementedError("sendCommand not override in child.")
 

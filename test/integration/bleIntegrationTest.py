@@ -30,7 +30,8 @@ import time
 import unittest
 
 from neblina import *
-from neblinaBLE import NeblinaBLE
+from neblinaAPI import NeblinaAPI
+
 ###################################################################################
 
 
@@ -53,34 +54,23 @@ class BLEIntegrationTest(unittest.TestCase):
         # Give it a break between each test
         time.sleep(1)
 
-        logging.info("Opening BLE Device " + self.deviceAddress)
-        self.api = NeblinaBLE()
-        self.api.connect(self.deviceAddress)
+        self.api = NeblinaAPI(Interface.BLE, self.deviceAddress)
+        if not self.api.isConnected():
+            self.fail("Unable to connect to BLE device.")
 
     def tearDown(self):
-        logging.info("Closed BLE Device : " + self.deviceAddress)
+        self.api.close()
 
-    def testEulerAngle(self):
-        device = self.api.getDevice(self.deviceAddress)
+    def testStreamEuler(self):
+        self.api.motionStream(Commands.Motion.EulerAngle, 100)
 
+    def testStreamIMU(self):
+        self.api.motionStream(Commands.Motion.IMU, 100)
 
-        #self.api.getEulerAngles(self.deviceAddress)
-
-    # def testStreamEuler(self):
-    #     self.api.motionStream(Commands.Motion.EulerAngle, 100)
-    #
-    # def testStreamIMU(self):
-    #     self.api.motionStream(Commands.Motion.IMU, 100)
-    #
-    # def testVersion(self):
-    #     versions = self.api.debugFWVersions()
-    #     logging.info(versions)
-    #     self.assertNotEqual(versions[2][0], 255)
-    #
-    # def testMEMSComm(self):
-    #     logging.debug('Checking communication with the LSM9DS1 chip by getting the temperature...')
-    #     temp = self.api.getTemperature()
-    #     dataString = 'Board Temperature: {0} degrees (Celsius)'.format(temp)
+    def testMEMSComm(self):
+        logging.debug('Checking communication with the LSM9DS1 chip by getting the temperature...')
+        temp = self.api.getTemperature()
+        dataString = 'Board Temperature: {0} degrees (Celsius)'.format(temp)
     #
     # def testPMICComm(self):
     #     batteryLevel = self.api.getBatteryLevel()

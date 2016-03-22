@@ -56,7 +56,8 @@ class ProMotionIntegrationTest(unittest.TestCase):
         # Give it a break between each test
         time.sleep(1)
 
-        self.api = NeblinaAPI(Interface.UART, self.comPort)
+        self.api = NeblinaAPI(Interface.UART)
+        self.api.open(self.comPort)
 
     def tearDown(self):
         self.api.close()
@@ -72,14 +73,12 @@ class ProMotionIntegrationTest(unittest.TestCase):
     def testFlashRecord(self):
         logging.info('Flash Recorder Test on Euler Angle Data')
         self.api.flashRecord(1000, Commands.Motion.Quaternion)
-        dataString = "Playing back 1000 Quaternion packets now..."
-        logging.info( dataString )
+        logging.info("Playing back 1000 Quaternion packets now...")
         num = self.api.flashPlayback(65535)
         self.assertEqual(num, 1000)
 
         self.api.flashRecord(1000, Commands.Motion.EulerAngle)
-        dataString = "Playing back 1000 Euler Angle packets now..."
-        logging.info( dataString )
+        logging.info("Playing back 1000 Euler Angle packets now...")
         num = self.api.flashPlayback(65535)
         self.assertEqual(num, 1000)
 

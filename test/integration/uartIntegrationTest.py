@@ -35,19 +35,19 @@ import logging
 
 from neblina import *
 from neblinaAPI import NeblinaAPI
-import neblinaTestUtilities
+from test import neblinaTestUtilities
 
 ###################################################################################
 
 
 def getSuite(comPort):
-    ApiIntegrationTest.comPort = comPort
-    return unittest.TestLoader().loadTestsFromTestCase(ApiIntegrationTest)
+    UARTIntegrationTest.comPort = comPort
+    return unittest.TestLoader().loadTestsFromTestCase(UARTIntegrationTest)
 
 ###################################################################################
 
 
-class ApiIntegrationTest(unittest.TestCase):
+class UARTIntegrationTest(unittest.TestCase):
     setupHasAlreadyRun = False
     comPort = None
 
@@ -71,7 +71,10 @@ class ApiIntegrationTest(unittest.TestCase):
         # Give it a break between each test
         time.sleep(1)
 
-        self.api = NeblinaAPI(Interface.UART, self.comPort)
+        self.api = NeblinaAPI(Interface.UART)
+        self.api.open(self.comPort)
+        if not self.api.isOpened(self.comPort):
+            self.fail("Unable to connect to BLE device.")
 
     def tearDown(self):
         self.api.close()
@@ -113,6 +116,7 @@ class ApiIntegrationTest(unittest.TestCase):
             # packet = self.api.waitForPacket(PacketType.RegularResponse, \
             #                                 SubSystem.Debug, Commands.Debug.UnitTestMotionData)
             self.assertEqual(testOutputVectorPacketList[idx], packet.stringEncode())
-            #logging.debug("Sent %d testVectors out of %d\r".format(idx, len(testInputVectorPacketList)), end="", flush=True)
+            print("Sent %d testVectors out of %d\r" % (idx, len(testInputVectorPacketList)), end="", flush=True)
+        print("\r")
         self.api.debugUnitTestEnable(False)
 

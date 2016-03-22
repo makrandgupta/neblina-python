@@ -136,6 +136,13 @@ class NebResponsePacket(object):
         return responsePacket
 
     @classmethod
+    def createEmptyResponsePacket(cls, subSystem, command):
+        garbage = ('\000' * 16).encode('utf-8')
+        data = BlankData(garbage)
+        dataString = data.encode()
+        return cls.createResponsePacket(cls, subSystem, command, data, dataString)
+
+    @classmethod
     def createMAGResponsePacket(cls, timestamp, mag, accel):
         data = MAGData(timestamp, mag, accel)
         dataString = data.encode()

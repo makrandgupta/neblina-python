@@ -38,37 +38,55 @@ from neblinaCommandPacket import NebCommandPacket
 from neblinaError import *
 from neblinaResponsePacket import NebResponsePacket
 
+from neblinaBLE import NeblinaBLE
+from neblinaUART import NeblinaUART
+
 ###################################################################################
 
 
 class NeblinaAPI(object):
     """docstring for NeblinaComm"""
-    def __init__(self, serialcom):
-        self.comslip = slip.slip()
-        self.sc = serialcom
+
+    def __init__(self, interface):
+        self.interface = interface
+
+        self.api = None
+        if self.interface == Interface.BLE:
+            self.api = NeblinaBLE()
+        elif self.interface == Interface.UART:
+            self.api = NeblinaUART()
+
+    def close(self, port=None):
+        self.api.close(port)
+
+    def open(self, port):
+        self.api.open(port)
+        self.setStreamingInterface(self.interface)
+        self.stopAllStreams()
+
+    def isOpened(self, port=None):
+        return self.api.isOpened(port)
 
     def sendCommand(self, subsystem, command, enable=True, **kwargs):
         commandPacket = NebCommandPacket(subsystem, command, enable, **kwargs)
-        self.comslip.sendPacketToStream(self.sc, commandPacket.stringEncode())
+        self.api.sendCommand(commandPacket.stringEncode())
 
     def receivePacket(self):
-        consoleBytes = self.comslip.receivePacketFromStream(self.sc)
-        packet = NebResponsePacket(consoleBytes)
-        return packet
+        return self.api.receivePacket()
 
     def storePacketsUntil(self, packetType, subSystem, command):
         packetList = []
         packetCounter = 0
         packet = None
-        #logging.debug('waiting and got: {0}'.format(packet))
-        while(packet == None or \
-              packet.header.packetType != packetType or \
-              packet.header.subSystem != subSystem or \
-              packet.header.command != command):
+        # logging.debug('waiting and got: {0}'.format(packet))
+        while (packet == None or \
+                           packet.header.packetType != packetType or \
+                           packet.header.subSystem != subSystem or \
+                           packet.header.command != command):
             try:
                 if (packet != None and packet.header.subSystem != SubSystem.Debug):
                     packetList.append(packet)
-                    logging.debug('Received {0} packets \r'.format(len(packetList)) , end="", flush=True)
+                    print('Received {0} packets \r'.format(len(packetList)), end="", flush=True)
                 packet = self.receivePacket()
                 # logging.debug('waiting and got: {0}'.format(packet.data))
             except NotImplementedError as e:
@@ -102,10 +120,11 @@ class NeblinaAPI(object):
 
     def waitForPacket(self, packetType, subSystem, command):
         packet = None
-        while( (packet == None) or \
-            ( (packet.header.packetType != packetType) and (packet.header.packetType != PacketType.ErrorLogResp) ) or \
-            packet.header.subSystem != subSystem or \
-            packet.header.command != command):
+        while ((packet == None) or \
+                       ((packet.header.packetType != packetType) and (
+                           packet.header.packetType != PacketType.ErrorLogResp)) or \
+                           packet.header.subSystem != subSystem or \
+                           packet.header.command != command):
             try:
                 packet = self.receivePacket()
             except NotImplementedError as e:
@@ -132,7 +151,7 @@ class NeblinaAPI(object):
                 exit()
             except:
                 packet = None
-                logging.error("Unexpected error : ", sys.exc_info()[0])
+                logging.error("Unexpected error : ", exc_info=True)
                 continue
         return packet
 
@@ -140,8 +159,9 @@ class NeblinaAPI(object):
         self.sendCommand(SubSystem.Debug, Commands.Debug.SetInterface, interface)
         logging.debug('Waiting for the module to switch its interface...')
         packet = self.waitForAck(SubSystem.Debug, Commands.Debug.SetInterface)
+        logging.debug("Module has switched its interface.")
         numTries = 0
-        while(packet == None):
+        while (packet == None):
             numTries += 1
             if numTries > 5:
                 logging.error('The unit is not responding. Exiting...')
@@ -163,16 +183,16 @@ class NeblinaAPI(object):
     def motionGetStates(self):
         self.sendCommand(SubSystem.Debug, Commands.Debug.MotAndFlashRecState)
         self.waitForAck(SubSystem.Debug, Commands.Debug.MotAndFlashRecState)
-        packet = self.waitForPacket(PacketType.RegularResponse,\
-            SubSystem.Debug, Commands.Debug.MotAndFlashRecState)
-        return (packet.data.distance, packet.data.force, packet.data.euler, packet.data.quaternion,\
-            packet.data.imuData, packet.data.motion, packet.data.steps,packet.data.magData, packet.data.sitStand)
+        packet = self.waitForPacket(PacketType.RegularResponse, \
+                                    SubSystem.Debug, Commands.Debug.MotAndFlashRecState)
+        return (packet.data.distance, packet.data.force, packet.data.euler, packet.data.quaternion, \
+                packet.data.imuData, packet.data.motion, packet.data.steps, packet.data.magData, packet.data.sitStand)
 
     def flashGetState(self):
         self.sendCommand(SubSystem.Debug, Commands.Debug.MotAndFlashRecState)
         self.waitForAck(SubSystem.Debug, Commands.Debug.MotAndFlashRecState)
-        packet = self.waitForPacket(PacketType.RegularResponse,\
-            SubSystem.Debug, Commands.Debug.MotAndFlashRecState)
+        packet = self.waitForPacket(PacketType.RegularResponse, \
+                                    SubSystem.Debug, Commands.Debug.MotAndFlashRecState)
         return MotAndFlashRecStateData.recorderStatusStrings[packet.data.recorderStatus]
 
     # Motine Engine commands
@@ -199,12 +219,12 @@ class NeblinaAPI(object):
         while(keepStreaming):
             try:
                 packet = self.receivePacket()
-                if(packet.header.subSystem == SubSystem.Motion and \
-                    packet.header.command == streamingType):
-                    logging.info(packet.data)
-                elif(packet.header.subSystem!=SubSystem.Debug):
+                if (packet.header.subSystem == SubSystem.Motion and \
+                                packet.header.command == streamingType):
+                    print(packet.data, end="\r", flush=True)
+                elif (packet.header.subSystem != SubSystem.Debug):
                     logging.warning('Unexpected packet: {0}'.format(packet))
-                if(numPackets != None):
+                if (numPackets != None):
                     numPackets -= 1
                 keepStreaming = (numPackets == None or numPackets > 0)
             except NotImplementedError as nie:
@@ -215,7 +235,8 @@ class NeblinaAPI(object):
             except CRCError as e:
                 logging.error("CRCError : " + str(e))
             except TimeoutError as te:
-                if (streamingType!=Commands.Motion.RotationInfo and streamingType!=Commands.Motion.Pedometer and streamingType!=Commands.Motion.FingerGesture and streamingType!=Commands.Motion.TrajectoryInfo):
+                if (
+                                streamingType != Commands.Motion.RotationInfo and streamingType != Commands.Motion.Pedometer and streamingType != Commands.Motion.FingerGesture and streamingType != Commands.Motion.TrajectoryInfo):
                     logging.warning('Timed out, sending command again.')
                     numTries += 1
                     self.sendCommand(SubSystem.Motion, streamingType, True)
@@ -224,32 +245,34 @@ class NeblinaAPI(object):
                         exit()
             except Exception as e:
                 logging.error("Exception : " + str(e))
+        print("\r")
+
         # Stop whatever it was streaming
         self.sendCommand(SubSystem.Motion, streamingType, False)
 
     def motionSetDownsample(self, factor):
-        self.sendCommand(SubSystem.Motion,\
-            Commands.Motion.Downsample, factor)
-        self.waitForAck(SubSystem.Motion,\
-            Commands.Motion.Downsample)
+        self.sendCommand(SubSystem.Motion, \
+                         Commands.Motion.Downsample, factor)
+        self.waitForAck(SubSystem.Motion, \
+                        Commands.Motion.Downsample)
 
     def motionSetAccFullScale(self, factor):
-        self.sendCommand(SubSystem.Motion,\
-            Commands.Motion.AccRange, factor)
-        self.waitForAck(SubSystem.Motion,\
-            Commands.Motion.AccRange)
+        self.sendCommand(SubSystem.Motion, \
+                         Commands.Motion.AccRange, factor)
+        self.waitForAck(SubSystem.Motion, \
+                        Commands.Motion.AccRange)
 
     def motionStopStreams(self):
-        self.sendCommand(SubSystem.Motion,\
-            Commands.Motion.DisableStreaming, True)
-        self.waitForAck(SubSystem.Motion,\
-            Commands.Motion.DisableStreaming)
+        self.sendCommand(SubSystem.Motion, \
+                         Commands.Motion.DisableStreaming, True)
+        self.waitForAck(SubSystem.Motion, \
+                        Commands.Motion.DisableStreaming)
 
     def motionResetTimestamp(self):
-        self.sendCommand(SubSystem.Motion,\
-            Commands.Motion.ResetTimeStamp, True)
-        self.waitForAck(SubSystem.Motion,\
-            Commands.Motion.ResetTimeStamp)
+        self.sendCommand(SubSystem.Motion, \
+                         Commands.Motion.ResetTimeStamp, True)
+        self.waitForAck(SubSystem.Motion, \
+                        Commands.Motion.ResetTimeStamp)
 
     def EEPROMRead(self, readPageNumber):
         self.sendCommand(SubSystem.EEPROM, Commands.EEPROM.Read, pageNumber=readPageNumber)
@@ -258,42 +281,38 @@ class NeblinaAPI(object):
         return packet.data.dataBytes
 
     def EEPROMWrite(self, writePageNumber, dataString):
-        self.sendCommand(SubSystem.EEPROM, Commands.EEPROM.Write,\
-            pageNumber=writePageNumber, dataBytes=dataString)
+        self.sendCommand(SubSystem.EEPROM, Commands.EEPROM.Write, \
+                         pageNumber=writePageNumber, dataBytes=dataString)
         packet = self.waitForAck(SubSystem.EEPROM, Commands.EEPROM.Write)
 
     def getBatteryLevel(self):
-        self.sendCommand(SubSystem.Power,\
-            Commands.Power.GetBatteryLevel, True)
+        self.sendCommand(SubSystem.Power, \
+                         Commands.Power.GetBatteryLevel, True)
 
         # Drop all packets until you get an ack
-        packet = self.waitForAck(SubSystem.Power,\
-            Commands.Power.GetBatteryLevel)
-        packet = self.waitForPacket(PacketType.RegularResponse,\
-            SubSystem.Power,\
-            Commands.Power.GetBatteryLevel)
+        packet = self.waitForAck(SubSystem.Power, \
+                                 Commands.Power.GetBatteryLevel)
+        packet = self.waitForPacket(PacketType.RegularResponse, \
+                                    SubSystem.Power, \
+                                    Commands.Power.GetBatteryLevel)
         return packet.data.batteryLevel
 
     def getTemperature(self):
-        self.sendCommand(SubSystem.Power,\
-            Commands.Power.GetTemperature, True)
+        self.sendCommand(SubSystem.Power, Commands.Power.GetTemperature, True)
 
         # Drop all packets until you get an ack
-        packet = self.waitForAck(SubSystem.Power,\
-            Commands.Power.GetTemperature)
-        packet = self.waitForPacket(PacketType.RegularResponse,\
-            SubSystem.Power,\
-            Commands.Power.GetTemperature)
+        packet = self.waitForAck(SubSystem.Power, Commands.Power.GetTemperature)
+        packet = self.waitForPacket(PacketType.RegularResponse, SubSystem.Power, Commands.Power.GetTemperature)
         return packet.data.temperature
 
     def flashErase(self):
         # Step 1 - Initialization
-        self.sendCommand(SubSystem.Motion,Commands.Motion.IMU_Data, True)
-        self.sendCommand(SubSystem.Motion,Commands.Motion.DisableStreaming, True)
+        self.sendCommand(SubSystem.Motion, Commands.Motion.IMU, True)
+        self.sendCommand(SubSystem.Motion, Commands.Motion.DisableStreaming, True)
         logging.debug('Sending the DisableAllStreaming command, and waiting for a response...')
 
         # Step 2 - wait for ack
-        self.waitForAck(SubSystem.Motion,Commands.Motion.DisableStreaming)
+        self.waitForAck(SubSystem.Motion, Commands.Motion.DisableStreaming)
         logging.debug('Acknowledge packet was received!')
 
         # Step 3 - erase the flash command
@@ -301,22 +320,22 @@ class NeblinaAPI(object):
         logging.debug('Sent the EraseAll command, and waiting for a response...')
 
         # Step 4 - wait for ack
-        self.waitForAck(SubSystem.Storage,Commands.Storage.EraseAll)
+        self.waitForAck(SubSystem.Storage, Commands.Storage.EraseAll)
         logging.debug("Acknowledge packet was received!")
         logging.info("Started erasing... This takes about 3 minutes...")
 
         # Step 5 - wait for the completion notice
-        self.waitForPacket(PacketType.RegularResponse,\
-            SubSystem.Storage, Commands.Storage.EraseAll)
+        self.waitForPacket(PacketType.RegularResponse, \
+                           SubSystem.Storage, Commands.Storage.EraseAll)
 
     def flashRecord(self, numSamples, dataType):
 
         # Step 1 - Initialization
-        self.sendCommand(SubSystem.Motion,Commands.Motion.DisableStreaming, True)
+        self.sendCommand(SubSystem.Motion, Commands.Motion.DisableStreaming, True)
         logging.debug('Sending the DisableAllStreaming command, and waiting for a response...')
 
         # Step 2 - wait for ack
-        self.waitForAck(SubSystem.Motion,Commands.Motion.DisableStreaming)
+        self.waitForAck(SubSystem.Motion, Commands.Motion.DisableStreaming)
         logging.debug('Acknowledge packet was received!')
 
         # Step 3 - Start recording
@@ -324,24 +343,23 @@ class NeblinaAPI(object):
         logging.debug('Sending the command to start the flash recorder, and waiting for a response...')
         # Step 4 - wait for ack and the session number
         self.waitForAck(SubSystem.Storage, Commands.Storage.Record)
-        packet = self.waitForPacket(PacketType.RegularResponse,\
-            SubSystem.Storage, Commands.Storage.Record)
-        logging.debug('Acknowledge packet was received with the session number %d!' % packet.data.sessionID)
+        packet = self.waitForPacket(PacketType.RegularResponse, \
+                                    SubSystem.Storage, Commands.Storage.Record)
+        logging.debug('Acknowledge packet was received with the session number {0}!'.format(packet.data.sessionID))
         sessionID = packet.data.sessionID
 
         # Step 5 - enable IMU streaming
-        self.sendCommand(SubSystem.Motion,dataType, True)
+        self.sendCommand(SubSystem.Motion, dataType, True)
         logging.debug('Sending the enable IMU streaming command, and waiting for a response...')
 
         # Step 6 - wait for ack
-        self.waitForAck(SubSystem.Motion,dataType)
+        self.waitForAck(SubSystem.Motion, dataType)
         logging.debug('Acknowledge packet was received!')
 
         # Step 7 Receive Packets
-        for x in range(1, numSamples+1):
+        for x in range(1, numSamples + 1):
             packet = self.waitForPacket(PacketType.RegularResponse, SubSystem.Motion, dataType)
-            logging.info('Recording %d packets, current packet: %d\r' % (numSamples, x), end="", flush=True)
-        logging.info('\n')
+            print('Recording {0} packets, current packet: {1}\r'.format(numSamples, x), end="", flush=True)
 
         # Step 8 - Stop the streaming
         self.sendCommand(SubSystem.Motion, dataType, False)
@@ -352,31 +370,32 @@ class NeblinaAPI(object):
         logging.debug('Acknowledge packet was received!')
 
         # Step 10 - Stop the recording
-        self.sendCommand(SubSystem.Storage,Commands.Storage.Record, False)
+        self.sendCommand(SubSystem.Storage, Commands.Storage.Record, False)
         logging.debug('Sending the command to stop the flash recorder, and waiting for a response...')
 
         # Step 11 - wait for ack and the closed session confirmation
-        self.waitForAck(SubSystem.Storage,Commands.Storage.Record)
-        packet = self.waitForPacket(PacketType.RegularResponse,\
-            SubSystem.Storage, Commands.Storage.Record)
+        self.waitForAck(SubSystem.Storage, Commands.Storage.Record)
+        packet = self.waitForPacket(PacketType.RegularResponse, \
+                                    SubSystem.Storage, Commands.Storage.Record)
         logging.debug("The acknowledge packet is received")
         logging.info("Session {0} is closed successfully".format(sessionID))
 
     def flashPlayback(self, pbSessionID, destinationFileName=None):
         self.sendCommand(SubSystem.Storage, Commands.Storage.Playback, True, sessionID=pbSessionID)
         logging.debug('Sent the start playback command, waiting for response...')
-        #wait for confirmation
-        packet = self.waitForPacket(PacketType.RegularResponse,\
-            SubSystem.Storage, Commands.Storage.Playback)
-        if(packet.header.packetType==PacketType.ErrorLogResp):
+        # wait for confirmation
+        packet = self.waitForPacket(PacketType.RegularResponse, \
+                                    SubSystem.Storage, Commands.Storage.Playback)
+        if (packet.header.packetType == PacketType.ErrorLogResp):
             logging.error('Playback failed due to an invalid session number request!')
             return 0
         else:
             pbSessionID = packet.data.sessionID
-            logging.info('Playback routine started from session number %d' % pbSessionID);
-            packetList = self.storePacketsUntil(PacketType.RegularResponse, SubSystem.Storage, Commands.Storage.Playback)
-            logging.info('Finished playback from session number %d!' % pbSessionID)
-            if(destinationFileName != None):
+            logging.info('Playback routine started from session number {0}'.format(pbSessionID));
+            packetList = self.storePacketsUntil(PacketType.RegularResponse, SubSystem.Storage,
+                                                Commands.Storage.Playback)
+            logging.info('Finished playback from session number {0}!'.format(pbSessionID))
+            if (destinationFileName != None):
                 thefile = open(destinationFileName, 'w')
                 for item in packetList:
                     thefile.write("%s\n" % item.stringEncode())
@@ -385,15 +404,15 @@ class NeblinaAPI(object):
 
     def flashGetSessions(self):
         self.sendCommand(SubSystem.Storage, Commands.Storage.NumSessions)
-        packet = self.waitForPacket(PacketType.RegularResponse,\
-            SubSystem.Storage, Commands.Storage.NumSessions)
+        packet = self.waitForPacket(PacketType.RegularResponse, \
+                                    SubSystem.Storage, Commands.Storage.NumSessions)
         return packet.data.numSessions
 
     def flashGetSessionInfo(self, sessionID):
         self.sendCommand(SubSystem.Storage, Commands.Storage.SessionInfo, sessionID=sessionID)
-        packet = self.waitForPacket(PacketType.RegularResponse,\
-            SubSystem.Storage, Commands.Storage.SessionInfo)
-        if(packet.data.sessionLength == 0xFFFFFFFF):
+        packet = self.waitForPacket(PacketType.RegularResponse, \
+                                    SubSystem.Storage, Commands.Storage.SessionInfo)
+        if (packet.data.sessionLength == 0xFFFFFFFF):
             return None
         else:
             return (packet.data.sessionID, packet.data.sessionLength)
@@ -403,14 +422,14 @@ class NeblinaAPI(object):
             logging.warning("Use this function with a list of leds you want to know the value as an argument.")
             return
         self.sendCommand(SubSystem.LED, Commands.LED.GetVal, ledIndicesList)
-        packet = self.waitForPacket(PacketType.RegularResponse,\
-            SubSystem.LED, Commands.LED.GetVal)
+        packet = self.waitForPacket(PacketType.RegularResponse, \
+                                    SubSystem.LED, Commands.LED.GetVal)
         return packet.data.ledTupleList
 
     def getLED(self, index):
         self.sendCommand(SubSystem.LED, Commands.LED.GetVal, [index])
-        packet = self.waitForPacket(PacketType.RegularResponse,\
-            SubSystem.LED, Commands.LED.GetVal)
+        packet = self.waitForPacket(PacketType.RegularResponse, \
+                                    SubSystem.LED, Commands.LED.GetVal)
         return packet.data.ledTupleList[0]
 
     def setLEDs(self, ledValues):
@@ -420,13 +439,13 @@ class NeblinaAPI(object):
         self.sendCommand(SubSystem.LED, Commands.LED.SetVal, ledValueTupleList=ledValues)
 
     def setLED(self, ledIndex, ledValue):
-        ledValues = [(ledIndex,ledValue)]
-        self.sendCommand(SubSystem.LED, Commands.LED.SetVal, ledValueTupleList=ledValues )
+        ledValues = [(ledIndex, ledValue)]
+        self.sendCommand(SubSystem.LED, Commands.LED.SetVal, ledValueTupleList=ledValues)
 
     def debugFWVersions(self):
         self.sendCommand(SubSystem.Debug, Commands.Debug.FWVersions)
         versionPacket = self.waitForPacket(PacketType.RegularResponse,
-            SubSystem.Debug, Commands.Debug.FWVersions)
+                                           SubSystem.Debug, Commands.Debug.FWVersions)
         return (versionPacket.data.apiRelease,
                 versionPacket.data.mcuFWVersion,
                 versionPacket.data.bleFWVersion,
@@ -452,14 +471,13 @@ class NeblinaAPI(object):
         self.sendCommand(SubSystem.Debug, Commands.Debug.StartUnitTestMotion, enable)
         self.waitForAck(SubSystem.Debug, Commands.Debug.StartUnitTestMotion)
 
+    def debugUnitTestSendBytes(self, bytes):
+        self.api.sendCommand(bytes)
+        return self.waitForPacket(PacketType.RegularResponse, SubSystem.Debug, Commands.Debug.UnitTestMotionData)
+
     def debugUnitTestSendVector(self, vectorTimestamp, accelVector, gyroVector, magVector):
-        self.sendCommand(SubSystem.Debug, Commands.Debug.UnitTestMotionData,\
-            timestamp=vectorTimestamp,\
-            accel=accelVector, gyro=gyroVector,\
-            mag=magVector)
+        self.sendCommand(SubSystem.Debug, Commands.Debug.UnitTestMotionData, \
+                         timestamp=vectorTimestamp, \
+                         accel=accelVector, gyro=gyroVector, \
+                         mag=magVector)
         self.waitForPacket(PacketType.RegularResponse, SubSystem.Debug, Commands.Debug.UnitTestMotionData)
-
-
-
-
-

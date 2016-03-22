@@ -43,6 +43,10 @@ class BlankData(object):
     def __str__(self):
         return '{0}'.format(self.blankBytes)
 
+    def encode(self):
+        garbage = ('\000'*16).encode('utf-8')
+        return struct.pack(Formatting.Data.Blank, garbage)
+
 ###################################################################################
 
 

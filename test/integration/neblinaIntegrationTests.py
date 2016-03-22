@@ -27,7 +27,7 @@
 
 import unittest
 
-from test.integration import apiIntegrationTest, bleIntegrationTest, promotionIntegrationTest
+from test.integration import uartIntegrationTest, bleIntegrationTest, promotionIntegrationTest
 
 ###################################################################################
 
@@ -35,9 +35,9 @@ from test.integration import apiIntegrationTest, bleIntegrationTest, promotionIn
 def getSuite(comPort, deviceAddress):
     suite = unittest.TestSuite()
 
-    suite.addTest(apiIntegrationTest.getSuite(comPort))
+    suite.addTest(uartIntegrationTest.getSuite(comPort))
     suite.addTest(promotionIntegrationTest.getSuite(comPort))
-    suite.addTest(bleIntegrationTest.getSuite(deviceAddress))
+    #suite.addTest(bleIntegrationTest.getSuite(deviceAddress))
 
     return suite
 

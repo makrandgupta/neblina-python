@@ -33,21 +33,29 @@ import time
 from pyslip import slip
 
 from neblina import *
+from neblinaAPIBase import NeblinaAPIBase
 from neblinaResponsePacket import NebResponsePacket
 
 ###################################################################################
 
 
-class NeblinaUART(object):
+class NeblinaUART(NeblinaAPIBase):
     """
         NeblinaUART serves as a UART communication protocol for NeblinaAPI.
 
         This supports only 1 UART COM port.
     """
-
-    def __init__(self, comPort):
+    def __init__(self):
+        super(NeblinaUART, self).__init__()
         self.comslip = slip.slip()
-        self.comPort = comPort
+        self.comPort = None
+
+    def close(self, port=None):
+        logging.debug("Closing COM port : {0}".format(self.comPort))
+        self.sc.close()
+
+    def open(self, port):
+        self.comPort = port
 
         # Try to open the serial COM port
         self.sc = None
@@ -63,11 +71,12 @@ class NeblinaUART(object):
 
         self.sc.flushInput()
 
-    def close(self):
-        self.sc.close()
+    def isOpened(self, port=None):
+        value = self.sc and self.sc.is_open
+        return self.sc and self.sc.is_open
 
-    def sendCommand(self, packet):
-        self.comslip.sendPacketToStream(self.sc, packet)
+    def sendCommand(self, packetString):
+        self.comslip.sendPacketToStream(self.sc, packetString)
 
     def receivePacket(self):
         bytes = self.comslip.receivePacketFromStream(self.sc)
